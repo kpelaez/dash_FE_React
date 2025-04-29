@@ -5,6 +5,7 @@ import LoginPage from './pages/LoginPage';
 import AboutPage from './pages/AboutPage';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import DashboardsPage from './pages/DashboardsPage';
+import UserRegisterPage from './pages/UserRegisterPage';
 
 function App() {
 
@@ -36,6 +37,15 @@ function App() {
           element={
             <ProtectedRoute>
               <AboutPage />
+            </ProtectedRoute>
+          } 
+        />
+        {/* Ruta para el registro de usuarios */}
+        <Route 
+          path="/admin/register-user" 
+          element={
+            <ProtectedRoute>
+              <UserRegisterPage />
             </ProtectedRoute>
           } 
         />
