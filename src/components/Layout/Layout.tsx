@@ -9,15 +9,17 @@ interface LayoutProps {
 
 const Layout = ({children}: LayoutProps) => {
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 w-full overflow-hidden">
       {/* Sidebar */}
       <Sidebar />
       
       {/* Contenido principal */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-y-auto p-4">
-          {children}
+        <main className="flex-1 overflow-y-auto p-4 bg-gray-50 w-full">
+          <div className="container mx-auto h-full">
+            {children}
+          </div>
         </main>
         <Footer />
       </div>

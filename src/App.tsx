@@ -10,47 +10,49 @@ import UserRegisterPage from './pages/UserRegisterPage';
 function App() {
 
   return (
-    <Router>
-      <Routes>
-        {/* Ruta pública */}
-        <Route path="/login" element={<LoginPage />} />
-        
-        {/* Rutas protegidas */}
-        <Route 
-          path="/" 
-          element={
-            // <ProtectedRoute>
-              <HomePage />
-            // </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/dashboards" 
-          element={
-            <ProtectedRoute>
-              <DashboardsPage />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/about" 
-          element={
-            <ProtectedRoute>
-              <AboutPage />
-            </ProtectedRoute>
-          } 
-        />
-        {/* Ruta para el registro de usuarios */}
-        <Route 
-          path="/admin/register-user" 
-          element={
-            <ProtectedRoute>
-              <UserRegisterPage />
-            </ProtectedRoute>
-          } 
-        />
-      </Routes>
-    </Router>
+    <div className="app-container">
+      <Router>
+        <Routes>
+          {/* Ruta pública */}
+          <Route path="/login" element={<LoginPage />} />
+          
+          {/* Rutas protegidas */}
+          <Route 
+            path="/" 
+            element={
+              // <ProtectedRoute>
+                <HomePage />
+              // </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/dashboards" 
+            element={
+              <ProtectedRoute>
+                <DashboardsPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/about" 
+            element={
+              <ProtectedRoute>
+                <AboutPage />
+              </ProtectedRoute>
+            } 
+          />
+          {/* Ruta para el registro de usuarios */}
+          <Route 
+            path="/admin/register-user" 
+            element={
+              <ProtectedRoute>
+                <UserRegisterPage />
+              </ProtectedRoute>
+            } 
+          />
+        </Routes>
+      </Router>
+    </div>
   )
 }
 

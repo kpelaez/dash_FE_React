@@ -1,3 +1,12 @@
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -29,8 +38,34 @@ body {
   margin: 0;
   display: flex;
   place-items: center;
-  min-width: 320px;
+  min-width: 520px;
   min-height: 100vh;
+}
+
+/* Para que el contenedor de la aplicación ocupe toda la pantalla */
+.app-container {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Mejora de estilos para contenedores de contenido */
+.content-container {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  height: 100%;
+}
+
+
+/* Mejora de estilos para contenedores de contenido */
+.content-container {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  height: 100%;
 }
 
 h1 {

@@ -4,7 +4,7 @@ import Layout from '../components/Layout/Layout';
 const HomePage = () => {
   return (
     <Layout>
-      <div className="home-page">
+      <div className="home-page h-full w-full">
         <section className="hero">
           <h1>Bienvenido al Visualizador de Dashboards</h1>
           <p>Explora análisis de datos interactivos creados con Dash y Plotly</p>

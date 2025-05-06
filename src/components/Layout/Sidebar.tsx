@@ -127,9 +127,9 @@ const Sidebar = () => {
     );
   }
   return (
-    <div className="w-64 h-screen bg-white border-r border-gray-200 flex flex-col">
+    <div className="w-64 h-screen bg-white border-r border-gray-200 flex flex-col overflow-hidden">
       {/* Logo */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-4 border-b border-gray-200 flex-shrink-0">
         <div className="h-10 w-10 rounded-full bg-indigo-500 text-white flex items-center justify-center">
           <svg 
             xmlns="http://www.w3.org/2000/svg" 
