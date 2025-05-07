@@ -41,10 +41,6 @@ const menuItems: MenuItems[] = [
         ]
     },
     {
-      title: 'Acerca de',
-      path: '/about'
-    },
-    {
       title: 'Administración',
       icon: <Users size={18} />,
       children: [
@@ -59,7 +55,11 @@ const menuItems: MenuItems[] = [
           icon: <Users size={18} />
         }
       ]
-    }
+    },
+    {
+      title: 'Acerca de',
+      path: '/about'
+    },
 ]
 
 const Sidebar = () => {
@@ -93,7 +93,7 @@ const Sidebar = () => {
             to={item.path}
             className={`
             flex items-center ${paddingLeft} py-3 pr-4 
-            ${isActive ? 'bg-indigo-50 text-indigo-600 font-medium' : 'text-gray-700 hover:bg-gray-100'}
+            ${isActive ? 'bg-emerald-50 text-emerald-600 font-medium' : 'text-gray-700 hover:bg-gray-200'}
             transition-colors duration-150
             `}
         >
@@ -104,7 +104,7 @@ const Sidebar = () => {
             onClick={() => toggleExpand(item.title)}
             className={`
             flex items-center justify-between w-full ${paddingLeft} py-3 pr-4 
-            text-gray-700 hover:bg-gray-100
+            text-emerald-800 font-medium hover:bg-gray-200
             transition-colors duration-150
             `}
         >
@@ -130,21 +130,8 @@ const Sidebar = () => {
     <div className="w-64 h-screen bg-white border-r border-gray-200 flex flex-col overflow-hidden">
       {/* Logo */}
       <div className="p-4 border-b border-gray-200 flex-shrink-0">
-        <div className="h-10 w-10 rounded-full bg-indigo-500 text-white flex items-center justify-center">
-          <svg 
-            xmlns="http://www.w3.org/2000/svg" 
-            className="h-6 w-6" 
-            fill="none" 
-            viewBox="0 0 24 24" 
-            stroke="currentColor"
-          >
-            <path 
-              strokeLinecap="round" 
-              strokeLinejoin="round" 
-              strokeWidth={2} 
-              d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5" 
-            />
-          </svg>
+        <div className="h-9 flex items-center justify-center">
+          <a href='/'><img src="/Logo_Omnimedica_Largo.svg" alt="logo empresa diminutivo" className="h-25" /></a>
         </div>
       </div>
       

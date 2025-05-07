@@ -53,7 +53,7 @@ const Header = () => {
             <input
               type="text"
               placeholder="Buscar..."
-              className="pl-10 pr-4 py-2 bg-gray-100 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white w-64"
+              className="pl-10 pr-4 py-2 bg-gray-100 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white w-64"
             />
           </div>
         </div>
@@ -61,7 +61,7 @@ const Header = () => {
         {isAuthenticated && (
           <div className="flex items-center space-x-4">
             {/* Notificaciones */}
-            <button className="p-1 rounded-md hover:bg-gray-100 relative">
+            <button className="button-header p-1 rounded-md hover:bg-gray-100 relative">
               <Bell size={20} />
               <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
             </button>
@@ -74,7 +74,7 @@ const Header = () => {
               </div>
               <button 
                 onClick={handleLogout}
-                className="text-sm text-emerald-600 hover:text-emerald-800"
+                className="button-header text-sm text-emerald-600 hover:text-emerald-800"
               >
                 Cerrar sesión
               </button>
