@@ -15,7 +15,7 @@ interface MenuItems {
 const menuItems: MenuItems[] = [
     {
       title: 'Inicio',
-      requiredRoles: ['admin'],
+      requiredRoles: ['admin','manager'],
       path: '/',
     },
     {
@@ -179,7 +179,7 @@ const Sidebar = () => {
       {/* Logo */}
       <div className="p-4 border-b border-gray-200 flex-shrink-0">
         <div className="h-9 flex items-center justify-center">
-          <a href='/'><img src="/Logo_Omnimedica_Largo.svg" alt="logo empresa diminutivo" className="h-25" /></a>
+          <a href='/'><img src="/Logo-text-small.png" alt="logo empresa diminutivo" className="h-14" /></a>
         </div>
       </div>
       
