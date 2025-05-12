@@ -16,22 +16,32 @@ interface User { //<-Asi es el tipo de dato que nos va a devolver la funcion cur
   created_at: string;
 }
 
+interface RegisterData extends LoginCredentials {
+  full_name?: string;
+  is_active?: boolean;
+  roles?: string[];
+}
+
 interface AuthState {
     token: string | null;
     user: User | null;
+    roles: string[];
     isAuthenticated: boolean;
     isLoading: boolean;
     error: string | null;
     
     login: (credentials: LoginCredentials) => Promise<void>;
-    logout: ()=>void;
-    getUser: ()=>Promise<void>;
-    register:(credentials: LoginCredentials & {full_name?:string}) =>Promise<void>;
+    logout: () =>void;
+    getUser: () =>Promise<void>;
+    register:(credentials: LoginCredentials & {full_name?:string, roles?: string[]}) => Promise<void>;
+    hasRole: (role:string) => boolean;
+    hasAnyRole:(roles: string[]) => boolean;
 }
 
 export const useAuthStore = create<AuthState>((set, get)=>({
   token: localStorage.getItem('auth_token'),
   user: null,
+  roles: [],
   isAuthenticated: !!localStorage.getItem('auth_token'),
   isLoading: false,
   error: null,
@@ -61,8 +71,12 @@ export const useAuthStore = create<AuthState>((set, get)=>({
 
       localStorage.setItem('auth_token', data.access_token);//<-- Se llama asi en el backend
 
+      // IMPORTANTE: Asegúrate de que los roles se están guardando correctamente
+      console.log("Roles recibidos:", data.roles); // Para depuración
+
       set({
         token: data.access_token,
+        roles: data.roles || [],
         isAuthenticated: true,
         isLoading: false,
       });
@@ -72,6 +86,7 @@ export const useAuthStore = create<AuthState>((set, get)=>({
       set({
         error: error instanceof Error ? error.message : 'Error desconocido',
         isLoading: false,
+        roles: [],
         isAuthenticated: false,
         token: null,
         user: null,
@@ -84,6 +99,7 @@ export const useAuthStore = create<AuthState>((set, get)=>({
     set({
       token: null,
       user: null,
+      roles: [],
       isAuthenticated: false,
       error: null
     });
@@ -95,7 +111,8 @@ export const useAuthStore = create<AuthState>((set, get)=>({
     if (!token) {
       set({ 
         user: null,
-        isAuthenticated: false
+        isAuthenticated: false,
+        roles: [],
       })
       return;
     }
@@ -114,7 +131,21 @@ export const useAuthStore = create<AuthState>((set, get)=>({
       }
 
       const userData = await response.json();
-      set({ user: userData, isLoading: false});
+
+      const rolesResponse = await fetch(`${API_URL}/users/me/roles`,{
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      let roles = [];
+      if (rolesResponse.ok) {
+        roles = await rolesResponse.json();
+      }
+
+
+      set({ user: userData,roles: roles ,isLoading: false});
+
     } catch (error) {
       console.error('Error al obtener el usuario:', error);
       localStorage.removeItem('auth_token');
@@ -122,6 +153,7 @@ export const useAuthStore = create<AuthState>((set, get)=>({
         error: error instanceof Error ? error.message : 'Error desconocido',
         isLoading: false,
         user: null,
+        roles: [],
         isAuthenticated: false,
         token: null,
       });
@@ -141,6 +173,7 @@ export const useAuthStore = create<AuthState>((set, get)=>({
           email: credentials.email,
           password: credentials.password,
           full_name: credentials.full_name || null,
+          roles: credentials.roles || ['user'],
         }),
       });
 
@@ -164,5 +197,16 @@ export const useAuthStore = create<AuthState>((set, get)=>({
         isLoading: false
       });
     }
+  },
+
+  //Funciones de utilidad para verificar roles
+  hasRole: (role: string) => {
+    const { roles } = get();
+    return roles.includes(role);
+  },
+
+  hasAnyRole: (requiredRoles: string[]) => {
+    const { roles } = get();
+    return requiredRoles.some(role => roles.includes(role));
   }
 }));

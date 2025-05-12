@@ -1,47 +1,53 @@
 import { useState, ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ChevronDown, ChevronRight, Users, PlusCircle } from 'lucide-react';
+import { useAuthStore } from '../../stores/authStore';
 
 interface MenuItems {
     title: string;
     path?: string;
     icon?: ReactNode;
     children?: MenuItems[];
+    requiredRoles?: string[];
 }
 
 // Datos del Menu
 const menuItems: MenuItems[] = [
     {
       title: 'Inicio',
+      requiredRoles: ['admin'],
       path: '/',
     },
     {
       title: 'Dashboards',
+      requiredRoles: ['admin', 'manager', 'user'],
       path:'/dashboards',
     },
     {
       title: 'Teams',
-        children: [
-            {
-            title: 'Desarrollo',
-            path: '/teams/desarrollo',
-            },
-            {
-            title: 'Recursos Humanos',
-            path: '/teams/RRHH',
-            },
-            {
-            title: 'Comercio Exterior',
-            path: '/teams/comex',
-            },
-            {
-            title: 'Ventas',
-            path: '/teams/ventas',
-            }
-        ]
+      requiredRoles: ['admin', 'manager', 'user'],
+      children: [
+          {
+          title: 'Desarrollo',
+          path: '/teams/desarrollo',
+          },
+          {
+          title: 'Recursos Humanos',
+          path: '/teams/RRHH',
+          },
+          {
+          title: 'Comercio Exterior',
+          path: '/teams/comex',
+          },
+          {
+          title: 'Ventas',
+          path: '/teams/ventas',
+          }
+      ]
     },
     {
       title: 'Administración',
+      requiredRoles: ['admin'],
       icon: <Users size={18} />,
       children: [
         {
@@ -58,12 +64,20 @@ const menuItems: MenuItems[] = [
     },
     {
       title: 'Acerca de',
+      requiredRoles: ['admin'],
       path: '/about'
     },
 ]
 
 const Sidebar = () => {
   const location = useLocation();
+  const hasAnyRole = useAuthStore(state => state.hasAnyRole);
+  const roles = useAuthStore(state=>state.roles)
+
+  // Para depuración
+  console.log("Roles actuales en Sidebar:", roles);
+  
+
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({
     Teams: false, //Para iniciar expandido, se puede omitir
     Administracion: false,
@@ -77,11 +91,43 @@ const Sidebar = () => {
     }));
   };
 
+  // Función para determinar si una opción del menú debe mostrarse según el rol
+  const shouldShowMenuItem = (item: MenuItems): boolean => {
+    // Si no tiene restricción de roles, mostrar siempre
+    if (!item.requiredRoles) return true;
+    
+    // Verificar si el usuario tiene alguno de los roles requeridos
+    // IMPORTANTE: Asegúrate de que esta lógica esté funcionando correctamente
+    if (hasAnyRole) {
+      return hasAnyRole(item.requiredRoles);
+    } else {
+      // Fallback si hasAnyRole no está disponible
+      return item.requiredRoles.some(role => roles.includes(role));
+    }
+  };
+
   // Renderizar un elemento del menu
   const renderMenuItem = (item: MenuItems, level = 0) => {
     const hasChildren = item.children && item.children.length > 0;
     const isActive = location.pathname === item.path;
     const isExpanded = expandedItems[item.title] || false;
+
+    // Para depuracion
+    console.log("MenuItem:", item.title, "requiredRoles:", item.requiredRoles, "Should show:", shouldShowMenuItem(item));
+
+
+    //No mostrar si el usuario no tiene los roles requeridos
+    if(!shouldShowMenuItem(item)) return null;
+
+    // Si tiene hijos, verificar si al menos uno debe mostrarse
+    if(item.children && item.children.length > 0) {
+      const visibleChildren = item.children.filter(shouldShowMenuItem);
+      if (visibleChildren.length === 0) return null;
+      
+      // Actualizar children con solo los visibles
+      item = {... item, children: visibleChildren};
+    }
+
 
     // Estilos basados en el nivel 
     const paddingLeft = level === 0 ? 'pl-4': `pl-${4 + level * 6}`;
@@ -126,6 +172,8 @@ const Sidebar = () => {
       </div>
     );
   }
+
+  const visibleMenuItems = menuItems.filter(shouldShowMenuItem);
   return (
     <div className="w-64 h-screen bg-white border-r border-gray-200 flex flex-col overflow-hidden">
       {/* Logo */}
@@ -137,7 +185,7 @@ const Sidebar = () => {
       
       {/* Menú */}
       <div className="flex-1 overflow-y-auto">
-        {menuItems.map(item => renderMenuItem(item))}
+        {visibleMenuItems.map(item => renderMenuItem(item))}
       </div>
     </div>
   );

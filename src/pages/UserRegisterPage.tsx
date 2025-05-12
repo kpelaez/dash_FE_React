@@ -9,6 +9,7 @@ interface RegisterFormData {
     confirmPassword: string;
     full_name: string;
     is_active: boolean;
+    roles: string[];
 }
 
 const UserRegisterPage = ()=>{
@@ -17,8 +18,17 @@ const UserRegisterPage = ()=>{
       password: '',
       confirmPassword: '',
       full_name: '',
-      is_active: true
+      is_active: true,
+      roles: ['user'] //asignacion por defecto
     });
+
+    // Definir los roles disponibles
+    const availableRoles = [
+      { value: 'admin', label: 'Administrador' },
+      { value: 'manager', label: 'Gerente' },
+      { value: 'user', label: 'Usuario' },
+      { value: 'viewer', label: 'Visor (solo lectura)' }
+    ];
 
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [submitStatus, setSubmitStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -50,6 +60,10 @@ const UserRegisterPage = ()=>{
         if (!formData.full_name) {
           newErrors.full_name = 'El nombre completo es obligatorio';
         }
+
+        if (formData.roles.length === 0) {
+          newErrors.roles = 'Selecciona al menos un rol';
+        }
           
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -72,6 +86,33 @@ const UserRegisterPage = ()=>{
       }
     };
 
+    // Manejar cambios en los checkboxes de roles
+    const handleRoleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { value, checked } = e.target;
+      
+      if (checked) {
+        // Añadir el rol si está marcado
+        setFormData(prev => ({
+          ...prev,
+          roles: [...prev.roles, value]
+        }));
+      } else {
+        // Quitar el rol si está desmarcado
+        setFormData(prev => ({
+          ...prev,
+          roles: prev.roles.filter(role => role !== value)
+        }));
+      }
+      
+      // Limpiar error de roles
+      if (errors.roles) {
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors.roles;
+          return newErrors;
+        });
+      }
+    };
     
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -108,15 +149,16 @@ const UserRegisterPage = ()=>{
           console.error('Error registrando usuario:', error);
           throw error;
         }
-        };
+    };
 
       try {
         // Llamar a la API para registrar usuario
         await registerUser({
-        email: formData.email,
-        password: formData.password,
-        full_name: formData.full_name,
-        is_active: formData.is_active
+          email: formData.email,
+          password: formData.password,
+          full_name: formData.full_name,
+          is_active: formData.is_active,
+          roles: formData.roles,
         });
         
         setSubmitStatus('success');
@@ -124,11 +166,12 @@ const UserRegisterPage = ()=>{
         
         // Resetear formulario
         setFormData({
-        email: '',
-        password: '',
-        confirmPassword: '',
-        full_name: '',
-        is_active: true
+          email: '',
+          password: '',
+          confirmPassword: '',
+          full_name: '',
+          is_active: true,
+          roles: ['user'],
         });
         
       } catch (error) {
@@ -225,6 +268,33 @@ const UserRegisterPage = ()=>{
               />
               {errors.full_name && (
                 <p className="mt-1 text-sm text-red-600">{errors.full_name}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Roles del Usuario
+              </label>
+              <div className="space-y-2">
+                {availableRoles.map(role => (
+                  <div key={role.value} className="flex items-center">
+                    <input
+                      id={`role-${role.value}`}
+                      name={`role-${role.value}`}
+                      type="checkbox"
+                      value={role.value}
+                      checked={formData.roles.includes(role.value)}
+                      onChange={handleRoleChange}
+                      className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor={`role-${role.value}`} className="ml-2 block text-sm text-gray-700">
+                      {role.label}
+                    </label>
+                  </div>
+                ))}
+              </div>
+              {errors.roles && (
+                <p className="mt-1 text-sm text-red-600">{errors.roles}</p>
               )}
             </div>
             

@@ -1,11 +1,16 @@
 import './App.css'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+// Pages
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import AboutPage from './pages/AboutPage';
-import ProtectedRoute from './components/Auth/ProtectedRoute';
 import DashboardsPage from './pages/DashboardsPage';
 import UserRegisterPage from './pages/UserRegisterPage';
+import UnauthorizedPage from './pages/UnauthorizedPage';
+// ProtectedRoutes
+import ProtectedRoute from './components/Auth/ProtectedRoute';
+import RoleProtectedRoute from './components/Auth/RoleProtectedRoute';
+
 
 function App() {
 
@@ -15,8 +20,9 @@ function App() {
         <Routes>
           {/* Ruta pública */}
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/unauthorized" element={<UnauthorizedPage />} />
           
-          {/* Rutas protegidas */}
+          {/* Rutas protegidas basicas (cualquier usuario autenticado) */}
           <Route 
             path="/" 
             element={
@@ -25,12 +31,14 @@ function App() {
               // </ProtectedRoute>
             } 
           />
+
+          {/* Rutas protegidas por roles */}
           <Route 
             path="/dashboards" 
             element={
-              <ProtectedRoute>
+              <RoleProtectedRoute requiredRoles={['admin','manager','user']}>
                 <DashboardsPage />
-              </ProtectedRoute>
+              </RoleProtectedRoute>
             } 
           />
           <Route 
@@ -45,9 +53,9 @@ function App() {
           <Route 
             path="/admin/register-user" 
             element={
-              <ProtectedRoute>
+              <RoleProtectedRoute requiredRoles={['admin']}>
                 <UserRegisterPage />
-              </ProtectedRoute>
+              </RoleProtectedRoute>
             } 
           />
         </Routes>
