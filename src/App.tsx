@@ -5,6 +5,7 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import AboutPage from './pages/AboutPage';
 import DashboardsPage from './pages/DashboardsPage';
+import SingleDashboardPage from './pages/SingleDashboardPage';
 import UserRegisterPage from './pages/UserRegisterPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 // ProtectedRoutes
@@ -26,21 +27,31 @@ function App() {
           <Route 
             path="/" 
             element={
-              // <ProtectedRoute>
+              <ProtectedRoute>
                 <HomePage />
-              // </ProtectedRoute>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/dashboards" 
+            element={
+              <ProtectedRoute>
+                <DashboardsPage />
+              </ProtectedRoute>
             } 
           />
 
           {/* Rutas protegidas por roles */}
           <Route 
-            path="/dashboards" 
+            path="/dashboards/:dashboardId" 
             element={
-              <RoleProtectedRoute requiredRoles={['admin','manager','user']}>
-                <DashboardsPage />
-              </RoleProtectedRoute>
-            } 
+              <ProtectedRoute>
+                <SingleDashboardPage />
+              </ProtectedRoute>
+            }  
           />
+          <Route
+            ></Route>
           <Route 
             path="/about" 
             element={

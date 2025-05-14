@@ -15,17 +15,17 @@ interface MenuItems {
 const menuItems: MenuItems[] = [
     {
       title: 'Inicio',
-      requiredRoles: ['admin','manager'],
+      requiredRoles: ['admin','manager', 'user'],
       path: '/',
     },
     {
       title: 'Dashboards',
-      requiredRoles: ['admin', 'manager', 'user'],
+      requiredRoles: ['admin', 'manager',],
       path:'/dashboards',
     },
     {
       title: 'Teams',
-      requiredRoles: ['admin', 'manager', 'user'],
+      requiredRoles: ['admin', 'manager',],
       children: [
           {
           title: 'Desarrollo',
@@ -64,7 +64,7 @@ const menuItems: MenuItems[] = [
     },
     {
       title: 'Acerca de',
-      requiredRoles: ['admin'],
+      requiredRoles: ['admin', 'user'],
       path: '/about'
     },
 ]
