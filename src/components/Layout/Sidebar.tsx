@@ -175,7 +175,7 @@ const Sidebar = () => {
 
   const visibleMenuItems = menuItems.filter(shouldShowMenuItem);
   return (
-    <div className="w-64 h-screen bg-white border-r border-gray-200 flex flex-col overflow-hidden">
+    <div className="w-55 h-screen bg-white border-r border-gray-200 flex flex-col overflow-hidden">
       {/* Logo */}
       <div className="p-4 border-b border-gray-200 flex-shrink-0">
         <div className="h-9 flex items-center justify-center">

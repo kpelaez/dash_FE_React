@@ -35,9 +35,9 @@ function App() {
           <Route 
             path="/dashboards" 
             element={
-              <ProtectedRoute>
+              <RoleProtectedRoute requiredRoles={['admin', 'manager']}>
                 <DashboardsPage />
-              </ProtectedRoute>
+              </RoleProtectedRoute>
             } 
           />
 
@@ -45,9 +45,9 @@ function App() {
           <Route 
             path="/dashboards/:dashboardId" 
             element={
-              <ProtectedRoute>
+              <RoleProtectedRoute requiredRoles={['admin', 'manager']}>
                 <SingleDashboardPage />
-              </ProtectedRoute>
+              </RoleProtectedRoute>
             }  
           />
           <Route
