@@ -24,29 +24,73 @@ const menuItems: MenuItems[] = [
       path:'/dashboards',
     },
     {
-      title: 'Teams',
+      title: 'Sectores',
       requiredRoles: ['admin', 'manager',],
       children: [
           {
-          title: 'Desarrollo',
+            title: 'Directorio',
+            path:'/teams/directorio'
+          },
+          {
+          title: 'D.A.T.',
           path: '/teams/desarrollo',
           },
           {
           title: 'Recursos Humanos',
-          path: '/teams/RRHH',
+          path: '/teams/rrhh',
           },
           {
           title: 'Comercio Exterior',
           path: '/teams/comex',
           },
           {
-          title: 'Ventas',
-          path: '/teams/ventas',
-          }
+          title: 'Comercial',
+          path: '/teams/comercial',
+          children: [
+            {
+            title: 'Vendedores',
+            path: '/teams/comercial/vendedores',
+            },
+            {
+            title: 'Asistencia tecnica',
+            path: '/teams/comercial/asistencia-tecnica',
+            },
+            {
+            title: 'Administracion de Ventas',
+            path: '/teams/comercial/admin-ventas',
+            },
+          ]
+          },
+          {
+          title: 'Administración',
+          path: '/teams/administracion',
+          children: [
+            {
+            title: 'Pago a Proveedores',
+            path: '/teams/administracion/pago-proveedores',
+            },
+            {
+            title: 'Facturacion',
+            path: '/teams/administracion/facturacion',
+            },
+            {
+            title: 'Logistica Inversa',
+            path: '/teams/administracion/logistica-inversa',
+            },
+            {
+            title: 'Tesorería',
+            path: '/teams/administracion/tesoreria',
+            },
+            {
+            title: 'Stock',
+            path: '/teams/administracion/stock',
+            },
+          ]
+          },
       ]
     },
     {
-      title: 'Administración',
+      title: 'SF Administración',
       requiredRoles: ['admin'],
       icon: <Users size={18} />,
       children: [
@@ -73,10 +117,6 @@ const Sidebar = () => {
   const location = useLocation();
   const hasAnyRole = useAuthStore(state => state.hasAnyRole);
   const roles = useAuthStore(state=>state.roles)
-
-  // Para depuración
-  console.log("Roles actuales en Sidebar:", roles);
-  
 
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({
     Teams: false, //Para iniciar expandido, se puede omitir
@@ -112,10 +152,7 @@ const Sidebar = () => {
     const isActive = location.pathname === item.path;
     const isExpanded = expandedItems[item.title] || false;
 
-    // Para depuracion
-    console.log("MenuItem:", item.title, "requiredRoles:", item.requiredRoles, "Should show:", shouldShowMenuItem(item));
-
-
+  
     //No mostrar si el usuario no tiene los roles requeridos
     if(!shouldShowMenuItem(item)) return null;
 
@@ -130,7 +167,7 @@ const Sidebar = () => {
 
 
     // Estilos basados en el nivel 
-    const paddingLeft = level === 0 ? 'pl-4': `pl-${4 + level * 6}`;
+    const paddingLeft = level === 0 ? 'pl-4': `pl-${4 + level * 5}`;
     return (
       <div key={item.title}>
         {/* Elemento principal */}
@@ -165,7 +202,7 @@ const Sidebar = () => {
         
         {/* Subelementos */}
         {hasChildren && isExpanded && (
-        <div className="ml-2">
+        <div className={`ml-2 ${paddingLeft}`}>
             {item.children!.map(child => renderMenuItem(child, level + 1))}
         </div>
         )}
