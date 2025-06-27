@@ -14,7 +14,7 @@ export const DASHBOARDS: DashboardConfig[] = [
     id: 'sales-overview',
     title: 'Resumen de Ventas',
     description: 'Visión general de las ventas mensuales y comparativas',
-    url: 'http://192.168.0.132:8050/tablero_ventas', // URL del servicio de Dash
+    url: 'http://192.168.0.133:8050/tablero_ventas', // URL del servicio de Dash
     size: 'large',
     requiredRoles: ['admin', 'manager', 'user']
   },
