@@ -1,6 +1,6 @@
 import { useState, ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ChevronDown, ChevronRight, Users, PlusCircle } from 'lucide-react';
+import { ChevronDown, ChevronRight, Users, PlusCircle, Package, Laptop, Settings, ClipboardList } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 
 interface MenuItems {
@@ -22,6 +22,43 @@ const menuItems: MenuItems[] = [
       title: 'Dashboards',
       requiredRoles: ['admin', 'manager',],
       path:'/dashboards',
+    },
+    {
+      title: 'Inventario Tecnologico',
+      requiredRoles: ['admin', 'manager', 'inventory_manager'],
+      icon: <Package size={18} />,
+      children: [
+        {
+          title: 'Dashboard',
+          path: '/inventory/dashboard',
+          icon: <div className="w-2 h-2 rounded-full bg-blue-400 mr-2"></div>
+        },
+        {
+          title: 'Activos Tecnológicos',
+          path: '/inventory/tech-assets',
+          icon: <Laptop size={16} />
+        },
+        {
+          title: 'Asignaciones',
+          path: '/inventory/assignments',
+          icon: <Users size={16} />
+        },
+        {
+          title: 'Mantenimiento',
+          path: '/inventory/maintenance',
+          icon: <Settings size={16} />
+        },
+        {
+          title: 'Mis Activos',
+          path: '/inventory/my-assets',
+          icon: <div className="w-2 h-2 rounded-full bg-green-400 mr-2"></div>
+        },
+        {
+          title: 'Reportes',
+          path: '/inventory/reports',
+          icon: <ClipboardList size={16} />
+        }
+      ]
     },
     {
       title: 'Sectores',
@@ -121,6 +158,7 @@ const Sidebar = () => {
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({
     Teams: false, //Para iniciar expandido, se puede omitir
     Administracion: false,
+    "Inventario Tecnológico": false,
   });
 
   //Funcion para alternar la expansion
@@ -152,6 +190,12 @@ const Sidebar = () => {
     const isActive = location.pathname === item.path;
     const isExpanded = expandedItems[item.title] || false;
 
+    // Verificar si es una ruta activa de inventario para destacar la sección
+    const isInventoryActive = location.pathname.startsWith('/inventory') && item.title === 'Inventario Tecnológico';
+    const isChildActive = hasChildren && item.children?.some(child => 
+      location.pathname === child.path || 
+      (child.children && child.children.some(grandchild => location.pathname === grandchild.path))
+    );
   
     //No mostrar si el usuario no tiene los roles requeridos
     if(!shouldShowMenuItem(item)) return null;
@@ -168,6 +212,14 @@ const Sidebar = () => {
 
     // Estilos basados en el nivel 
     const paddingLeft = level === 0 ? 'pl-4': `pl-${4 + level * 5}`;
+
+    // Estilos especiales para el módulo de inventario
+    const getItemStyles = () => {
+      if (isActive || isInventoryActive || isChildActive) {
+        return 'bg-emerald-50 text-emerald-600 font-medium border-r-2 border-emerald-500';
+      }
+      return 'text-gray-700 hover:bg-gray-200';
+    };
     return (
       <div key={item.title}>
         {/* Elemento principal */}
@@ -177,7 +229,7 @@ const Sidebar = () => {
             className={`
             flex items-center ${paddingLeft} py-3 pr-4 
             ${isActive ? 'bg-emerald-50 text-emerald-600 font-medium' : 'text-gray-700 hover:bg-gray-200'}
-            transition-colors duration-150
+            transition-colors duration-150 ${getItemStyles()}
             `}
         >
             {item.title}
@@ -202,7 +254,7 @@ const Sidebar = () => {
         
         {/* Subelementos */}
         {hasChildren && isExpanded && (
-        <div className={`ml-2 ${paddingLeft}`}>
+        <div className={`ml-2 ${paddingLeft} ${getItemStyles()}`}>
             {item.children!.map(child => renderMenuItem(child, level + 1))}
         </div>
         )}
