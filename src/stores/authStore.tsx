@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 // Define la URL base de la API de autenticacion
-const API_URL = 'http://localhost:8000';
+const API_URL = 'http://127.0.0.1:8000';
 
 interface LoginCredentials {
   email: string;

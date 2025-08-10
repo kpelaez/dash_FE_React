@@ -29,7 +29,7 @@ const DashboardsPage = () => {
 
   return (
     <ResponsiveLayout>
-      <Layout>
+      {/* <Layout> */}
         <div className="py-6">
           <div className="px-4 sm:px-6 md:px-8">
             <h1 className="text-2xl font-semibold text-gray-900">Dashboards</h1>
@@ -67,10 +67,10 @@ const DashboardsPage = () => {
             )}
           </div>
         </div>
-      </Layout>
-      {isMobile ? (
+      {/* </Layout> */}
+      {isMobile && (
         <MobileDashboardGrid dashboards={filteredDashboards} />
-      ): ( <DashboardGrid dashboards={filteredDashboards} />)}
+      )}
     </ResponsiveLayout>
   );
 };
