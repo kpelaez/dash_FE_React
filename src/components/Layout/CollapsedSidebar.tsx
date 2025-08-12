@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   ChevronLeft, ChevronRight, Home, BarChart2, Users, 
-  Settings, Info, Menu, X, ChevronDown, PlusCircle, BookUser
+  Settings, Info, Menu, X, ChevronDown, PlusCircle, BookUser,
+  Package, Laptop, ClipboardList
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 
@@ -19,10 +20,13 @@ interface MenuItem {
 const CollapsibleSidebar = () => {
   const location = useLocation();
   const hasAnyRole = useAuthStore(state => state.hasAnyRole);
+  const roles = useAuthStore(state => state.roles);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({
     Administración: true,
-    Teams: true
+    Teams: true,
+    "Inventario Tecnológico": false,
+    Sectores: false
   });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -31,13 +35,51 @@ const CollapsibleSidebar = () => {
     {
       title: 'Inicio',
       path: '/',
-      icon: <Home size={isCollapsed ? 20 : 18} />
+      icon: <Home size={isCollapsed ? 20 : 18} />,
+      requiredRoles: ['admin','manager', 'user']
     },
     {
       title: 'Dashboards',
       path: '/dashboards',
       icon: <BarChart2 size={isCollapsed ? 20 : 18} />,
       requiredRoles: ['admin', 'manager']
+    },
+    {
+      title: 'Inventario Tecnológico',
+      icon: <Package size={isCollapsed ? 20 : 18} />,
+      requiredRoles: ['admin', 'manager', 'inventory_manager'],
+      children: [
+        {
+          title: 'Dashboard',
+          path: '/inventory/dashboard',
+          icon: <div className="w-2 h-2 rounded-full bg-blue-400 mr-2"></div>
+        },
+        {
+          title: 'Activos Tecnológicos',
+          path: '/inventory/tech-assets',
+          icon: <Laptop size={16} />
+        },
+        {
+          title: 'Asignaciones',
+          path: '/inventory/assignments',
+          icon: <Users size={16} />
+        },
+        {
+          title: 'Mantenimiento',
+          path: '/inventory/maintenance',
+          icon: <Settings size={16} />
+        },
+        {
+          title: 'Mis Activos',
+          path: '/inventory/my-assets',
+          icon: <div className="w-2 h-2 rounded-full bg-green-400 mr-2"></div>
+        },
+        {
+          title: 'Reportes',
+          path: '/inventory/reports',
+          icon: <ClipboardList size={16} />
+        }
+      ]
     },
     {
       title: 'Sectores',
@@ -126,7 +168,8 @@ const CollapsibleSidebar = () => {
     {
       title: 'Acerca de',
       path: '/about',
-      icon: <Info size={isCollapsed ? 20 : 18} />
+      icon: <Info size={isCollapsed ? 20 : 18} />,
+      requiredRoles: ['admin', 'user']
     }
   ];
 
@@ -150,12 +193,20 @@ const CollapsibleSidebar = () => {
 
   // Función para determinar si un elemento del menú debe mostrarse según el rol
   const shouldShowMenuItem = (item: MenuItem): boolean => {
+    // Si no tiene restricción de roles, mostrar siempre
     if (!item.requiredRoles) return true;
-    return hasAnyRole(item.requiredRoles);
+    
+    // Verificar si el usuario tiene alguno de los roles requeridos
+    if (hasAnyRole) {
+      return hasAnyRole(item.requiredRoles);
+    } else {
+      // Fallback si hasAnyRole no está disponible
+      return item.requiredRoles.some(role => roles.includes(role));
+    }
   };
 
   // Renderizar un elemento del menú
-  const renderMenuItem = (item: MenuItem) => {
+  const renderMenuItem = (item: MenuItem, level = 0) => {
     if (!shouldShowMenuItem(item)) return null;
     
     const hasChildren = item.children && item.children.length > 0;
@@ -163,13 +214,26 @@ const CollapsibleSidebar = () => {
       ? item.children.filter(shouldShowMenuItem)
       : [];
     
-    const isActive = location.pathname === item.path ||
-      (hasChildren && visibleChildren.some(child => location.pathname === child.path));
+    // Verificar si es una ruta activa de inventario para destacar la sección
+    const isInventoryActive = location.pathname.startsWith('/inventory') && item.title === 'Inventario Tecnológico';
+    const isActive = location.pathname === item.path || isInventoryActive;
+    const isChildActive = hasChildren && visibleChildren.some(child => 
+      location.pathname === child.path || 
+      (child.children && child.children.some(grandchild => location.pathname === grandchild.path))
+    );
     
     const isExpanded = expandedItems[item.title] || false;
     
     // Si tiene hijos, pero ninguno visible según los roles, no mostrar
     if (hasChildren && visibleChildren.length === 0) return null;
+
+    // Estilos especiales para el módulo de inventario
+    const getItemStyles = () => {
+      if (isActive || isInventoryActive || isChildActive) {
+        return 'bg-emerald-50 text-emerald-600 font-medium border-r-2 border-emerald-500';
+      }
+      return 'text-gray-700 hover:bg-gray-100';
+    };
 
     return (
       <div key={item.title} className="mb-1">
@@ -179,9 +243,7 @@ const CollapsibleSidebar = () => {
             to={item.path}
             className={`
               flex items-center ${isCollapsed ? 'justify-center' : 'px-4'} py-2 rounded-md
-              ${isActive 
-                ? 'bg-indigo-50 text-indigo-600 font-medium' 
-                : 'text-gray-700 hover:bg-gray-100'}
+              ${getItemStyles()}
               transition-colors duration-150
               ${isCollapsed ? 'h-10 w-10 mx-auto' : ''}
             `}
@@ -195,7 +257,7 @@ const CollapsibleSidebar = () => {
             onClick={() => toggleExpand(item.title)}
             className={`
               flex items-center ${isCollapsed ? 'justify-center' : 'justify-between px-4'} py-2 w-full rounded-md
-              ${isActive ? 'bg-indigo-50 text-indigo-600 font-medium' : 'text-gray-700 hover:bg-gray-100'}
+              ${getItemStyles()}
               transition-colors duration-150
               ${isCollapsed ? 'h-10 w-10 mx-auto' : ''}
             `}
@@ -216,22 +278,83 @@ const CollapsibleSidebar = () => {
         {/* Subelementos */}
         {hasChildren && isExpanded && !isCollapsed && (
           <div className={`ml-4 pl-2 border-l border-gray-200 space-y-1 ${isCollapsed ? 'hidden' : 'mt-1'}`}>
-            {visibleChildren.map(child => (
-              <Link 
-                key={child.title}
-                to={child.path || '#'}
-                className={`
-                  flex items-center px-3 py-2 text-sm rounded-md
-                  ${location.pathname === child.path 
-                    ? 'bg-indigo-50 text-indigo-600 font-medium' 
-                    : 'text-gray-700 hover:bg-gray-100'}
-                `}
-              >
-                {child.icon}
-                <span>{child.title}</span>
-              </Link>
-            ))}
+            {visibleChildren.map(child => renderSubMenuItem(child, level + 1))}
           </div>
+        )}
+      </div>
+    );
+  };
+
+  // Función separada para renderizar subelementos (para manejar niveles anidados)
+  const renderSubMenuItem = (item: MenuItem, level: number) => {
+    if (!shouldShowMenuItem(item)) return null;
+
+    const hasChildren = item.children && item.children.length > 0;
+    const visibleChildren = hasChildren && item.children
+      ? item.children.filter(shouldShowMenuItem)
+      : [];
+
+    const isActive = location.pathname === item.path;
+    const isChildActive = hasChildren && visibleChildren.some(child => location.pathname === child.path);
+
+    if (hasChildren && visibleChildren.length === 0) return null;
+
+    return (
+      <div key={item.title}>
+        {item.path && !hasChildren ? (
+          <Link 
+            to={item.path}
+            className={`
+              flex items-center px-3 py-2 text-sm rounded-md
+              ${isActive 
+                ? 'bg-emerald-50 text-emerald-600 font-medium' 
+                : 'text-gray-700 hover:bg-gray-100'}
+            `}
+          >
+            {item.icon && <span className="mr-2">{item.icon}</span>}
+            <span>{item.title}</span>
+          </Link>
+        ) : (
+          <>
+            <button
+              onClick={() => toggleExpand(item.title)}
+              className={`
+                flex items-center justify-between w-full px-3 py-2 text-sm rounded-md
+                ${isActive || isChildActive 
+                  ? 'bg-emerald-50 text-emerald-600 font-medium' 
+                  : 'text-gray-700 hover:bg-gray-100'}
+              `}
+            >
+              <div className="flex items-center">
+                {item.icon && <span className="mr-2">{item.icon}</span>}
+                <span>{item.title}</span>
+              </div>
+              {hasChildren && (
+                expandedItems[item.title] ? 
+                <ChevronDown size={14} className="text-gray-500" /> : 
+                <ChevronRight size={14} className="text-gray-500" />
+              )}
+            </button>
+            {hasChildren && expandedItems[item.title] && (
+              <div className="ml-4 mt-1 space-y-1">
+                {visibleChildren.map(child => (
+                  <Link 
+                    key={child.title}
+                    to={child.path || '#'}
+                    className={`
+                      flex items-center px-3 py-2 text-sm rounded-md
+                      ${location.pathname === child.path 
+                        ? 'bg-emerald-50 text-emerald-600 font-medium' 
+                        : 'text-gray-700 hover:bg-gray-100'}
+                    `}
+                  >
+                    {child.icon && <span className="mr-2">{child.icon}</span>}
+                    <span>{child.title}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
     );
@@ -298,7 +421,7 @@ const CollapsibleSidebar = () => {
             {/* Logo */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200">
               <div className="flex items-center">
-                <img src="/omnimedica-logo.svg" alt="OmniMedica" className="h-8 w-8" />
+                <img src="/Logo-text-small.png" alt="OmniMedica" className="h-8 w-8" />
                 <span className="ml-2 font-semibold text-gray-800">OmniMedica</span>
               </div>
               <button 
