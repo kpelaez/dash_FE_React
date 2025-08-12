@@ -1,7 +1,7 @@
 import React from 'react';
 import Header from './Header';
 import Footer from './Footer';
-import Sidebar from './Sidebar';
+import CollapsibleSidebar from './CollapsedSidebar';
 
 interface LayoutProps {
     children: React.ReactNode;
@@ -11,7 +11,7 @@ const Layout = ({children}: LayoutProps) => {
   return (
     <div className="flex h-screen bg-gray-50 w-full overflow-hidden">
       {/* Sidebar */}
-      <Sidebar />
+      <CollapsibleSidebar />
       
       {/* Contenido principal */}
       <div className="flex-1 flex flex-col overflow-hidden">

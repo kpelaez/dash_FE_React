@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   ChevronLeft, ChevronRight, Home, BarChart2, Users, 
-  Settings, Info, Menu, X, ChevronDown 
+  Settings, Info, Menu, X, ChevronDown, PlusCircle, BookUser
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 
@@ -11,7 +11,7 @@ import { useAuthStore } from '../../stores/authStore';
 interface MenuItem {
   title: string;
   path?: string;
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
   children?: MenuItem[];
   requiredRoles?: string[];
 }
@@ -40,41 +40,86 @@ const CollapsibleSidebar = () => {
       requiredRoles: ['admin', 'manager']
     },
     {
-      title: 'Teams',
+      title: 'Sectores',
       icon: <Users size={isCollapsed ? 20 : 18} />,
       requiredRoles: ['admin', 'manager'],
       children: [
-        {
-          title: 'Engineering',
-          path: '/teams/engineering',
-          icon: <div className="w-2 h-2 rounded-full bg-indigo-400 mr-2"></div>
-        },
-        {
-          title: 'Human Resources',
-          path: '/teams/hr',
-          icon: <div className="w-2 h-2 rounded-full bg-green-400 mr-2"></div>
-        },
-        {
-          title: 'Customer Success',
-          path: '/teams/customer-success',
-          icon: <div className="w-2 h-2 rounded-full bg-amber-400 mr-2"></div>
-        }
+          {
+            title: 'Directorio',
+            path:'/teams/directorio'
+          },
+          {
+          title: 'D.A.T.',
+          path: '/teams/desarrollo',
+          },
+          {
+          title: 'Recursos Humanos',
+          path: '/teams/rrhh',
+          },
+          {
+          title: 'Comercio Exterior',
+          path: '/teams/comex',
+          },
+          {
+          title: 'Comercial',
+          path: '/teams/comercial',
+          children: [
+            {
+            title: 'Vendedores',
+            path: '/teams/comercial/vendedores',
+            },
+            {
+            title: 'Asistencia tecnica',
+            path: '/teams/comercial/asistencia-tecnica',
+            },
+            {
+            title: 'Administracion de Ventas',
+            path: '/teams/comercial/admin-ventas',
+            },
+          ]
+          },
+          {
+          title: 'Administración',
+          path: '/teams/administracion',
+          children: [
+            {
+            title: 'Pago a Proveedores',
+            path: '/teams/administracion/pago-proveedores',
+            },
+            {
+            title: 'Facturacion',
+            path: '/teams/administracion/facturacion',
+            },
+            {
+            title: 'Logistica Inversa',
+            path: '/teams/administracion/logistica-inversa',
+            },
+            {
+            title: 'Tesorería',
+            path: '/teams/administracion/tesoreria',
+            },
+            {
+            title: 'Stock',
+            path: '/teams/administracion/stock',
+            },
+          ]
+          },
       ]
     },
     {
-      title: 'Administración',
+      title: 'SF Administración',
       icon: <Settings size={isCollapsed ? 20 : 18} />,
       requiredRoles: ['admin'],
       children: [
         {
           title: 'Registrar Usuario',
           path: '/admin/register-user',
-          icon: <div className="w-2 h-2 rounded-full bg-blue-400 mr-2"></div>
+          icon: <PlusCircle size={18} />
         },
         {
           title: 'Listar Usuarios',
           path: '/admin/users',
-          icon: <div className="w-2 h-2 rounded-full bg-purple-400 mr-2"></div>
+          icon: <BookUser size={18} />,
         }
       ]
     },
@@ -209,12 +254,11 @@ const CollapsibleSidebar = () => {
         <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} p-4 border-b border-gray-200`}>
           {!isCollapsed && (
             <div className="flex items-center">
-              <img src="/omnimedica-logo.svg" alt="OmniMedica" className="h-8 w-8" />
-              <span className="ml-2 font-semibold text-gray-800">OmniMedica</span>
+              <img src="/Logo-text-small.png" alt="Omnimedica" className="h-9 w-40 ml-2" />
             </div>
           )}
           {isCollapsed && (
-            <img src="/omnimedica-icon.svg" alt="OmniMedica" className="h-8 w-8" />
+            <img src="/Logo_Omni_O.svg" alt="OmniMedica" className="h-9 w-8 ml-5" />
           )}
           <button 
             onClick={() => setIsCollapsed(!isCollapsed)}
@@ -227,28 +271,6 @@ const CollapsibleSidebar = () => {
         {/* Menú */}
         <div className={`flex-1 overflow-y-auto py-4 ${isCollapsed ? 'px-2' : 'px-3'}`}>
           {visibleMenuItems.map(item => renderMenuItem(item))}
-        </div>
-        
-        {/* Pie del sidebar */}
-        <div className={`
-          p-4 border-t border-gray-200 flex ${isCollapsed ? 'justify-center' : 'items-center space-x-3'}
-        `}>
-          {!isCollapsed ? (
-            <>
-              <div className="h-8 w-8 rounded-full bg-indigo-500 text-white flex items-center justify-center text-sm font-medium">
-                {/* Iniciales del usuario */}
-                KP
-              </div>
-              <div className="text-sm">
-                <p className="font-medium truncate">Kevin Pelaez</p>
-                <p className="text-gray-500 truncate text-xs">kevin@omnimedica.com</p>
-              </div>
-            </>
-          ) : (
-            <div className="h-8 w-8 rounded-full bg-indigo-500 text-white flex items-center justify-center text-sm font-medium">
-              KP
-            </div>
-          )}
         </div>
       </div>
 

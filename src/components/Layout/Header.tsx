@@ -1,6 +1,6 @@
 import { useAuthStore } from "../../stores/authStore";
 import { useNavigate } from "react-router-dom";
-import { Search, Bell, Menu } from 'lucide-react';
+import { Search, Bell} from 'lucide-react';
 
 
 const Header = () => {
@@ -18,10 +18,6 @@ const Header = () => {
     <header className="bg-white border-b border-gray-200 w-full">
       <div className="flex items-center justify-between px-4 py-4 w-full mx-auto">
         <div className="flex items-center space-x-4 flex-grow">
-          {/* Botón de menú para móvil */}
-          <button className="p-1 rounded-md hover:bg-gray-100 lg:hidden">
-            <Menu size={20} />
-          </button>
           
           {/* Buscador */}
           <div className="relative">

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 // Define la URL base de la API de autenticacion
-const API_URL = 'http://localhost:8000';
+const API_URL = 'http://127.0.0.1:8000';
 
 interface LoginCredentials {
   email: string;
@@ -120,7 +120,7 @@ export const useAuthStore = create<AuthState>((set, get)=>({
     set({ isLoading: true});
 
     try {
-      const response = await fetch(`${API_URL}/users/me`, { // <-- Asi es la ruta para obtener usuario en el back
+      const response = await fetch(`${API_URL}/me`, { // <-- Asi es la ruta para obtener usuario en el back
         headers: {
           'Authorization': `Bearer ${token}`
         }
