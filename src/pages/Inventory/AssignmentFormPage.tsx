@@ -13,7 +13,7 @@ import {
   User,
   CheckCircle
 } from 'lucide-react';
-import useInventoryStore from '../../stores/inventoryStore';
+import {useInventoryStore} from '../../stores/inventoryStore';
 
 interface AssignmentFormData {
   tech_asset_id: number | '';

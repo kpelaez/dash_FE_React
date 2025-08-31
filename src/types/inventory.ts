@@ -14,6 +14,7 @@ export interface TechAsset {
     purchase_date?: string;
     purchase_orden?: string;
     supplier?: string;
+    invoice?: string;
     warranty_expiry?: string;
     warranty_provider?: string;
     location ?:string;
@@ -37,6 +38,7 @@ export interface TechAssetCreate {
   purchase_date: string;
   purchase_order?: string;
   supplier?: string;
+  invoice?: string;
   warranty_expiry?: string;
   warranty_provider?: string;
   location?: string;
@@ -58,6 +60,7 @@ export interface TechAssetUpdate {
   purchase_date?: string;
   purchase_order?: string;
   supplier?: string;
+  invoice?: string;
   warranty_expiry?: string;
   warranty_provider?: string;
   location?: string;

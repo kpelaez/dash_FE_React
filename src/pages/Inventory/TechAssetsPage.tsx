@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import useInventoryStore from '../../stores/inventoryStore';
+import {useInventoryStore} from '../../stores/inventoryStore';
 import Layout from '../../components/Layout/Layout';
 import { TechAsset } from '../../types/inventory';
-import { Package, Plus, Search, Filter, Download, Upload, Edit, Trash2, Eye, MapPin, DollarSign, AlertCircle } from 'lucide-react';
+import { Package, Plus, Search, Filter, Download, Upload, Edit, Trash2, Eye, MapPin, DollarSign, AlertCircle, Locate } from 'lucide-react';
 import { useSearchParams, Link } from 'react-router-dom';
 
 
@@ -132,6 +132,7 @@ const TechAssetsPage = () => {
     );
   };
 
+  // Si hay error en la pagina mostrar el aviso
   if (error) {
     return (
       <Layout>
@@ -161,6 +162,8 @@ const TechAssetsPage = () => {
     );
   }
 
+  console.log("ACtivos filtrados: ", filteredAssets)
+  console.log("Todos los activos: ", techAssets)
   return (
     <Layout>
       <div className="space-y-6">
@@ -367,6 +370,9 @@ const TechAssetsPage = () => {
                       Estado
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Sector
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Ubicación
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -375,6 +381,7 @@ const TechAssetsPage = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Acciones
                     </th>
+                    
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -420,6 +427,12 @@ const TechAssetsPage = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         <div className="flex items-center">
+                          <Locate className="h-4 w-4 text-gray-400 mr-1" />
+                          {asset.department ? asset.department : "—"}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <div className="flex items-center">
                           <MapPin className="h-4 w-4 text-gray-400 mr-1" />
                           {asset.location}
                         </div>
@@ -428,7 +441,7 @@ const TechAssetsPage = () => {
                         <div className="flex items-center">
                           <DollarSign className="h-4 w-4 text-gray-400 mr-1" />
                           {asset.purchase_price !== undefined 
-                            ? `$${asset.purchase_price.toLocaleString('es-AR')}`
+                            ? `${asset.purchase_price.toLocaleString('es-AR')}`
                             : "—"}
                         </div>
                       </td>

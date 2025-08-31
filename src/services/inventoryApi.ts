@@ -25,7 +25,7 @@ class InventoryApiService {
         const token = localStorage.getItem('auth_token');
         return {
             'Content-Type':'application/json',
-            ...(token && { Authorizacion: `Bearer ${token}` })
+            ...(token && { Authorization: `Bearer ${token}` })
         };
     }
 
@@ -33,8 +33,11 @@ class InventoryApiService {
         endpoint: string,
         options: RequestInit = {}
     ): Promise<T> {
-        try {
-            const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        try{
+             console.log('Enviando request a:', `${API_BASE_URL}${endpoint}`);
+             console.log('Datos:', options.body);   
+
+             const response = await fetch(`${API_BASE_URL}${endpoint}`, {
                 headers: this.getAuthHeaders(),
                 ...options,
             });
@@ -43,14 +46,34 @@ class InventoryApiService {
                 let errorMessage = `HTTP error! status: ${response.status}`;
                 try {
                     const errorData = await response.json();
-                    errorMessage = errorData.detail || errorData.message || errorMessage;
-                } catch {
-
+                    console.error('Error response:', errorData);
+                
+                    if (response.status === 422 && errorData.detail) {
+                        // Manejar errores de validación de FastAPI
+                        if (Array.isArray(errorData.detail)) {
+                            errorMessage = errorData.detail
+                                .map((err: any) => `${err.loc?.join('.') || 'Campo'}: ${err.msg}`)
+                                .join(', ');
+                        } else {
+                            errorMessage = String(errorData.detail);
+                        }
+                    } else {
+                        errorMessage = errorData.detail || errorData.message || errorMessage;
+                    }
+                } catch (parseError) {
+                    console.error('Error parsing response:', parseError)
                 }
                 throw new Error(errorMessage);
             }
 
-            return await response.json();
+            // Manejar respuestas vacías (como 204)
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                return await response.json();
+            } else {
+                return {} as T;
+            }
+            
         } catch (error) {
             console.error('API request failed:', error);
             throw error;
@@ -89,7 +112,7 @@ class InventoryApiService {
     }
 
     async deleteTechAsset(id: number): Promise<void> {
-        await this.request<void>(`/invetory/tech-assets/${id}`, {
+        await this.request<void>(`/inventory/tech-assets/${id}`, {
             method: 'DELETE'
         });
     }

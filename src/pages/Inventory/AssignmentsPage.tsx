@@ -16,7 +16,7 @@ import {
   CheckCircle,
   Clock
 } from 'lucide-react';
-import useInventoryStore from '../../stores/inventoryStore';
+import {useInventoryStore} from '../../stores/inventoryStore';
 import { Link, useSearchParams } from 'react-router-dom';
 import { AssetAssignment } from '../../types/inventory';
 

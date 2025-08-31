@@ -19,7 +19,7 @@ import {
   User,
   FileText
 } from 'lucide-react';
-import useInventoryStore from '../../stores/inventoryStore';
+import {useInventoryStore} from '../../stores/inventoryStore';
 
 interface Maintenance {
   id: number;

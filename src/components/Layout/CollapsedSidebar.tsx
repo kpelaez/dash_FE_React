@@ -45,17 +45,17 @@ const CollapsibleSidebar = () => {
       requiredRoles: ['admin', 'manager']
     },
     {
-      title: 'Inventario Tecnológico',
+      title: 'Activos Tecnologicos',
       icon: <Laptop size={isCollapsed ? 20 : 18} />,
       requiredRoles: ['admin', 'manager', 'inventory_manager'],
       children: [
         {
           title: 'Dashboard',
           path: '/inventory/dashboard',
-          icon: <div className="w-2 h-2 rounded-full bg-blue-400 mr-2"></div>
+          icon: <div className="w-2 h-2 rounded-full bg-blue-600 mr-2"></div>
         },
         {
-          title: 'Activos Tecnológicos',
+          title: 'Gestión de Activos',
           path: '/inventory/tech-assets',
           icon: <Laptop size={16} />
         },
@@ -65,14 +65,14 @@ const CollapsibleSidebar = () => {
           icon: <Users size={16} />
         },
         {
-          title: 'Mantenimiento',
+          title: 'Mantenimientos',
           path: '/inventory/maintenance',
           icon: <Settings size={16} />
         },
         {
           title: 'Mis Activos',
           path: '/inventory/my-assets',
-          icon: <div className="w-2 h-2 rounded-full bg-green-400 mr-2"></div>
+          icon: <div className="w-2 h-2 rounded-full bg-green-600 mr-2"></div>
         },
         {
           title: 'Reportes',

@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Layout from '../../components/Layout/Layout';
+import CurrencyInput from '../../components/UI/CurrencyInput';
 import {
   Save,
   X,
@@ -10,13 +11,13 @@ import {
   AlertCircle,
   Laptop,
 } from 'lucide-react';
-import useInventoryStore from '../../stores/inventoryStore';
+import {useInventoryStore} from '../../stores/inventoryStore';
 import { TechAssetCreate, TechAssetUpdate, AssetCategory, AssetStatus } from '../../types/inventory';
 
 
 const initialFormData: TechAssetCreate = {
   name: '',
-  category: AssetCategory.DEFAULT,
+  category: AssetCategory.NOTEBOOK,
   brand: '',
   model: '',
   serial_number: '',
@@ -25,23 +26,30 @@ const initialFormData: TechAssetCreate = {
   purchase_date: '',
   purchase_price: 0,
   location: '',
-  description: ''
+  description: '',
+  //
+  supplier: '',
+  invoice: '',
+  warranty_expiry:'',
+  specifications: '',
+  notes: '',
 };
 
 const categories = [
   { value: 'Notebook', label: 'Notebook' },
-  { value: 'Desktop', label: 'Desktop' },
+  { value: 'PC_Desktop', label: 'PC Desktop' },
   { value: 'Monitor', label: 'Monitor' },
   { value: 'Impresora', label: 'Impresora' },
   { value: 'Celular', label: 'Celular' },
   { value: 'Server', label: 'Servidor' },
-  { value: 'Accessorios', label: 'Accesorio' },
+  { value: 'Accessorio', label: 'Accesorio' },
   { value: 'Tablet', label: 'Tablet'},
   { value: 'Mouse', label: 'Mouse'},
   { value: 'Teclado', label: 'Teclado'},
   { value: 'Kit_teclado_mouse', label: 'Kit de teclado y mouse'},
   { value: 'Software', label: 'Software'},
   { value: 'Cable', label: 'Cable'},
+  { value: 'Router', label: 'Router'},
   { value: 'Otro', label: 'Otro'},
 ];
 
@@ -77,7 +85,7 @@ const AssetFormPage: React.FC = () => {
       if (asset) {
         setFormData({
           name: asset.name || '',
-          category: asset.category || AssetCategory.DEFAULT,
+          category: asset.category || AssetCategory.OTRO,
           brand: asset.brand || '',
           model: asset.model || '',
           serial_number: asset.serial_number || '',
@@ -86,8 +94,13 @@ const AssetFormPage: React.FC = () => {
           purchase_date: asset.purchase_date || '',
           purchase_price: asset.purchase_price || 0,
           location: asset.location || '',
-          description: asset.description || ''
-        });
+          description: asset.description || '',
+          supplier: asset.supplier || '',
+          invoice: asset.invoice || '',
+          warranty_expiry: asset.warranty_expiry || '',
+          specifications: asset.specifications || '',
+          notes: asset.notes || '',
+          });
       }
     }
   }, [isEditing, id, techAssets]);
@@ -137,12 +150,30 @@ const AssetFormPage: React.FC = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: name === 'purchase_price' ? parseFloat(value) || 0 : value
-    }));
+
+    if(name != 'purchase_price') {
+      setFormData(prev => ({
+        ...prev,
+        [name]: name === 'purchase_price' ? parseFloat(value) || 0 : value
+      }));
+    }
 
     // Limpiar error del campo si existe
+    if (errors[name as keyof TechAssetCreate]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: undefined
+      }));
+    }
+  };
+
+  const handlePriceChange = (name: string, value: number) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+
+    // limpiar error del campo si existe
     if (errors[name as keyof TechAssetCreate]) {
       setErrors(prev => ({
         ...prev,
@@ -189,10 +220,17 @@ const AssetFormPage: React.FC = () => {
         asset_tag: formData.asset_tag?.trim(),
         status: formData.status,
         purchase_date: new Date(formData.purchase_date).toISOString(),
-        purchase_price: Number(formData.purchase_price),
+        purchase_price: Number(formData.purchase_price) || 0,
         location: formData.location?.trim(),
-        description: formData.description?.trim() || undefined,
+        description: formData.description || '',
+        supplier: formData.supplier || '',
+        invoice: formData.invoice || '',
+        warranty_expiry: formData.warranty_expiry && formData.warranty_expiry.trim() ? new Date(formData.warranty_expiry).toISOString() : undefined,
+        specifications: formData.specifications || '',
+        notes:  formData.notes || '',
       };
+
+      console.log('Datos limpios a enviar:', dataToSubmit) // Para debug
 
       if (isEditing && id) {
         // Para actualizar, crear objeto con solo los campos que pueden cambiar
@@ -207,12 +245,16 @@ const AssetFormPage: React.FC = () => {
           purchase_date: dataToSubmit.purchase_date,
           purchase_price: dataToSubmit.purchase_price,
           location: dataToSubmit.location,
-          description: dataToSubmit.description
+          description: dataToSubmit.description,
+          supplier: dataToSubmit.supplier,
+          invoice: dataToSubmit.invoice,
+          warranty_expiry:formData.warranty_expiry && formData.warranty_expiry.trim() ? new Date(formData.warranty_expiry).toISOString() : undefined,
+          specifications: dataToSubmit.specifications,
+          notes: dataToSubmit.notes,
         };
         
         await updateTechAsset(parseInt(id), updateData);
       } else {
-        console.log(dataToSubmit);//debug
         await createTechAsset(dataToSubmit);
       }
 
@@ -225,7 +267,7 @@ const AssetFormPage: React.FC = () => {
   };
 
   const handleCancel = () => {
-    navigate('/inventory/assets');
+    navigate('/inventory/tech-assets');
   };
 
   return (
@@ -273,7 +315,7 @@ const AssetFormPage: React.FC = () => {
                     className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 ${
                       errors.name ? 'border-red-300 ring-red-500' : ''
                     }`}
-                    placeholder="Ej: MacBook Pro 13 inch"
+                    placeholder=" Ej: MacBook Pro 13 inch"
                   />
                   {errors.name && (
                     <p className="mt-1 text-sm text-red-600 flex items-center">
@@ -326,7 +368,7 @@ const AssetFormPage: React.FC = () => {
                     className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 ${
                       errors.brand ? 'border-red-300 ring-red-500' : ''
                     }`}
-                    placeholder="Ej: Apple, Dell, HP"
+                    placeholder=" Ej: Apple, Dell, HP"
                   />
                   {errors.brand && (
                     <p className="mt-1 text-sm text-red-600 flex items-center">
@@ -350,7 +392,7 @@ const AssetFormPage: React.FC = () => {
                     className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 ${
                       errors.model ? 'border-red-300 ring-red-500' : ''
                     }`}
-                    placeholder="Ej: MacBook Pro M2"
+                    placeholder=" Ej: MacBook Pro M2"
                   />
                   {errors.model && (
                     <p className="mt-1 text-sm text-red-600 flex items-center">
@@ -374,7 +416,7 @@ const AssetFormPage: React.FC = () => {
                     className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 ${
                       errors.serial_number ? 'border-red-300 ring-red-500' : ''
                     }`}
-                    placeholder="Número de serie del dispositivo"
+                    placeholder=" Número de serie del dispositivo"
                   />
                   {errors.serial_number && (
                     <p className="mt-1 text-sm text-red-600 flex items-center">
@@ -399,7 +441,7 @@ const AssetFormPage: React.FC = () => {
                       className={`flex-1 rounded-l-md border-gray-300 focus:ring-emerald-500 focus:border-emerald-500 ${
                         errors.asset_tag ? 'border-red-300 ring-red-500' : ''
                       }`}
-                      placeholder="Ej: LAP-001234"
+                      placeholder=" Ej: LAP-001234"
                     />
                     <button
                       type="button"
@@ -454,37 +496,82 @@ const AssetFormPage: React.FC = () => {
 
                 {/* Precio de Compra */}
                 <div>
-                  <label htmlFor="purchase_price" className="block text-sm font-medium text-gray-700">
-                    Precio de Compra
-                  </label>
-                  <div className="mt-1 relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <DollarSign className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <input
-                      type="number"
-                      id="purchase_price"
-                      name="purchase_price"
-                      value={formData.purchase_price}
-                      onChange={handleInputChange}
-                      min="0"
-                      step="0.01"
-                      className={`block w-full pl-10 rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 ${
-                        errors.purchase_price ? 'border-red-300 ring-red-500' : ''
-                      }`}
-                      placeholder="0.00"
-                    />
-                  </div>
-                  {errors.purchase_price && (
-                    <p className="mt-1 text-sm text-red-600 flex items-center">
-                      <AlertCircle className="h-4 w-4 mr-1" />
-                      {errors.purchase_price}
-                    </p>
-                  )}
+                  <CurrencyInput
+                    id="purchase_price"
+                    name="purchase_price"
+                    value={formData.purchase_price || 0}
+                    onChange={handlePriceChange}
+                    error={errors.purchase_price}
+                    label="Precio de Compra"
+                    placeholder="0,00"
+                    required
+                  />
                 </div>
 
+                {/* Proveedor */}
+                <div>
+                  <label htmlFor="supplier" className="block text-sm font-medium text-gray-700">
+                    Proveedor
+                  </label>
+                  <div className='mt-1 relative'>
+                    <input
+                      type="text"
+                      id="supplier"
+                      name="supplier"
+                      value={formData.supplier}
+                      onChange={handleInputChange}
+                      className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500`}
+                      placeholder=" Proveedor del activo"
+                    />
+                  </div>
+                </div>
 
-                {/* Estado */}
+                {/* Numero de Factura */}
+                <div>
+                  <label htmlFor="supplier" className="block text-sm font-medium text-gray-700">
+                    Número de Factura
+                  </label>
+                  <div className='mt-1 relative'>
+                    <input
+                      type="text"
+                      id="invoice"
+                      name="invoice"
+                      value={formData.invoice}
+                      onChange={handleInputChange}
+                      className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500`}
+                      placeholder=" A-****-********"
+                    />
+                  </div>
+                </div>
+
+                {/* Fecha de Garantia */}
+                <div>
+                  <label htmlFor="purchase_date" className="block text-sm font-medium text-gray-700">
+                    Fecha de Expiracion Garantia
+                  </label>
+                  <div className="mt-1 relative">
+                    <input
+                      type="date"
+                      id="warranty_expiry"
+                      name="warranty_expiry"
+                      value={formData.warranty_expiry}
+                      onChange={handleInputChange}
+                      className={`block w-full rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500`}
+                    />
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          {/* Ubicación y Descripción */}
+          <div className="bg-white shadow rounded-lg">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-medium text-gray-900">Ubicación y Detalles</h3>
+            </div>
+            <div className="px-6 py-4 space-y-6">
+              {/* Estado */}
                 <div>
                   <label htmlFor="status" className="block text-sm font-medium text-gray-700">
                     Estado
@@ -503,20 +590,11 @@ const AssetFormPage: React.FC = () => {
                     ))}
                   </select>
                 </div>
-              </div>
-            </div>
-          </div>
 
-          {/* Ubicación y Descripción */}
-          <div className="bg-white shadow rounded-lg">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Ubicación y Detalles</h3>
-            </div>
-            <div className="px-6 py-4 space-y-6">
               {/* Ubicación */}
               <div>
                 <label htmlFor="location" className="block text-sm font-medium text-gray-700">
-                  Ubicación
+                  Ubicación Física del Activo
                 </label>
                 <div className="mt-1 relative">
                   <input
@@ -539,10 +617,10 @@ const AssetFormPage: React.FC = () => {
                 )}
               </div>
 
-              {/* Descripción */}
+              {/* Notas */}
               <div>
                 <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                  Descripción
+                  Descripción Extendida
                 </label>
                 <textarea
                   id="description"
