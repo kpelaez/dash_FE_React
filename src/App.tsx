@@ -21,6 +21,10 @@ import InventoryDashboardPage from './pages/Inventory/InventoryDashboardPage';
 // ProtectedRoutes
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import RoleProtectedRoute from './components/Auth/RoleProtectedRoute';
+import TechAssetsPage from './pages/Inventory/TechAssetsPage';
+import AssignmentsPage from './pages/Inventory/AssignmentsPage';
+import MaintenancePage from './pages/Inventory/MaintenancePage';
+import AssetFormPage from './pages/Inventory/AssetFormPage';
 
 
 function App() {
@@ -73,34 +77,44 @@ function App() {
           />
 
           {/* Gestión de activos tecnológicos - requiere permisos de gestión */}
-          {/* <Route 
+          <Route 
             path="/inventory/tech-assets" 
             element={
               <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager']}>
                 <TechAssetsPage />
               </RoleProtectedRoute>
             } 
-          /> */}
+          />
+
+          {/* Gestion de activos tecnologicos - requiere permisos de gestion */}
+          <Route
+            path="/inventory/tech-assets/new"
+            element={
+              <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager']}>
+                <AssetFormPage />
+              </RoleProtectedRoute>
+            }
+          />
 
           {/* Gestión de asignaciones - requiere permisos de gestión */}
-          {/* <Route 
+          <Route 
             path="/inventory/assignments" 
             element={
               <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager']}>
                 <AssignmentsPage />
               </RoleProtectedRoute>
             } 
-          /> */}
+          />
 
           {/* Gestión de mantenimiento - accesible para técnicos también */}
-          {/* <Route 
+          <Route 
             path="/inventory/maintenance" 
             element={
               <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager', 'technician']}>
                 <MaintenancePage />
               </RoleProtectedRoute>
             } 
-          /> */}
+          />
 
           {/* Mis activos - accesible para todos los usuarios autenticados */}
           {/* <Route 

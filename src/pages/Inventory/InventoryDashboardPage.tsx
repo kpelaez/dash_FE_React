@@ -77,30 +77,37 @@ interface QuickActionProps {
   color: string;
 }
 
-const QuickAction: React.FC<QuickActionProps> = ({ title, description, icon, link, color }) => (
-  <Link
-    to={link}
-    className={`block p-4 rounded-lg border border-gray-200 hover:border-${color}-300 hover:shadow-md transition-all group`}
-  >
-    <div className="flex items-center space-x-3">
-      <div className={`p-2 rounded-lg bg-${color}-50 text-${color}-600 group-hover:bg-${color}-100`}>
-        {icon}
+const QuickAction: React.FC<QuickActionProps> = ({ title, description, icon, link, color }) => {
+  const colorVariants: { [key: string]: string } = {
+    blue: 'hover:border-blue-300 bg-blue-50 text-blue-600 group-hover:bg-blue-100',
+    green: 'hover:border-green-300 bg-green-50 text-green-600 group-hover:bg-green-100',
+    yellow: 'hover:border-yellow-300 bg-yellow-50 text-yellow-600 group-hover:bg-yellow-100',
+    purple: 'hover:border-purple-300 bg-purple-50 text-purple-600 group-hover:bg-purple-100'
+  };
+
+  return (
+    <Link
+      to={link}
+      className={`block p-4 rounded-lg border border-gray-200 ${colorVariants[color]?.split(' ')[0]} hover:shadow-md transition-all group`}
+    >
+      <div className="flex items-center space-x-3">
+        <div className={`p-2 rounded-lg ${colorVariants[color]?.substring(colorVariants[color].indexOf('bg-'))}`}>
+          {icon}
+        </div>
+        <div>
+          <h3 className="font-medium text-gray-900">{title}</h3>
+          <p className="text-sm text-gray-500">{description}</p>
+        </div>
       </div>
-      <div>
-        <h3 className="font-medium text-gray-900">{title}</h3>
-        <p className="text-sm text-gray-500">{description}</p>
-      </div>
-    </div>
-  </Link>
-);
+    </Link>
+  );
+};
 
 const InventoryDashboardPage: React.FC = () => {
-  const { 
-    dashboardMetrics, 
-    fetchDashboardMetrics, 
-    isLoading, 
-    error 
-  } = useInventoryStore();
+  const dashboardMetrics = useInventoryStore(state => state.dashboardMetrics); 
+  const fetchDashboardMetrics = useInventoryStore(state => state.fetchDashboardMetrics); 
+  const isLoading = useInventoryStore(state => state.isLoading); 
+  const error = useInventoryStore(state => state.error);
 
   useEffect(() => {
     fetchDashboardMetrics();
@@ -111,21 +118,21 @@ const InventoryDashboardPage: React.FC = () => {
       title: 'Nuevo Activo',
       description: 'Registrar un nuevo activo tecnológico',
       icon: <Package size={20} />,
-      link: '/inventory/tech-assets?action=new',
+      link: '/inventory/tech-assets/new',
       color: 'blue'
     },
     {
       title: 'Asignar Activo',
       description: 'Asignar activo a un usuario',
       icon: <Users size={20} />,
-      link: '/inventory/assignments?action=new',
+      link: '/inventory/assignments/new',
       color: 'green'
     },
     {
       title: 'Programar Mantenimiento',
       description: 'Crear nuevo mantenimiento',
       icon: <Settings size={20} />,
-      link: '/inventory/maintenance?action=new',
+      link: '/inventory/maintenance/new',
       color: 'yellow'
     },
     {
@@ -205,7 +212,7 @@ const InventoryDashboardPage: React.FC = () => {
             subtitle="Activos registrados"
             icon={<Package size={24} />}
             color="blue"
-            link="/inventory/tech-assets"
+            link="/inventory/assets"
           />
           <MetricCard
             title="Activos Disponibles"
@@ -213,7 +220,7 @@ const InventoryDashboardPage: React.FC = () => {
             subtitle="Listos para asignar"
             icon={<Users size={24} />}
             color="green"
-            link="/inventory/tech-assets?status=available"
+            link="/inventory/assets?status=available"
           />
           <MetricCard
             title="Activos Asignados"
@@ -229,7 +236,7 @@ const InventoryDashboardPage: React.FC = () => {
             subtitle="Requieren atención"
             icon={<Settings size={24} />}
             color="yellow"
-            link="/inventory/tech-assets?status=in_maintenance"
+            link="/inventory/assets?status=in_maintenance"
           />
         </div>
 

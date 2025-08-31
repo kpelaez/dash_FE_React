@@ -4,7 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { 
   ChevronLeft, ChevronRight, Home, BarChart2, Users, 
   Settings, Info, Menu, X, ChevronDown, PlusCircle, BookUser,
-  Package, Laptop, ClipboardList
+  Laptop, ClipboardList
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 
@@ -46,7 +46,7 @@ const CollapsibleSidebar = () => {
     },
     {
       title: 'Inventario Tecnológico',
-      icon: <Package size={isCollapsed ? 20 : 18} />,
+      icon: <Laptop size={isCollapsed ? 20 : 18} />,
       requiredRoles: ['admin', 'manager', 'inventory_manager'],
       children: [
         {

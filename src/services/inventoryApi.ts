@@ -18,7 +18,7 @@ import {
 } from '../types/inventory';
 
 // Configuracion base de la API
-const API_BASE_URL = import.meta.env.BASE_URL || 'http://localhost:8000'
+const API_BASE_URL =  'http://127.0.0.1:8000' //|| import.meta.env.BASE_URL
 
 class InventoryApiService {
     private getAuthHeaders(): HeadersInit {
@@ -67,9 +67,7 @@ class InventoryApiService {
                 }
             });
         }
-
-        const query = params.toString();
-        return this.request<TechAsset[]>(`/inventory/tech-assets${query ? `?${query}` : ''}`);
+        return this.request<TechAsset[]>(`/inventory/tech-assets/`);
     }
 
     async  getTechAsset(id: number): Promise<TechAsset> {
@@ -149,9 +147,7 @@ class InventoryApiService {
             }
         });
         }
-
-        const query = params.toString();
-        return this.request<AssetAssignment[]>(`/inventory/assignments${query ? `?${query}` : ''}`);
+        return this.request<AssetAssignment[]>(`/inventory/assignments`);
     }
 
     async getAssignment(id: number): Promise<AssetAssignment> {
@@ -228,8 +224,7 @@ class InventoryApiService {
         });
         }
 
-        const query = params.toString();
-        return this.request<AssetMaintenance[]>(`/inventory/maintenance${query ? `?${query}` : ''}`);
+        return this.request<AssetMaintenance[]>(`/inventory/maintenance`);
     }
 
     async getMaintenance(id: number): Promise<AssetMaintenance> {

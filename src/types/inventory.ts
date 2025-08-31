@@ -34,7 +34,7 @@ export interface TechAssetCreate {
   category: AssetCategory;
   status?: AssetStatus;
   purchase_price?: number;
-  purchase_date?: string;
+  purchase_date: string;
   purchase_order?: string;
   supplier?: string;
   warranty_expiry?: string;
@@ -67,19 +67,24 @@ export interface TechAssetUpdate {
 }
 
 export enum AssetCategory {
-  LAPTOP = "laptop",
-  DESKTOP = "desktop",
-  MONITOR = "monitor",
-  KEYBOARD = "keyboard",
-  MOUSE = "mouse",
-  PRINTER = "printer",
-  TABLET = "tablet",
-  SMARTPHONE = "smartphone",
-  SERVER = "server",
-  NETWORK_EQUIPMENT = "network_equipment",
-  ACCESSORIES = "accessories",
-  SOFTWARE = "software",
-  OTHER = "other"
+  DEFAULT = "",
+  NOTEBOOK = "Notebook",
+  DESKTOP = "Desktop",
+  MONITOR = "Monitor",
+  TECLADO = "Teclado",
+  MOUSE = "Mouse",
+  KIT_TECLADO_MOUSE = "Kit_teclado_mouse",
+  IMPRESORA = "Impresora",
+  TABLET = "Tablet",
+  CELULAR = "Celular",
+  SERVER = "Server",
+  ROUTER = "Router",
+  ACCESSORIES = "Accessorios",
+  SOFTWARE = "Software",
+  CABLE = "Cable",
+  OTRO = "Otro",
+
+  _ERROR_MESSAGE = "La categoría es requerida"
 }
 
 export enum AssetStatus {
@@ -122,6 +127,7 @@ export interface AssetAssignmentCreate {
   location_of_use?: string;
   condition_at_assignment?: string;
   assignment_notes?: string;
+  assigned_date: string;
 }
 
 export enum AssignmentStatus {
