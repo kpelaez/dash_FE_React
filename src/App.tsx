@@ -11,9 +11,13 @@ import UnauthorizedPage from './pages/UnauthorizedPage';
 
 // Páginas del módulo de inventario
 import InventoryDashboardPage from './pages/Inventory/InventoryDashboardPage';
-// import TechAssetsPage from './pages/Inventory/TechAssetsPage';
-// import AssignmentsPage from './pages/Inventory/AssignmentsPage';
-// import MaintenancePage from './pages/Inventory/MaintenancePage';
+import TechAssetsPage from './pages/Inventory/TechAssetsPage';
+import AssignmentsPage from './pages/Inventory/AssignmentsPage';
+import MaintenancePage from './pages/Inventory/MaintenancePage';
+import MaintenanceFormPage from './pages/Inventory/MaintenanceFormPage';
+import AssetFormPage from './pages/Inventory/AssetFormPage';
+import AssignmentFormPage from './pages/Inventory/AssignmentFormPage';
+
 // import MyAssetsPage from './pages/Inventory/MyAssetsPage';
 // import InventoryReportsPage from './pages/Inventory/InventoryReportsPage';
 
@@ -21,10 +25,7 @@ import InventoryDashboardPage from './pages/Inventory/InventoryDashboardPage';
 // ProtectedRoutes
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import RoleProtectedRoute from './components/Auth/RoleProtectedRoute';
-import TechAssetsPage from './pages/Inventory/TechAssetsPage';
-import AssignmentsPage from './pages/Inventory/AssignmentsPage';
-import MaintenancePage from './pages/Inventory/MaintenancePage';
-import AssetFormPage from './pages/Inventory/AssetFormPage';
+import AssetDetailPage from './pages/Inventory/AssetDetailPage';
 
 
 function App() {
@@ -96,6 +97,24 @@ function App() {
             }
           />
 
+          <Route
+            path="/inventory/tech-assets/:id"
+            element={
+              <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager']}>
+                <AssetDetailPage />
+              </RoleProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/inventory/tech-assets/:id/edit"
+            element={
+              <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager']}>
+                <AssetFormPage />
+              </RoleProtectedRoute>
+            }
+          />
+
           {/* Gestión de asignaciones - requiere permisos de gestión */}
           <Route 
             path="/inventory/assignments" 
@@ -106,12 +125,30 @@ function App() {
             } 
           />
 
+          <Route
+            path="/inventory/assignments/new"
+            element={
+              <RoleProtectedRoute requiredRoles={['admin']}>
+                <AssignmentFormPage />
+              </RoleProtectedRoute>
+            }   
+          />
+
           {/* Gestión de mantenimiento - accesible para técnicos también */}
           <Route 
             path="/inventory/maintenance" 
             element={
               <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager', 'technician']}>
                 <MaintenancePage />
+              </RoleProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/inventory/maintenance/new" 
+            element={
+              <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager', 'technician']}>
+                <MaintenanceFormPage />
               </RoleProtectedRoute>
             } 
           />

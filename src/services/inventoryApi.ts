@@ -57,6 +57,17 @@ class InventoryApiService {
                         } else {
                             errorMessage = String(errorData.detail);
                         }
+
+                    } else if (response.status === 500) {
+                        errorMessage = 'Error interno del servidor. Por favor contacta al administrador.';
+                    } else if (response.status === 403) {
+                        errorMessage = 'No tienes permisos suficientes para realizar esta acción.';
+                    } else if (response.status === 401) {
+                        errorMessage = 'Tu sesión ha expirado. Por favor inicia sesión nuevamente.';
+                        // Opcional: redirigir al login
+                        localStorage.removeItem('auth_token');
+                        window.location.href = '/login';
+                        return {} as T;
                     } else {
                         errorMessage = errorData.detail || errorData.message || errorMessage;
                     }
@@ -80,17 +91,17 @@ class InventoryApiService {
         }
     }
 
+    // ============ TECH ASSETS ============
     async getTechAssets(filters?: AssetFilters): Promise<TechAsset[]> {
         const params = new URLSearchParams();
 
-        if(filters){
-            Object.entries(filters).forEach(([key, value]) => {
-                if (value != undefined && value != null && value != '') {
-                    params.append(key, value.toString());
-                }
-            });
-        }
-        return this.request<TechAsset[]>(`/inventory/tech-assets/`);
+        if (filters?.category) params.append('category', filters.category);
+        if (filters?.status) params.append('status', filters.status);
+        if (filters?.search) params.append('search', filters.search);
+        if (filters?.location) params.append('location', filters.location);
+
+        const queryString = params.toString();
+        return this.request<TechAsset[]>(`/inventory/tech-assets${queryString ? `?${queryString}` : ''}`);
     }
 
     async  getTechAsset(id: number): Promise<TechAsset> {
@@ -117,6 +128,17 @@ class InventoryApiService {
         });
     }
 
+    async generateAssetTag(category: AssetCategory): Promise<{asset_tag: string; category: string;}> {
+
+        const body: any = { category };
+        
+        return this.request('/inventory/tech-assets/generate-tag', {
+        method: 'POST',
+        body: JSON.stringify(body),
+        });
+    }
+
+    // ============ UTILITIES FOR TECH ASSETS ============
     async updateAssetStatus(id: number, status: AssetStatus): Promise<TechAsset> {
         return this.request<TechAsset>(`/inventory/tech-assets/${id}/status`, {
         method: 'PATCH',
@@ -140,19 +162,6 @@ class InventoryApiService {
         return this.request(`/inventory/tech-assets/warranty/expiring?days_ahead=${daysAhead}`);
     }
 
-    async generateAssetTag(category: AssetCategory, location?: string): Promise<{
-        asset_tag: string;
-        category: string;
-        location?: string;
-    }> {
-        const body: any = { category };
-        if (location) body.location = location;
-        
-        return this.request('/inventory/tech-assets/generate-tag', {
-        method: 'POST',
-        body: JSON.stringify(body),
-        });
-    }
 
     async getAssetStatistics(): Promise<AssetStatistics> {
         return this.request<AssetStatistics>('/inventory/tech-assets/statistics/overview');

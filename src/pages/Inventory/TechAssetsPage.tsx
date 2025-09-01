@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import {useInventoryStore} from '../../stores/inventoryStore';
 import Layout from '../../components/Layout/Layout';
 import { TechAsset } from '../../types/inventory';
-import { Package, Plus, Search, Filter, Download, Upload, Edit, Trash2, Eye, MapPin, DollarSign, AlertCircle, Locate } from 'lucide-react';
+import { Package, Plus, Search, Filter, Download, Upload, Edit, Trash2, Eye, MapPin, DollarSign, AlertCircle, Locate, User } from 'lucide-react';
 import { useSearchParams, Link } from 'react-router-dom';
 
 
@@ -28,14 +28,14 @@ const categoryColors = {
     'Monitor': 'bg-green-100 text-green-800',
     'Impresora': 'bg-orange-100 text-orange-800',
     'Tablet': 'bg-cyan-100 text-cyan-800',
-    'Mouse':'',
-    'Keyboard':'',
+    'Mouse':'bg-indigo-100 text-indigo-800',
+    'Keyboard':'bg-yellow-100 text-yellow-800',
     'Celular': 'bg-pink-100 text-pink-800',
     'Server': 'bg-red-100 text-red-800',
     'Accesorios': 'bg-gray-100 text-gray-800',
-    'Software': '',
-    'Cable':'',
-    'Otro': '',
+    'Software': 'bg-teal-100 text-teal-800',
+    'Cable':'bg-slate-100 text-slate-800',
+    'Otro': 'bg-neutral-100 text-neutral-800',
 };
 
 
@@ -85,12 +85,14 @@ const TechAssetsPage = () => {
     return matchesSearch && matchesStatus && matchesCategory;
   });
 
-  const handleDeleteAsset = async (assetId: number) => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar este activo?')) {
+  const handleDeleteAsset = async (assetId: number, assetName: string) => {
+    if (window.confirm(`¿Estás seguro de que quieres eliminar "${assetName}`)) {
       try {
         await deleteTechAsset(assetId);
+        setSelectedAssets( prev => prev.filter(id => id != assetId))
       } catch (error) {
         console.error('Error al eliminar activo:', error);
+        alert(`Error al eliminar el activo: ${error instanceof Error ? error.message : 'Error desconocido'}`);
       }
     }
   };
@@ -107,9 +109,13 @@ const TechAssetsPage = () => {
         break;
       case 'assign':
         console.log('Asignar activos seleccionados:', selectedAssets);
+        const assetIds = selectedAssets.join(',');
+        window.location.href = `/inventory/assignments/new?asset_ids=${assetIds}`;
         break;
       case 'maintenance':
         console.log('Programar mantenimiento para activos:', selectedAssets);
+        const maintenanceIds = selectedAssets.join(',');
+        window.location.href = `/inventory/maintenance/new?asset_ids=${maintenanceIds}`;
         break;
       default:
         break;
@@ -162,8 +168,6 @@ const TechAssetsPage = () => {
     );
   }
 
-  console.log("ACtivos filtrados: ", filteredAssets)
-  console.log("Todos los activos: ", techAssets)
   return (
     <Layout>
       <div className="space-y-6">
@@ -448,21 +452,30 @@ const TechAssetsPage = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center space-x-2">
                           <Link
-                            to={`/inventory/assets/${asset.id}`}
+                            to={`/inventory/tech-assets/${asset.id}`}
                             className="text-emerald-600 hover:text-emerald-900"
                             title="Ver detalles"
                           >
                             <Eye className="h-4 w-4" />
                           </Link>
+                          {asset.status === 'available' && (
+                            <Link
+                              to={`/inventory/assignments/new?asset_id=${asset.id}`}
+                              className="inline-flex items-center p-1 border border-transparent rounded-full text-gray-400 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                              title="Asignar activo"
+                            >
+                              <User className="h-4 w-4" />
+                            </Link>
+                          )}
                           <Link
-                            to={`/inventory/assets/${asset.id}/edit`}
+                            to={`/inventory/tech-assets/${asset.id}/edit`}
                             className="text-blue-600 hover:text-blue-900"
                             title="Editar"
                           >
                             <Edit className="h-4 w-4" />
                           </Link>
                           <button
-                            onClick={() => handleDeleteAsset(asset.id)}
+                            onClick={() => handleDeleteAsset(asset.id, asset.name)}
                             className="text-red-600 hover:text-red-900"
                             title="Eliminar"
                           >

@@ -109,87 +109,87 @@ export const useInventoryStore = create<InventoryState>()(
             createTechAsset: async (asset: TechAssetCreate) => {
                 set({ isLoading: true, error: null });
                 try {
-                const newAsset = await inventoryApi.createTechAsset(asset);
-                set(state => ({
-                    techAssets: [...state.techAssets, newAsset],
-                    isLoading: false
-                }));
-                
-                get().addNotification({
-                    type: 'success',
-                    title: 'Activo creado',
-                    message: `El activo "${newAsset.name}" ha sido creado exitosamente.`
-                });
-                
-                return newAsset;
+                    const newAsset = await inventoryApi.createTechAsset(asset);
+                    set(state => ({
+                        techAssets: [...state.techAssets, newAsset],
+                        isLoading: false
+                    }));
+                    
+                    get().addNotification({
+                        type: 'success',
+                        title: 'Activo creado',
+                        message: `El activo "${newAsset.name}" ha sido creado exitosamente.`
+                    });
+                    
+                    return newAsset;
                 } catch (error) {
-                const errorMessage = inventoryApi.handleApiError(error);
-                set({ error: errorMessage, isLoading: false });
-                
-                get().addNotification({
-                    type: 'error',
-                    title: 'Error al crear activo',
-                    message: errorMessage
-                });
-                
-                throw error;
+                    const errorMessage = inventoryApi.handleApiError(error);
+                    set({ error: errorMessage, isLoading: false });
+                    
+                    get().addNotification({
+                        type: 'error',
+                        title: 'Error al crear activo',
+                        message: errorMessage
+                    });
+                    
+                    throw error;
                 }
             },
 
             updateTechAsset: async (id: number, asset: TechAssetUpdate) => {
                 set({ isLoading: true, error: null });
                 try {
-                const updatedAsset = await inventoryApi.updateTechAsset(id, asset);
-                set(state => ({
-                    techAssets: state.techAssets.map(a => a.id === id ? updatedAsset : a),
-                    isLoading: false
-                }));
-                
-                get().addNotification({
-                    type: 'success',
-                    title: 'Activo actualizado',
-                    message: `El activo "${updatedAsset.name}" ha sido actualizado exitosamente.`
-                });
-                
-                return updatedAsset;
+                    const updatedAsset = await inventoryApi.updateTechAsset(id, asset);
+                    set(state => ({
+                        techAssets: state.techAssets.map(a => a.id === id ? updatedAsset : a),
+                        isLoading: false
+                    }));
+                    
+                    get().addNotification({
+                        type: 'success',
+                        title: 'Activo actualizado',
+                        message: `El activo "${updatedAsset.name}" ha sido actualizado exitosamente.`
+                    });
+                    
+                    return updatedAsset;
                 } catch (error) {
-                const errorMessage = inventoryApi.handleApiError(error);
-                set({ error: errorMessage, isLoading: false });
-                
-                get().addNotification({
-                    type: 'error',
-                    title: 'Error al actualizar activo',
-                    message: errorMessage
-                });
-                
-                throw error;
+                    const errorMessage = inventoryApi.handleApiError(error);
+                    set({ error: errorMessage, isLoading: false });
+                    
+                    get().addNotification({
+                        type: 'error',
+                        title: 'Error al actualizar activo',
+                        message: errorMessage
+                    });
+                    
+                    throw error;
                 }
             },
             deleteTechAsset: async (id: number) => {
                 set({ isLoading: true, error: null });
                 try {
-                await inventoryApi.deleteTechAsset(id);
-                set(state => ({
-                    techAssets: state.techAssets.filter(a => a.id !== id),
-                    isLoading: false
-                }));
-                
-                get().addNotification({
-                    type: 'success',
-                    title: 'Activo eliminado',
-                    message: 'El activo ha sido eliminado exitosamente.'
-                });
+                    await inventoryApi.deleteTechAsset(id);
+                    set(state => ({
+                        techAssets: state.techAssets.filter(a => a.id !== id),
+                        isLoading: false
+                    }));
+                    
+                    get().addNotification({
+                        type: 'success',
+                        title: 'Activo eliminado',
+                        message: 'El activo ha sido eliminado exitosamente.'
+                    });
                 } catch (error) {
-                const errorMessage = inventoryApi.handleApiError(error);
-                set({ error: errorMessage, isLoading: false });
-                
-                get().addNotification({
-                    type: 'error',
-                    title: 'Error al eliminar activo',
-                    message: errorMessage
-                });
-                
-                throw error;
+                    const errorMessage = inventoryApi.handleApiError(error);
+                    set({ error: errorMessage, isLoading: false });
+                    
+                    get().addNotification({
+                        type: 'error',
+                        title: 'Error al eliminar activo',
+                        message: errorMessage
+                    });
+                    
+                    throw error;
                 }
             },
             setAssetFilters: (filters: AssetFilters) => {
@@ -204,117 +204,117 @@ export const useInventoryStore = create<InventoryState>()(
             fetchAssignments: async () => {
                 set({ isLoading: true, error: null });
                 try {
-                const { assignmentFilters } = get();
-                const assignments = await inventoryApi.getAssignments(assignmentFilters);
-                set({ assignments, isLoading: false });
+                    const { assignmentFilters } = get();
+                    const assignments = await inventoryApi.getAssignments(assignmentFilters);
+                    set({ assignments, isLoading: false });
                 } catch (error) {
-                set({ 
-                    error: inventoryApi.handleApiError(error), 
-                    isLoading: false 
-                });
+                    set({ 
+                        error: inventoryApi.handleApiError(error), 
+                        isLoading: false 
+                    });
                 }
             },
 
             fetchMyAssignments: async () => {
                 set({ isLoading: true, error: null });
                 try {
-                const myAssignments = await inventoryApi.getMyAssignments();
-                set({ myAssignments, isLoading: false });
+                    const myAssignments = await inventoryApi.getMyAssignments();
+                    set({ myAssignments, isLoading: false });
                 } catch (error) {
-                set({ 
-                    error: inventoryApi.handleApiError(error), 
-                    isLoading: false 
-                });
+                    set({ 
+                        error: inventoryApi.handleApiError(error), 
+                        isLoading: false 
+                    });
                 }
             },
 
             createAssignment: async (assignment: AssetAssignmentCreate) => {
                 set({ isLoading: true, error: null });
                 try {
-                const newAssignment = await inventoryApi.createAssignment(assignment);
-                set(state => ({
-                    assignments: [...state.assignments, newAssignment],
-                    isLoading: false
-                }));
-                
-                get().addNotification({
-                    type: 'success',
-                    title: 'Asignación creada',
-                    message: 'El activo ha sido asignado exitosamente.'
-                });
-                
-                return newAssignment;
+                    const newAssignment = await inventoryApi.createAssignment(assignment);
+                    set(state => ({
+                        assignments: [...state.assignments, newAssignment],
+                        isLoading: false
+                    }));
+                    
+                    get().addNotification({
+                        type: 'success',
+                        title: 'Asignación creada',
+                        message: 'El activo ha sido asignado exitosamente.'
+                    });
+                    
+                    return newAssignment;
                 } catch (error) {
-                const errorMessage = inventoryApi.handleApiError(error);
-                set({ error: errorMessage, isLoading: false });
-                
-                get().addNotification({
-                    type: 'error',
-                    title: 'Error al crear asignación',
-                    message: errorMessage
-                });
-                
-                throw error;
+                    const errorMessage = inventoryApi.handleApiError(error);
+                    set({ error: errorMessage, isLoading: false });
+                    
+                    get().addNotification({
+                        type: 'error',
+                        title: 'Error al crear asignación',
+                        message: errorMessage
+                    });
+                    
+                    throw error;
                 }
             },
 
             returnAsset: async (assignmentId: number, returnData: any) => {
                 set({ isLoading: true, error: null });
-                try {
-                const updatedAssignment = await inventoryApi.returnAsset(assignmentId, returnData);
-                set(state => ({
-                    assignments: state.assignments.map(a => a.id === assignmentId ? updatedAssignment : a),
-                    myAssignments: state.myAssignments.map(a => a.id === assignmentId ? updatedAssignment : a),
-                    isLoading: false
-                }));
-                
-                get().addNotification({
-                    type: 'success',
-                    title: 'Activo devuelto',
-                    message: 'El activo ha sido devuelto exitosamente.'
-                });
-                
-                return updatedAssignment;
+                    try {
+                    const updatedAssignment = await inventoryApi.returnAsset(assignmentId, returnData);
+                    set(state => ({
+                        assignments: state.assignments.map(a => a.id === assignmentId ? updatedAssignment : a),
+                        myAssignments: state.myAssignments.map(a => a.id === assignmentId ? updatedAssignment : a),
+                        isLoading: false
+                    }));
+                    
+                    get().addNotification({
+                        type: 'success',
+                        title: 'Activo devuelto',
+                        message: 'El activo ha sido devuelto exitosamente.'
+                    });
+                    
+                    return updatedAssignment;
                 } catch (error) {
-                const errorMessage = inventoryApi.handleApiError(error);
-                set({ error: errorMessage, isLoading: false });
-                
-                get().addNotification({
-                    type: 'error',
-                    title: 'Error al devolver activo',
-                    message: errorMessage
-                });
-                
-                throw error;
+                    const errorMessage = inventoryApi.handleApiError(error);
+                    set({ error: errorMessage, isLoading: false });
+                    
+                    get().addNotification({
+                        type: 'error',
+                        title: 'Error al devolver activo',
+                        message: errorMessage
+                    });
+                    
+                    throw error;
                 }
             },
 
             transferAsset: async (assignmentId: number, newUserId: number, notes?: string) => {
                 set({ isLoading: true, error: null });
                 try {
-                const newAssignment = await inventoryApi.transferAsset(assignmentId, newUserId, notes);
-                
-                // Refrescar las asignaciones
-                await get().fetchAssignments();
-                
-                get().addNotification({
-                    type: 'success',
-                    title: 'Activo transferido',
-                    message: 'El activo ha sido transferido exitosamente.'
-                });
-                
-                return newAssignment;
+                    const newAssignment = await inventoryApi.transferAsset(assignmentId, newUserId, notes);
+                    
+                    // Refrescar las asignaciones
+                    await get().fetchAssignments();
+                    
+                    get().addNotification({
+                        type: 'success',
+                        title: 'Activo transferido',
+                        message: 'El activo ha sido transferido exitosamente.'
+                    });
+                    
+                    return newAssignment;
                 } catch (error) {
-                const errorMessage = inventoryApi.handleApiError(error);
-                set({ error: errorMessage, isLoading: false });
-                
-                get().addNotification({
-                    type: 'error',
-                    title: 'Error al transferir activo',
-                    message: errorMessage
-                });
-                
-                throw error;
+                    const errorMessage = inventoryApi.handleApiError(error);
+                    set({ error: errorMessage, isLoading: false });
+                    
+                    get().addNotification({
+                        type: 'error',
+                        title: 'Error al transferir activo',
+                        message: errorMessage
+                    });
+                    
+                    throw error;
                 }
             },
 
@@ -330,164 +330,164 @@ export const useInventoryStore = create<InventoryState>()(
             fetchMaintenances: async () => {
                 set({ isLoading: true, error: null });
                 try {
-                const { maintenanceFilters } = get();
-                const maintenances = await inventoryApi.getMaintenances(maintenanceFilters);
-                set({ maintenances, isLoading: false });
+                    const { maintenanceFilters } = get();
+                    const maintenances = await inventoryApi.getMaintenances(maintenanceFilters);
+                    set({ maintenances, isLoading: false });
                 } catch (error) {
-                set({ 
-                    error: inventoryApi.handleApiError(error), 
-                    isLoading: false 
-                });
+                    set({ 
+                        error: inventoryApi.handleApiError(error), 
+                        isLoading: false 
+                    });
                 }
             },
 
             createMaintenance: async (maintenance: AssetMaintenanceCreate) => {
                 set({ isLoading: true, error: null });
                 try {
-                const newMaintenance = await inventoryApi.createMaintenance(maintenance);
-                set(state => ({
-                    maintenances: [...state.maintenances, newMaintenance],
-                    isLoading: false
-                }));
-                
-                get().addNotification({
-                    type: 'success',
-                    title: 'Mantenimiento programado',
-                    message: `El mantenimiento "${newMaintenance.title}" ha sido programado exitosamente.`
-                });
-                
-                return newMaintenance;
+                    const newMaintenance = await inventoryApi.createMaintenance(maintenance);
+                    set(state => ({
+                        maintenances: [...state.maintenances, newMaintenance],
+                        isLoading: false
+                    }));
+                    
+                    get().addNotification({
+                        type: 'success',
+                        title: 'Mantenimiento programado',
+                        message: `El mantenimiento "${newMaintenance.title}" ha sido programado exitosamente.`
+                    });
+                    
+                    return newMaintenance;
                 } catch (error) {
-                const errorMessage = inventoryApi.handleApiError(error);
-                set({ error: errorMessage, isLoading: false });
-                
-                get().addNotification({
-                    type: 'error',
-                    title: 'Error al programar mantenimiento',
-                    message: errorMessage
-                });
-                
-                throw error;
+                    const errorMessage = inventoryApi.handleApiError(error);
+                    set({ error: errorMessage, isLoading: false });
+                    
+                    get().addNotification({
+                        type: 'error',
+                        title: 'Error al programar mantenimiento',
+                        message: errorMessage
+                    });
+                    
+                    throw error;
                 }
             },
 
             updateMaintenance: async (id: number, maintenance: Partial<AssetMaintenanceCreate>) => {
                 set({ isLoading: true, error: null });
                 try {
-                const updatedMaintenance = await inventoryApi.updateMaintenance(id, maintenance);
-                set(state => ({
-                    maintenances: state.maintenances.map(m => m.id === id ? updatedMaintenance : m),
-                    isLoading: false
-                }));
-                
-                get().addNotification({
-                    type: 'success',
-                    title: 'Mantenimiento actualizado',
-                    message: 'El mantenimiento ha sido actualizado exitosamente.'
-                });
-                
-                return updatedMaintenance;
+                    const updatedMaintenance = await inventoryApi.updateMaintenance(id, maintenance);
+                    set(state => ({
+                        maintenances: state.maintenances.map(m => m.id === id ? updatedMaintenance : m),
+                        isLoading: false
+                    }));
+                    
+                    get().addNotification({
+                        type: 'success',
+                        title: 'Mantenimiento actualizado',
+                        message: 'El mantenimiento ha sido actualizado exitosamente.'
+                    });
+                    
+                    return updatedMaintenance;
                 } catch (error) {
-                const errorMessage = inventoryApi.handleApiError(error);
-                set({ error: errorMessage, isLoading: false });
-                
-                get().addNotification({
-                    type: 'error',
-                    title: 'Error al actualizar mantenimiento',
-                    message: errorMessage
-                });
-                
-                throw error;
+                    const errorMessage = inventoryApi.handleApiError(error);
+                    set({ error: errorMessage, isLoading: false });
+                    
+                    get().addNotification({
+                        type: 'error',
+                        title: 'Error al actualizar mantenimiento',
+                        message: errorMessage
+                    });
+                    
+                    throw error;
                 }
             },
 
             startMaintenance: async (id: number, notes?: string) => {
                 set({ isLoading: true, error: null });
                 try {
-                const updatedMaintenance = await inventoryApi.startMaintenance(id, notes);
-                set(state => ({
-                    maintenances: state.maintenances.map(m => m.id === id ? updatedMaintenance : m),
-                    isLoading: false
-                }));
-                
-                get().addNotification({
-                    type: 'success',
-                    title: 'Mantenimiento iniciado',
-                    message: 'El mantenimiento ha sido iniciado exitosamente.'
-                });
-                
-                return updatedMaintenance;
+                    const updatedMaintenance = await inventoryApi.startMaintenance(id, notes);
+                    set(state => ({
+                        maintenances: state.maintenances.map(m => m.id === id ? updatedMaintenance : m),
+                        isLoading: false
+                    }));
+                    
+                    get().addNotification({
+                        type: 'success',
+                        title: 'Mantenimiento iniciado',
+                        message: 'El mantenimiento ha sido iniciado exitosamente.'
+                    });
+                    
+                    return updatedMaintenance;
                 } catch (error) {
-                const errorMessage = inventoryApi.handleApiError(error);
-                set({ error: errorMessage, isLoading: false });
-                
-                get().addNotification({
-                    type: 'error',
-                    title: 'Error al iniciar mantenimiento',
-                    message: errorMessage
-                });
-                
-                throw error;
+                    const errorMessage = inventoryApi.handleApiError(error);
+                    set({ error: errorMessage, isLoading: false });
+                    
+                    get().addNotification({
+                        type: 'error',
+                        title: 'Error al iniciar mantenimiento',
+                        message: errorMessage
+                    });
+                    
+                    throw error;
                 }
             },
 
             completeMaintenance: async (id: number, completionData: any) => {
                 set({ isLoading: true, error: null });
                 try {
-                const updatedMaintenance = await inventoryApi.completeMaintenance(id, completionData);
-                set(state => ({
-                    maintenances: state.maintenances.map(m => m.id === id ? updatedMaintenance : m),
-                    isLoading: false
-                }));
-                
-                get().addNotification({
-                    type: 'success',
-                    title: 'Mantenimiento completado',
-                    message: 'El mantenimiento ha sido completado exitosamente.'
-                });
-                
-                return updatedMaintenance;
+                    const updatedMaintenance = await inventoryApi.completeMaintenance(id, completionData);
+                    set(state => ({
+                        maintenances: state.maintenances.map(m => m.id === id ? updatedMaintenance : m),
+                        isLoading: false
+                    }));
+                    
+                    get().addNotification({
+                        type: 'success',
+                        title: 'Mantenimiento completado',
+                        message: 'El mantenimiento ha sido completado exitosamente.'
+                    });
+                    
+                    return updatedMaintenance;
                 } catch (error) {
-                const errorMessage = inventoryApi.handleApiError(error);
-                set({ error: errorMessage, isLoading: false });
-                
-                get().addNotification({
-                    type: 'error',
-                    title: 'Error al completar mantenimiento',
-                    message: errorMessage
-                });
-                
-                throw error;
+                    const errorMessage = inventoryApi.handleApiError(error);
+                    set({ error: errorMessage, isLoading: false });
+                    
+                    get().addNotification({
+                        type: 'error',
+                        title: 'Error al completar mantenimiento',
+                        message: errorMessage
+                    });
+                    
+                    throw error;
                 }
             },
 
             cancelMaintenance: async (id: number, reason?: string) => {
                 set({ isLoading: true, error: null });
                 try {
-                const updatedMaintenance = await inventoryApi.cancelMaintenance(id, reason);
-                set(state => ({
-                    maintenances: state.maintenances.map(m => m.id === id ? updatedMaintenance : m),
-                    isLoading: false
-                }));
-                
-                get().addNotification({
-                    type: 'warning',
-                    title: 'Mantenimiento cancelado',
-                    message: 'El mantenimiento ha sido cancelado.'
-                });
-                
-                return updatedMaintenance;
+                    const updatedMaintenance = await inventoryApi.cancelMaintenance(id, reason);
+                    set(state => ({
+                        maintenances: state.maintenances.map(m => m.id === id ? updatedMaintenance : m),
+                        isLoading: false
+                    }));
+                    
+                    get().addNotification({
+                        type: 'warning',
+                        title: 'Mantenimiento cancelado',
+                        message: 'El mantenimiento ha sido cancelado.'
+                    });
+                    
+                    return updatedMaintenance;
                 } catch (error) {
-                const errorMessage = inventoryApi.handleApiError(error);
-                set({ error: errorMessage, isLoading: false });
-                
-                get().addNotification({
-                    type: 'error',
-                    title: 'Error al cancelar mantenimiento',
-                    message: errorMessage
-                });
-                
-                throw error;
+                    const errorMessage = inventoryApi.handleApiError(error);
+                    set({ error: errorMessage, isLoading: false });
+                    
+                    get().addNotification({
+                        type: 'error',
+                        title: 'Error al cancelar mantenimiento',
+                        message: errorMessage
+                    });
+                    
+                    throw error;
                 }
             },
 
@@ -503,20 +503,20 @@ export const useInventoryStore = create<InventoryState>()(
             fetchDashboardMetrics: async () => {
                 set({ isLoading: true, error: null });
                 try {
-                const response = await inventoryApi.getDashboardData();
-                if (response.success && response.data) {
-                    set({ 
-                    dashboardMetrics: response.data,
-                    isLoading: false 
-                    });
-                } else {
-                    throw new Error(response.error || 'Error al cargar métricas');
-                }
+                    const response = await inventoryApi.getDashboardData();
+                    if (response.success && response.data) {
+                        set({ 
+                        dashboardMetrics: response.data,
+                        isLoading: false 
+                        });
+                    } else {
+                        throw new Error(response.error || 'Error al cargar métricas');
+                    }
                 } catch (error) {
-                set({ 
-                    error: inventoryApi.handleApiError(error), 
-                    isLoading: false 
-                });
+                    set({ 
+                        error: inventoryApi.handleApiError(error), 
+                        isLoading: false 
+                    });
                 }
             },
 

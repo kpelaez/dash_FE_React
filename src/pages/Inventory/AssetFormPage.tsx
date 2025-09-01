@@ -10,9 +10,11 @@ import {
   Tag,
   AlertCircle,
   Laptop,
+  Loader2,
 } from 'lucide-react';
 import {useInventoryStore} from '../../stores/inventoryStore';
 import { TechAssetCreate, TechAssetUpdate, AssetCategory, AssetStatus } from '../../types/inventory';
+import inventoryApi from '../../services/inventoryApi';
 
 
 const initialFormData: TechAssetCreate = {
@@ -70,6 +72,7 @@ const AssetFormPage: React.FC = () => {
   const [formData, setFormData] = useState<TechAssetCreate>(initialFormData);
   const [errors, setErrors] = useState<Partial<TechAssetCreate>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGeneratingTag, setIsGeneratingTag] = useState(false);
 
 
   const createTechAsset = useInventoryStore(state => state.createTechAsset);
@@ -188,16 +191,28 @@ const AssetFormPage: React.FC = () => {
       return;
     }
 
-    // Aquí podrías llamar a un endpoint para generar el tag automáticamente
-    // Por ahora, generamos uno simple
-    const categoryPrefix = formData.category.toUpperCase().substring(0, 3);
-    const timestamp = Date.now().toString().slice(-6);
-    const generatedTag = `${categoryPrefix}-${timestamp}`;
+    setIsGeneratingTag(true);
+    try {
+      const response = await inventoryApi.generateAssetTag(formData.category);
 
-    setFormData(prev => ({
+      setFormData(prev => ({
       ...prev,
-      asset_tag: generatedTag
-    }));
+      asset_tag: response.asset_tag
+      }));
+
+      // Limpiar error si existía
+      if (errors.asset_tag) {
+        setErrors(prev => ({
+          ...prev,
+          asset_tag: undefined
+        }));
+      }
+    } catch (error) {
+      console.error('Error generando asset tag: ',error);
+      alert(`Error al generar el codigo del activo: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+    } finally {
+      setIsGeneratingTag(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -442,13 +457,20 @@ const AssetFormPage: React.FC = () => {
                         errors.asset_tag ? 'border-red-300 ring-red-500' : ''
                       }`}
                       placeholder=" Ej: LAP-001234"
+                      readOnly={isGeneratingTag}
                     />
                     <button
                       type="button"
                       onClick={generateAssetTag}
+                      disabled={isGeneratingTag || !formData.category}
+                      title="Generar etiqueta automaticamente"
                       className="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 rounded-r-md bg-gray-50 text-gray-500 text-sm hover:bg-gray-100"
                     >
-                      <Tag className="h-4 w-4" />
+                      {isGeneratingTag ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Tag className="h-4 w-4" />
+                      )}
                     </button>
                   </div>
                   {errors.asset_tag && (
@@ -547,7 +569,7 @@ const AssetFormPage: React.FC = () => {
                 {/* Fecha de Garantia */}
                 <div>
                   <label htmlFor="purchase_date" className="block text-sm font-medium text-gray-700">
-                    Fecha de Expiracion Garantia
+                    Fecha de Vencimiento Garantia
                   </label>
                   <div className="mt-1 relative">
                     <input
@@ -617,6 +639,22 @@ const AssetFormPage: React.FC = () => {
                 )}
               </div>
 
+              {/* Especificaciones */}
+                <div className="sm:col-span-2">
+                  <label htmlFor="specifications" className="block text-sm font-medium text-gray-700">
+                    Especificaciones Técnicas
+                  </label>
+                  <textarea
+                    id="specifications"
+                    name="specifications"
+                    rows={3}
+                    value={formData.specifications}
+                    onChange={handleInputChange}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500"
+                    placeholder=" RAM, procesador, almacenamiento, etc."
+                  />
+                </div>
+
               {/* Notas */}
               <div>
                 <label htmlFor="description" className="block text-sm font-medium text-gray-700">
@@ -629,7 +667,7 @@ const AssetFormPage: React.FC = () => {
                   value={formData.description}
                   onChange={handleInputChange}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500"
-                  placeholder="Información adicional sobre el activo (especificaciones, configuración, etc.)"
+                  placeholder=" Información adicional sobre el activo (especificaciones, configuración, etc.)"
                 />
               </div>
             </div>

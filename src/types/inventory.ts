@@ -182,6 +182,7 @@ export interface AssetMaintenanceCreate {
   title: string;
   description: string;
   priority?: MaintenancePriority;
+  status: MaintenanceStatus;
   scheduled_date: string;
   estimated_duration_hours?: number;
   assigned_technician_id?: number;
@@ -257,12 +258,9 @@ export interface AssignmentFilters {
 
 export interface MaintenanceFilters {
   status?: MaintenanceStatus;
-  maintenance_type?: MaintenanceType;
   priority?: MaintenancePriority;
+  type?: string;
   asset_id?: number;
-  technician_id?: number;
-  date_from?: string;
-  date_to?: string;
 }
 
 // Tipos para respuestas de API
