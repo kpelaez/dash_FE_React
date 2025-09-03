@@ -171,15 +171,12 @@ class InventoryApiService {
 
     async getAssignments(filters?: AssignmentFilters): Promise<AssetAssignment[]> {
         const params = new URLSearchParams();
-        
-        if (filters) {
-        Object.entries(filters).forEach(([key, value]) => {
-            if (value !== undefined && value !== null && value !== '') {
-            params.append(key, value.toString());
-            }
-        });
-        }
-        return this.request<AssetAssignment[]>(`/inventory/assignments`);
+        if (filters?.user_id) params.append('user_id', filters.user_id.toString());
+        if (filters?.asset_id) params.append('asset_id', filters.asset_id.toString());
+        if (filters?.status) params.append('status', filters.status);
+
+        const queryString = params.toString();
+        return this.request<AssetAssignment[]>(`/inventory/assignments${queryString ? `?${queryString}` : ''}`);
     }
 
     async getAssignment(id: number): Promise<AssetAssignment> {
@@ -187,9 +184,21 @@ class InventoryApiService {
     }
 
     async createAssignment(assignment: AssetAssignmentCreate): Promise<AssetAssignment> {
-        return this.request<AssetAssignment>('/inventory/assignments', {
-        method: 'POST',
-        body: JSON.stringify(assignment),
+        const assignmentData = {
+            tech_asset_id: assignment.tech_asset_id,
+            assigned_to_user_id: assignment.assigned_to_user_id,
+            expected_return_date: assignment.expected_return_date || null,
+            assignment_reason: assignment.assignment_reason || null,
+            location_of_use: assignment.location_of_use || null,
+            condition_at_assignment: assignment.condition_at_assignment || "good",
+            assignment_notes: assignment.assignment_notes || null
+        };
+
+        console.log('Sending assignment data:', assignmentData);
+        
+        return this.request<AssetAssignment>('/inventory/assignments/', {
+            method: 'POST',
+            body: JSON.stringify(assignmentData)
         });
     }
 
