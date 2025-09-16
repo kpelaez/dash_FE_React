@@ -25,7 +25,7 @@ const BusinessIndicatorsPage: React.FC = () => {
         setIndicators(data);
         setLastUpdated(new Date());
     } catch (error) {
-        setError('Error al cargar los iondicadores. Por favor, intenta nuevamente.');
+        setError('Error al cargar los indicadores. Por favor, intenta nuevamente.');
         console.error('Error fetching indicators: ', error);
     } finally {
         setLoading(false);

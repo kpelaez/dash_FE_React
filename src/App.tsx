@@ -23,6 +23,11 @@ import useMobile from './hooks/useMobile';
 import ResponsiveLayout from './components/Layout/ResponsiveLayout';
 import { useEffect } from 'react';
 
+
+//Nueva pagina de indicadores de negocio
+import BusinessIndicatorsPage from './pages/BusinessIndicators/BusinessIndicatorsPage';
+
+
 function App() {
   const { isMobile, touchDevice } = useMobile();
 
@@ -76,7 +81,7 @@ function App() {
             path="/dashboards" 
             element={
               <RoleProtectedRoute requiredRoles={['admin', 'manager']}>
-                <DashboardsPage />
+                <BusinessIndicatorsPage />
               </RoleProtectedRoute>
             } 
           />

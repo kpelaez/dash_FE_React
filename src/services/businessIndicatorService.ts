@@ -5,9 +5,23 @@ import {
   IndicatorHistory
 } from '../types/businessIndicators';
 
+
+// Importar mock service para desarrollo
+import {
+  getMockBusinessIndicators,
+  getMockIndicatorById,
+  getMockIndicatorHistory,
+  refreshMockIndicators,
+  getMockIndicatorsHealth
+} from './mockBusinessIndicatorService';
+
 // Base URL de la API - ajustar según tu configuración
 //const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-const API_BASE_URL = 'http://localhost:8000'
+const API_BASE_URL = 'http://localhost:8000';
+
+// Flag para activar/desactivar modo mock (cambiar a false cuando el backend esté listo)
+//const USE_MOCK_DATA = process.env.REACT_APP_USE_MOCK === 'true' || true;
+const USE_MOCK_DATA = true;
 
 class BusinessIndicatorService {
   private async fetchWithAuth(url: string, options: RequestInit = {}) {
@@ -44,6 +58,13 @@ class BusinessIndicatorService {
    * Obtener todos los indicadores de negocio
    */
   async getBusinessIndicators(params?: BusinessIndicatorsRequest): Promise<BusinessIndicator[]> {
+
+    // Usar mock data durante desarrollo
+    if (USE_MOCK_DATA) {
+      console.log('🔧 Usando datos mock para desarrollo');
+      return getMockBusinessIndicators(params);
+    }
+
     try {
       const queryParams = new URLSearchParams();
       
@@ -74,6 +95,13 @@ class BusinessIndicatorService {
    * Obtener un indicador específico por ID
    */
   async getIndicatorById(indicatorId: string, params?: BusinessIndicatorsRequest): Promise<BusinessIndicator> {
+
+    // Usar mock data durante desarrollo
+    if (USE_MOCK_DATA) {
+      console.log(`🔧 Usando datos mock para indicador: ${indicatorId}`);
+      return getMockIndicatorById(indicatorId, params);
+    }
+
     try {
       const queryParams = new URLSearchParams();
       
@@ -103,6 +131,13 @@ class BusinessIndicatorService {
     dateFrom?: string, 
     dateTo?: string
   ): Promise<IndicatorHistory[]> {
+
+    // Usar mock data durante desarrollo
+    if (USE_MOCK_DATA) {
+      console.log(`🔧 Usando datos mock para histórico de: ${indicatorId}`);
+      return getMockIndicatorHistory(indicatorId, dateFrom, dateTo);
+    }
+
     try {
       const queryParams = new URLSearchParams();
       
@@ -125,6 +160,13 @@ class BusinessIndicatorService {
    * Forzar actualización de indicadores (trigger manual del proceso)
    */
   async refreshIndicators(): Promise<{ message: string; status: string }> {
+
+    // Usar mock data durante desarrollo
+    if (USE_MOCK_DATA) {
+      console.log('🔧 Usando mock para refresh de indicadores');
+      return refreshMockIndicators();
+    }
+
     try {
       return await this.fetchWithAuth('/api/business-indicators/refresh', {
         method: 'POST',
@@ -143,6 +185,13 @@ class BusinessIndicatorService {
     lastUpdate: string;
     issues: string[];
   }> {
+
+    // Usar mock data durante desarrollo
+    if (USE_MOCK_DATA) {
+      console.log('🔧 Usando mock para health check');
+      return getMockIndicatorsHealth();
+    }
+
     try {
       return await this.fetchWithAuth('/api/business-indicators/health');
     } catch (error) {
