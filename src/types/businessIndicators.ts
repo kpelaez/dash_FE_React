@@ -10,8 +10,6 @@ export interface BusinessIndicator {
   icon?: string;
   color?: IndicatorColor;
   description?: string;
-  lastUpdated?: string;
-  target?: number;
   status?: IndicatorStatus;
 }
 

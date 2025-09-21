@@ -4,7 +4,6 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import AboutPage from './pages/AboutPage';
-import DashboardsPage from './pages/DashboardsPage';
 import SingleDashboardPage from './pages/SingleDashboardPage';
 import UserRegisterPage from './pages/UserRegisterPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
@@ -26,6 +25,8 @@ import { useEffect } from 'react';
 
 //Nueva pagina de indicadores de negocio
 import BusinessIndicatorsPage from './pages/BusinessIndicators/BusinessIndicatorsPage';
+import IndicatorsComparisonPage from './pages/BusinessIndicators/IndicatorComparisonPage';
+
 
 
 function App() {
@@ -95,6 +96,27 @@ function App() {
               </RoleProtectedRoute>
             }  
           />
+          
+          {/* Nuevas rutas para indicadores de negocio */}
+          {/* <Route path="/business-indicators" element={
+            <ProtectedRoute>
+              <BusinessIndicatorsPage />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/business-indicators-charts" element={
+            <ProtectedRoute>
+              <BusinessIndicatorsChartPage />
+            </ProtectedRoute>
+          } /> */}
+
+          <Route path="/indicators-comparison" element={
+            <ProtectedRoute>
+              <IndicatorsComparisonPage />
+            </ProtectedRoute>
+          } />
+
+
           <Route
             ></Route>
           <Route 

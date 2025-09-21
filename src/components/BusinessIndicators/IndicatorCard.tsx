@@ -171,13 +171,6 @@ const IndicatorCard: React.FC<IndicatorCardProps> = ({indicator, onClick}) => {
           </div>
         )}
 
-        {/* Target */}
-        {indicator.target !== undefined && (
-          <div className="text-xs md:text-sm text-gray-600 mb-2">
-            Meta: {formatValue(indicator.target, indicator.format, indicator.unit)}
-          </div>
-        )}
-
         {/* Description */}
         {indicator.description && (
           <p className="text-xs md:text-sm text-gray-600 line-clamp-2">
@@ -185,20 +178,6 @@ const IndicatorCard: React.FC<IndicatorCardProps> = ({indicator, onClick}) => {
           </p>
         )}
       </div>
-
-      {/* Footer */}
-      {indicator.lastUpdated && (
-        <div className="mt-3 md:mt-4 pt-2 border-t border-gray-200">
-          <span className="text-xs text-gray-500">
-            Actualizado: {new Date(indicator.lastUpdated).toLocaleString('es-AR', {
-              day: '2-digit',
-              month: '2-digit',
-              hour: '2-digit',
-              minute: '2-digit'
-            })}
-          </span>
-        </div>
-      )}
     </div>
   )
 }

@@ -61,7 +61,7 @@ class BusinessIndicatorService {
 
     // Usar mock data durante desarrollo
     if (USE_MOCK_DATA) {
-      console.log('🔧 Usando datos mock para desarrollo');
+      console.log('Usando datos mock para desarrollo');
       return getMockBusinessIndicators(params);
     }
 
@@ -98,7 +98,7 @@ class BusinessIndicatorService {
 
     // Usar mock data durante desarrollo
     if (USE_MOCK_DATA) {
-      console.log(`🔧 Usando datos mock para indicador: ${indicatorId}`);
+      console.log(`Usando datos mock para indicador: ${indicatorId}`);
       return getMockIndicatorById(indicatorId, params);
     }
 
@@ -134,7 +134,7 @@ class BusinessIndicatorService {
 
     // Usar mock data durante desarrollo
     if (USE_MOCK_DATA) {
-      console.log(`🔧 Usando datos mock para histórico de: ${indicatorId}`);
+      console.log(`Usando datos mock para histórico de: ${indicatorId}`);
       return getMockIndicatorHistory(indicatorId, dateFrom, dateTo);
     }
 
@@ -163,7 +163,7 @@ class BusinessIndicatorService {
 
     // Usar mock data durante desarrollo
     if (USE_MOCK_DATA) {
-      console.log('🔧 Usando mock para refresh de indicadores');
+      console.log('Usando mock para refresh de indicadores');
       return refreshMockIndicators();
     }
 
@@ -188,7 +188,7 @@ class BusinessIndicatorService {
 
     // Usar mock data durante desarrollo
     if (USE_MOCK_DATA) {
-      console.log('🔧 Usando mock para health check');
+      console.log(' Usando mock para health check');
       return getMockIndicatorsHealth();
     }
 

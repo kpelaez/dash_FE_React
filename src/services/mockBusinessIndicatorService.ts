@@ -38,8 +38,6 @@ class MockBusinessIndicatorService {
         trendPercentage: 17.7,
         color: IndicatorColor.GREEN,
         description: 'Ventas totales del mes actual',
-        lastUpdated: new Date().toISOString(),
-        target: 3000000,
         status: IndicatorStatus.GOOD
       },
       {
@@ -52,8 +50,7 @@ class MockBusinessIndicatorService {
         trendPercentage: 5.9,
         color: IndicatorColor.BLUE,
         description: 'Cobranzas efectivas del período',
-        lastUpdated: new Date(Date.now() - 1000 * 60 * 15).toISOString(), // 15 min ago
-        target: 2500000,
+
         status: IndicatorStatus.WARNING
       },
       {
@@ -66,8 +63,6 @@ class MockBusinessIndicatorService {
         trendPercentage: 7.4,
         color: IndicatorColor.YELLOW,
         description: 'Saldo pendiente en cuenta corriente',
-        lastUpdated: new Date(Date.now() - 1000 * 60 * 45).toISOString(), // 45 min ago
-        target: 400000,
         status: IndicatorStatus.WARNING
       },
       {
@@ -80,8 +75,6 @@ class MockBusinessIndicatorService {
         trendPercentage: 17.6,
         color: IndicatorColor.PURPLE,
         description: 'Días promedio de cobranza',
-        lastUpdated: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 min ago
-        target: 25,
         status: IndicatorStatus.GOOD
       },
       {
@@ -94,8 +87,6 @@ class MockBusinessIndicatorService {
         trendPercentage: 18.8,
         color: IndicatorColor.RED,
         description: 'Rotación del capital de trabajo',
-        lastUpdated: new Date(Date.now() - 1000 * 60 * 5).toISOString(), // 5 min ago
-        target: 4.0,
         status: IndicatorStatus.GOOD
       }
     ];
