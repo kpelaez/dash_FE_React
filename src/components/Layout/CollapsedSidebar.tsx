@@ -34,8 +34,8 @@ const CollapsibleSidebar = () => {
       icon: <Home size={isCollapsed ? 20 : 18} />
     },
     {
-      title: 'Dashboards',
-      path: '/dashboards',
+      title: 'Indicadores',
+      path: '/business-indicators',
       icon: <BarChart2 size={isCollapsed ? 20 : 18} />,
       requiredRoles: ['admin', 'manager']
     },

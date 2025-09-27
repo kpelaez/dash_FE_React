@@ -26,6 +26,7 @@ import { useEffect } from 'react';
 //Nueva pagina de indicadores de negocio
 import BusinessIndicatorsPage from './pages/BusinessIndicators/BusinessIndicatorsPage';
 import IndicatorsComparisonPage from './pages/BusinessIndicators/IndicatorComparisonPage';
+import BusinessIndicatorsChartPage from './pages/BusinessIndicators/BusinessIndicatorsChartPage';
 
 
 
@@ -78,14 +79,14 @@ function App() {
               </ProtectedRoute>
             } 
           />
-          <Route 
+          {/* <Route 
             path="/dashboards" 
             element={
-              <RoleProtectedRoute requiredRoles={['admin', 'manager']}>
+              <RoleProtectedRoute requiredRoles={['admin']}>
                 <BusinessIndicatorsPage />
               </RoleProtectedRoute>
             } 
-          />
+          /> */}
 
           {/* Rutas protegidas por roles */}
           <Route 
@@ -98,7 +99,7 @@ function App() {
           />
           
           {/* Nuevas rutas para indicadores de negocio */}
-          {/* <Route path="/business-indicators" element={
+          <Route path="/business-indicators" element={
             <ProtectedRoute>
               <BusinessIndicatorsPage />
             </ProtectedRoute>
@@ -108,7 +109,7 @@ function App() {
             <ProtectedRoute>
               <BusinessIndicatorsChartPage />
             </ProtectedRoute>
-          } /> */}
+          } />
 
           <Route path="/indicators-comparison" element={
             <ProtectedRoute>

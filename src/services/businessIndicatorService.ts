@@ -21,12 +21,12 @@ const API_BASE_URL = 'http://localhost:8000';
 
 // Flag para activar/desactivar modo mock (cambiar a false cuando el backend esté listo)
 //const USE_MOCK_DATA = process.env.REACT_APP_USE_MOCK === 'true' || true;
-const USE_MOCK_DATA = true;
+const USE_MOCK_DATA = false;
 
 class BusinessIndicatorService {
   private async fetchWithAuth(url: string, options: RequestInit = {}) {
-    // Obtener el token de autenticación (ajustar según tu sistema de auth)
-    const token = localStorage.getItem('access_token');
+    
+    const token = localStorage.getItem('auth_token');
     
     const headers = {
       'Content-Type': 'application/json',
@@ -42,7 +42,7 @@ class BusinessIndicatorService {
     if (!response.ok) {
       if (response.status === 401) {
         // Token expirado o inválido - redirigir al login
-        localStorage.removeItem('access_token');
+        localStorage.removeItem('auth_token');
         window.location.href = '/login';
         throw new Error('Sesión expirada');
       }
