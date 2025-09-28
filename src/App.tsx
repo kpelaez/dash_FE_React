@@ -4,7 +4,6 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import AboutPage from './pages/AboutPage';
-import DashboardsPage from './pages/DashboardsPage';
 import SingleDashboardPage from './pages/SingleDashboardPage';
 import UserRegisterPage from './pages/UserRegisterPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
@@ -22,6 +21,15 @@ import useMobile from './hooks/useMobile';
 // Layout Responsive
 import ResponsiveLayout from './components/Layout/ResponsiveLayout';
 import { useEffect } from 'react';
+
+
+//Nueva pagina de indicadores de negocio
+import BusinessIndicatorsPage from './pages/BusinessIndicators/BusinessIndicatorsPage';
+import IndicatorsComparisonPage from './pages/BusinessIndicators/IndicatorComparisonPage';
+import BusinessIndicatorsChartPage from './pages/BusinessIndicators/BusinessIndicatorsChartPage';
+import NetworkDebug from './components/Debug/NetworkDebug';
+
+
 
 function App() {
   const { isMobile, touchDevice } = useMobile();
@@ -72,14 +80,14 @@ function App() {
               </ProtectedRoute>
             } 
           />
-          <Route 
+          {/* <Route 
             path="/dashboards" 
             element={
-              <RoleProtectedRoute requiredRoles={['admin', 'manager']}>
-                <DashboardsPage />
+              <RoleProtectedRoute requiredRoles={['admin']}>
+                <BusinessIndicatorsPage />
               </RoleProtectedRoute>
             } 
-          />
+          /> */}
 
           {/* Rutas protegidas por roles */}
           <Route 
@@ -90,6 +98,27 @@ function App() {
               </RoleProtectedRoute>
             }  
           />
+          
+          {/* Nuevas rutas para indicadores de negocio */}
+          <Route path="/business-indicators" element={
+            <ProtectedRoute>
+              <BusinessIndicatorsPage />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/business-indicators-charts" element={
+            <ProtectedRoute>
+              <BusinessIndicatorsChartPage />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/indicators-comparison" element={
+            <ProtectedRoute>
+              <IndicatorsComparisonPage />
+            </ProtectedRoute>
+          } />
+
+
           <Route
             ></Route>
           <Route 
@@ -109,6 +138,8 @@ function App() {
               </RoleProtectedRoute>
             } 
           />
+          <Route
+            path="/debug" element={<NetworkDebug />} />
         </Routes>
       </Router>
     </div>

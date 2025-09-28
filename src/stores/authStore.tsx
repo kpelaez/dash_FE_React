@@ -1,7 +1,20 @@
 import { create } from 'zustand';
 
-// Define la URL base de la API de autenticacion
-const API_URL = 'http://127.0.0.1:8000';
+// FUNCIÓN PARA OBTENER LA URL BASE DINÁMICAMENTE
+const getAPIBaseURL = (): string => {
+  // Si estamos en desarrollo local (mismo dispositivo)
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return 'http://localhost:8000';
+  }
+  
+  // Si accedemos desde otro dispositivo en la red local
+  // Usar la misma IP que el frontend pero puerto 8000 para el backend
+  const hostname = window.location.hostname;
+  return `http://${hostname}:8000`;
+};
+
+// URL base de la API de autenticación (dinámicamente configurada)
+const API_URL = getAPIBaseURL();
 
 interface LoginCredentials {
   email: string;
@@ -36,6 +49,7 @@ interface AuthState {
     register:(credentials: LoginCredentials & {full_name?:string, roles?: string[]}) => Promise<void>;
     hasRole: (role:string) => boolean;
     hasAnyRole:(roles: string[]) => boolean;
+    getApiUrl: () => string; 
 }
 
 export const useAuthStore = create<AuthState>((set, get)=>({
@@ -208,5 +222,8 @@ export const useAuthStore = create<AuthState>((set, get)=>({
   hasAnyRole: (requiredRoles: string[]) => {
     const { roles } = get();
     return requiredRoles.some(role => roles.includes(role));
-  }
+  },
+
+  // Nueva función para debug
+  getApiUrl: () => API_URL,
 }));
