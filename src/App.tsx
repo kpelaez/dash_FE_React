@@ -27,6 +27,7 @@ import { useEffect } from 'react';
 import BusinessIndicatorsPage from './pages/BusinessIndicators/BusinessIndicatorsPage';
 import IndicatorsComparisonPage from './pages/BusinessIndicators/IndicatorComparisonPage';
 import BusinessIndicatorsChartPage from './pages/BusinessIndicators/BusinessIndicatorsChartPage';
+import NetworkDebug from './components/Debug/NetworkDebug';
 
 
 
@@ -137,6 +138,8 @@ function App() {
               </RoleProtectedRoute>
             } 
           />
+          <Route
+            path="/debug" element={<NetworkDebug />} />
         </Routes>
       </Router>
     </div>
