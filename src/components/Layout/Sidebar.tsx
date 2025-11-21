@@ -19,9 +19,9 @@ const menuItems: MenuItems[] = [
       path: '/',
     },
     {
-      title: 'Dashboards',
+      title: 'Indicadores',
       requiredRoles: ['admin', 'manager',],
-      path:'/dashboards',
+      path:'/business-indicators',
     },
     {
       title: 'Sectores',

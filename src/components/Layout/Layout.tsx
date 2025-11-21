@@ -2,6 +2,7 @@ import React from 'react';
 import Header from './Header';
 import Footer from './Footer';
 import CollapsibleSidebar from './CollapsedSidebar';
+import StonefixerSidebar from './StoneFixerSidebar';
 
 interface LayoutProps {
     children: React.ReactNode;
@@ -9,10 +10,11 @@ interface LayoutProps {
 
 const Layout = ({children}: LayoutProps) => {
   return (
-    <div className="flex h-screen bg-gray-50 w-full overflow-hidden">
+    <div className="flex min-h-screen bg-gray-50 w-full overflow-hidden">
       {/* Sidebar */}
       <CollapsibleSidebar />
-      
+      {/* <StonefixerSidebar /> */}
+
       {/* Contenido principal */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />

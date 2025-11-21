@@ -4,11 +4,12 @@ import { useAuthStore } from '../../stores/authStore';
 import { BarChart2, Bell, ChevronDown, ChevronRight, Home, Info, LogOut, Menu, PlusCircle, Search, Settings, Users, X } from 'lucide-react';
 
 interface MenuItem {
-    title: string;
-    path?: string;
-    icon: React.ReactNode;
-    children?: MenuItem[];
-    requiredRoles?: string[];
+  title: string;
+  path?: string;
+  icon: React.ReactNode;
+  children?: MenuItem[];
+  requiredRoles?: string[];
+  badge?: string;
 }
 
 interface MobileLayoutProps {
@@ -27,6 +28,67 @@ const MobileLayout = ({children}: MobileLayoutProps) => {
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
+// Logo SF para header móvil
+  const SFLogoMobile = () => (
+    <svg width="36" height="36" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="sfGradientMobile" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style={{stopColor:'#047857', stopOpacity:1}} />
+          <stop offset="33%" style={{stopColor:'#10b981', stopOpacity:1}} />
+          <stop offset="66%" style={{stopColor:'#0ea5e9', stopOpacity:1}} />
+          <stop offset="100%" style={{stopColor:'#3b82f6', stopOpacity:1}} />
+        </linearGradient>
+      </defs>
+      <rect 
+        width="64" 
+        height="64" 
+        rx="16" 
+        fill="url(#sfGradientMobile)" 
+        stroke="rgba(255,255,255,0.3)" 
+        strokeWidth="1"
+      />
+      <text 
+        x="32" 
+        y="42" 
+        fontFamily="Space Grotesk, Arial" 
+        fontSize="22" 
+        fontWeight="800" 
+        textAnchor="middle" 
+        fill="white"
+      >
+        SF
+      </text>
+    </svg>
+  );
+
+  // Logo completo para sidebar móvil
+  const StonefixerMobileLogo = () => (
+    <svg width="160" height="36" viewBox="0 0 160 36" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="iconGradMobile" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style={{stopColor:'#047857', stopOpacity:1}} />
+          <stop offset="33%" style={{stopColor:'#10b981', stopOpacity:1}} />
+          <stop offset="66%" style={{stopColor:'#0ea5e9', stopOpacity:1}} />
+          <stop offset="100%" style={{stopColor:'#3b82f6', stopOpacity:1}} />
+        </linearGradient>
+        <linearGradient id="textGradMobile" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style={{stopColor:'#047857', stopOpacity:1}} />
+          <stop offset="50%" style={{stopColor:'#10b981', stopOpacity:1}} />
+          <stop offset="100%" style={{stopColor:'#0ea5e9', stopOpacity:1}} />
+        </linearGradient>
+      </defs>
+      <rect width="28" height="28" x="4" y="4" rx="7" fill="url(#iconGradMobile)"/>
+      <text x="18" y="22" fontFamily="Space Grotesk, Arial" fontSize="12" fontWeight="800" textAnchor="middle" fill="white">SF</text>
+      <text x="40" y="18" fontFamily="Space Grotesk, Arial" fontSize="14" fontWeight="800" fill="url(#textGradMobile)">
+        StoneFixer
+      </text>
+      <text x="40" y="28" fontFamily="Inter, Arial" fontSize="8" fill="#6b7280">
+        Transformando problemas en soluciones
+      </text>
+    </svg>
+  );
+
+
   // Definicion de elementos del menu
   const menuItems: MenuItem[] = [
     {
@@ -35,8 +97,8 @@ const MobileLayout = ({children}: MobileLayoutProps) => {
       icon: <Home size={20} />
     },
     {
-      title: 'Dashboards',
-      path: '/dashboards',
+      title: 'Indicadores',
+      path: '/business-indicators',
       icon: <BarChart2 size={20} />,
       requiredRoles: ['admin', 'manager']
     },
@@ -85,7 +147,7 @@ const MobileLayout = ({children}: MobileLayoutProps) => {
   };
 
   const shouldShowMenuItem = (item: MenuItem): boolean => {
-    if (!item.requiredRoles) return true;
+    if (!item.requiredRoles || item.requiredRoles.length === 0) return true;
     return hasAnyRole(item.requiredRoles);
   };
 
@@ -93,6 +155,11 @@ const MobileLayout = ({children}: MobileLayoutProps) => {
     logout();
     navigate('/login');
     setIsSidebarOpen(false);
+  };
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    closeSidebar();
   };
 
   const closeSidebar = () => {
@@ -124,8 +191,8 @@ const MobileLayout = ({children}: MobileLayoutProps) => {
             className={`
               flex items-center px-4 py-3 rounded-lg mx-2
               ${isActive 
-                ? 'bg-emerald-50 text-emerald-600 font-medium border-l-4 border-emerald-500' 
-                : 'text-gray-700 hover:bg-gray-100 active:bg-gray-200'}
+                ? 'bg-emerald-100 text-emerald-600' 
+                : 'bg-gray-100 group-hover:bg-emerald-100 group-hover:text-emerald-600'}
               transition-all duration-200
             `}
           >
@@ -136,12 +203,12 @@ const MobileLayout = ({children}: MobileLayoutProps) => {
           <button
             onClick={() => toggleExpand(item.title)}
             className={`
-              flex items-center justify-between w-full px-4 py-3 rounded-lg mx-2
-              ${isActive ? 'bg-emerald-50 text-emerald-600 font-medium' : 'text-gray-700 hover:bg-gray-100'}
+              flex items-center justify-between w-full p-3 text-left rounded-xl transition-all duration-200 group
+              ${isActive ? 'bg-gradient-to-r from-emerald-50 to-emerald-100 text-emerald-700 font-semibold' : 'text-gray-700 hover:bg-emerald-50 hover:text-emerald-600'}
               transition-all duration-200
             `}
           >
-            <div className="flex items-center">
+            <div className="flex items-center space-x-3">
               <span className="flex-shrink-0 mr-3">{item.icon}</span>
               <span className="font-medium">{item.title}</span>
             </div>
@@ -158,7 +225,7 @@ const MobileLayout = ({children}: MobileLayoutProps) => {
         
         {/* Subelementos */}
         {hasChildren && isExpanded && (
-          <div className="ml-6 mt-1 space-y-1">
+          <div className="ml-6 mt-2 space-y-1 border-l-2 border-emerald-100 pl-4">
             {visibleChildren.map(child => (
               <Link 
                 key={child.title}
@@ -168,7 +235,7 @@ const MobileLayout = ({children}: MobileLayoutProps) => {
                   flex items-center px-4 py-2 rounded-lg mx-2 text-sm
                   ${location.pathname === child.path 
                     ? 'bg-emerald-50 text-emerald-600 font-medium' 
-                    : 'text-gray-600 hover:bg-gray-100'}
+                    : 'text-gray-600 hover:bg-emerald-50 hover:text-emerald-700'}
                   transition-all duration-200
                 `}
               >
@@ -188,23 +255,24 @@ const MobileLayout = ({children}: MobileLayoutProps) => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header móvil */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-        <div className="flex items-center justify-between px-4 py-3">
-          {/* Botón de menú y logo */}
-          <div className="flex items-center space-x-3">
-            <button 
-              onClick={() => setIsSidebarOpen(true)}
-              className="p-2 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors"
-            >
-              <Menu size={24} />
-            </button>
+      <header className="bg-gradient-to-r from-gray-800 via-gray-700 to-emerald-600 text-white sticky top-0 z-40 shadow-xl">
+        <div className="px-4 py-3">
+          <div className="flex items-center justify-between">
+            {/* Logo y botón de menú */}
+            <div className="flex items-center space-x-3">
+              <button 
+                onClick={() => setIsSidebarOpen(true)}
+                className="p-2 bg-white/10 backdrop-blur-sm rounded-xl hover:bg-white/20 transition-all duration-200"
+              >
+                <Menu size={20} />
+              </button>
             <Link to="/" className="flex items-center">
-              <img 
-                src="/Logo-text-small.png" 
-                alt="Omnimedica" 
-                className="h-8 w-auto"
-              />
+              <SFLogoMobile />
             </Link>
+            <div>
+                <div className="font-bold text-lg">StoneFixer</div>
+                <div className="text-xs text-gray-300">Gestión Empresarial</div>
+            </div>
           </div>
 
           {/* Iconos de la derecha */}
@@ -222,50 +290,28 @@ const MobileLayout = ({children}: MobileLayoutProps) => {
                 <LogOut size={20} />
               </button>
             </div>
-          )}
-        </div>
-
-        {/* Barra de búsqueda */}
-        <div className="px-4 pb-3">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search size={16} className="text-gray-400" />
-            </div>
-            <input
-              type="text"
-              placeholder="Buscar... ¡Próximamente!"
-              className={`
-                w-full pl-10 pr-4 py-2 bg-gray-100 rounded-lg text-sm
-                focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white
-                transition-all duration-200
-                ${isSearchFocused ? 'bg-white ring-2 ring-emerald-500' : ''}
-              `}
-              onFocus={() => setIsSearchFocused(true)}
-              onBlur={() => setIsSearchFocused(false)}
-            />
+            )}
           </div>
         </div>
       </header>
 
       {/* Sidebar overlay */}
       {isSidebarOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div className="fixed inset-0 z-50">
           {/* Backdrop */}
           <div 
-            className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300"
             onClick={closeSidebar}
           />
           
           {/* Sidebar */}
-          <div className="fixed inset-y-0 left-0 w-80 max-w-sm bg-white shadow-xl transform transition-transform duration-300 ease-in-out">
+          <div className="fixed inset-y-0 left-0 w-80 max-w-sm bg-white shadow-2xl transform transition-transform duration-300 ease-out">
             {/* Header del sidebar */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200">
-              <div className="flex items-center">
-                <img src="/Logo-text-small.png" alt="Omnimedica" className="h-8 w-auto" />
-              </div>
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-white to-gray-50">
+              <StonefixerMobileLogo />
               <button 
                 onClick={closeSidebar}
-                className="p-2 rounded-lg hover:bg-gray-100"
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
               >
                 <X size={20} />
               </button>
@@ -273,13 +319,13 @@ const MobileLayout = ({children}: MobileLayoutProps) => {
             
             {/* Información del usuario */}
             {isAuthenticated && user && (
-              <div className="p-4 border-b border-gray-200 bg-gray-50">
+              <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
                 <div className="flex items-center space-x-3">
-                  <div className="h-10 w-10 rounded-full bg-emerald-500 text-white flex items-center justify-center text-sm font-medium">
+                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center text-sm font-bold">
                     {user.full_name ? user.full_name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 truncate">
+                    <p className="font-semibold text-gray-900 truncate">
                       {user.full_name || 'Usuario'}
                     </p>
                     <p className="text-sm text-gray-500 truncate">{user.email}</p>
@@ -290,14 +336,27 @@ const MobileLayout = ({children}: MobileLayoutProps) => {
             
             {/* Menú */}
             <div className="flex-1 overflow-y-auto py-4">
-              {visibleMenuItems.map(item => renderMenuItem(item))}
+              <div className="space-y-2">
+                {visibleMenuItems.map(item => renderMenuItem(item))}
+              </div>
             </div>
           </div>
         </div>
       )}
 
+      {/* Footer del sidebar móvil */}
+      <div className="p-4 border-t border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+        <button 
+          onClick={logout}
+          className="flex items-center space-x-3 w-full p-3 text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+        >
+          <LogOut size={18} />
+          <span className="font-medium">Cerrar Sesión</span>
+        </button>
+      </div>
+
       {/* Contenido principal */}
-      <main className="min-h-screen pb-4">
+      <main className="pb-20 overflow-y-auto">
         <div className="px-4 py-4">
           {children}
         </div>

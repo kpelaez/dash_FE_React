@@ -130,6 +130,108 @@ const CollapsibleSidebar = () => {
     }
   ];
 
+  // Logo SF con borde sutil
+  const SFLogo = ({ className }: { className?: string }) => (
+    <svg 
+      width="48" 
+      height="48" 
+      viewBox="0 0 64 64" 
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+    >
+      <defs>
+        <linearGradient id="sfGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style={{stopColor:'#047857', stopOpacity:1}} />
+          <stop offset="33%" style={{stopColor:'#10b981', stopOpacity:1}} />
+          <stop offset="66%" style={{stopColor:'#0ea5e9', stopOpacity:1}} />
+          <stop offset="100%" style={{stopColor:'#3b82f6', stopOpacity:1}} />
+        </linearGradient>
+      </defs>
+      <rect 
+        width="64" 
+        height="64" 
+        rx="16" 
+        fill="url(#sfGradient)" 
+        stroke="rgba(255,255,255,0.3)" 
+        strokeWidth="1"
+      />
+      <text 
+        x="32" 
+        y="42" 
+        fontFamily="Space Grotesk, Arial" 
+        fontSize="22" 
+        fontWeight="800" 
+        textAnchor="middle" 
+        fill="white"
+      >
+        SF
+      </text>
+    </svg>
+  );
+
+  // Logo StoneFixer completo
+  const StonefixerFullLogo = ({ className }: { className?: string }) => (
+    <svg 
+      width="200" 
+      height="48" 
+      viewBox="0 0 200 48" 
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+    >
+      <defs>
+        <linearGradient id="iconGradientFull" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style={{stopColor:'#047857', stopOpacity:1}} />
+          <stop offset="33%" style={{stopColor:'#10b981', stopOpacity:1}} />
+          <stop offset="66%" style={{stopColor:'#0ea5e9', stopOpacity:1}} />
+          <stop offset="100%" style={{stopColor:'#3b82f6', stopOpacity:1}} />
+        </linearGradient>
+        <linearGradient id="textGradientFull" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style={{stopColor:'#047857', stopOpacity:1}} />
+          <stop offset="50%" style={{stopColor:'#10b981', stopOpacity:1}} />
+          <stop offset="100%" style={{stopColor:'#0ea5e9', stopOpacity:1}} />
+        </linearGradient>
+      </defs>
+      <rect 
+        width="36" 
+        height="36" 
+        x="6" 
+        y="6" 
+        rx="9" 
+        fill="url(#iconGradientFull)"
+      />
+      <text 
+        x="24" 
+        y="28" 
+        fontFamily="Space Grotesk, Arial" 
+        fontSize="14" 
+        fontWeight="800" 
+        textAnchor="middle" 
+        fill="white"
+      >
+        SF
+      </text>
+      <text 
+        x="50" 
+        y="21" 
+        fontFamily="Space Grotesk, Arial" 
+        fontSize="16" 
+        fontWeight="800" 
+        fill="url(#textGradientFull)"
+      >
+        StoneFixer
+      </text>
+      <text 
+        x="50" 
+        y="32" 
+        fontFamily="Inter, Arial" 
+        fontSize="9" 
+        fill="#6b7280"
+      >
+        Transformando piedras en diamantes
+      </text>
+    </svg>
+  );
+
   // Toggle para expandir/colapsar secciones
   const toggleExpand = (title: string) => {
     if (isCollapsed) {
@@ -247,25 +349,37 @@ const CollapsibleSidebar = () => {
         className={`
           hidden md:flex flex-col h-screen bg-white border-r border-gray-200 shadow-sm
           transition-all duration-300 ease-in-out
-          ${isCollapsed ? 'w-16' : 'w-64'}
+          ${isCollapsed ? 'w-20' : 'w-64'}
         `}
       >
-        {/* Logo y botón de colapso */}
-        <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} p-4 border-b border-gray-200`}>
-          {!isCollapsed && (
-            <div className="flex items-center">
-              <img src="/Logo-text-small.png" alt="Omnimedica" className="h-9 w-40 ml-2" />
+
+        <div className={`
+          border-b border-gray-200 bg-gradient-to-r from-white to-gray-50
+          ${isCollapsed ? 'p-2' : 'p-4'}
+          `}>
+          {isCollapsed ? (
+            // Layout colapsado: logo centrado + botón abajo
+            <div className="flex flex-col items-center space-y-2">
+              <SFLogo className="w-10 h-10" />
+              <button 
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                className="p-1 rounded text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-all duration-200"
+              >
+                <ChevronRight size={14} />
+              </button>
+            </div>
+          ) : (
+            // Layout expandido: logo + botón en fila
+            <div className="flex items-center justify-between">
+              <StonefixerFullLogo className="h-12" />
+              <button 
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-all duration-200"
+              >
+                <ChevronLeft size={16} />
+              </button>
             </div>
           )}
-          {isCollapsed && (
-            <img src="/Logo_Omni_O.svg" alt="OmniMedica" className="h-9 w-8 ml-5" />
-          )}
-          <button 
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-1 rounded-md text-gray-500 hover:bg-gray-100"
-          >
-            {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-          </button>
         </div>
         
         {/* Menú */}
@@ -295,8 +409,25 @@ const CollapsibleSidebar = () => {
           
           {/* Sidebar móvil */}
           <div className="fixed inset-y-0 left-0 max-w-xs w-full bg-white shadow-lg transform transition-transform duration-300 ease-in-out">
+            {/* Header móvil */}
+              <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-white to-gray-50">
+                <StonefixerFullLogo className="h-10" />
+                <button 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="p-2 rounded-lg text-gray-500 hover:bg-gray-100"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+              
+              {/* Navegación móvil */}
+              <div className="overflow-y-auto h-full py-4">
+                {visibleMenuItems.map(item => renderMenuItem(item))}
+              </div>
+
+            
             {/* Logo */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+            {/* <div className="flex items-center justify-between p-4 border-b border-gray-200">
               <div className="flex items-center">
                 <img src="/omnimedica-logo.svg" alt="OmniMedica" className="h-8 w-8" />
                 <span className="ml-2 font-semibold text-gray-800">OmniMedica</span>
@@ -307,12 +438,12 @@ const CollapsibleSidebar = () => {
               >
                 <X size={18} />
               </button>
-            </div>
+            </div> */}
             
             {/* Menú móvil */}
-            <div className="overflow-y-auto h-full py-4 px-3">
+            {/* <div className="overflow-y-auto h-full py-4 px-3">
               {visibleMenuItems.map(item => renderMenuItem(item))}
-            </div>
+            </div> */}
           </div>
         </div>
       )}
