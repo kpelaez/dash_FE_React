@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Layout from '../components/Layout/Layout';
+import Layout from '../components/Layout/MainLayout';
 import DashboardViewer from '../components/Dashboard/DashboardViewer';
 import { DASHBOARDS, DashboardConfig } from '../config/dashboards';
 import { useAuthStore } from '../stores/authStore';

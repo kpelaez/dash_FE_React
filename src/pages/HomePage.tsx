@@ -1,4 +1,4 @@
-import Layout from '../components/Layout/Layout';
+import Layout from '../components/Layout/MainLayout';
 import { Laptop, ShieldCheck, PlaneTakeoff, ChevronRight } from 'lucide-react';
 
 const ComingSoonSection = ()=> {

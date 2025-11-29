@@ -1,6 +1,6 @@
 import { useState, FormEvent} from 'react';
 import { useAuthStore } from '../stores/authStore';
-import Layout from '../components/Layout/Layout';
+import Layout from '../components/Layout/MainLayout';
 import { CheckCircle, AlertCircle } from 'lucide-react';
 
 interface RegisterFormData {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Layout from '../../components/Layout/Layout';
+import Layout from '../../components/Layout/MainLayout';
 import IndicatorCard from '../../components/BusinessIndicators/IndicatorCard';
 import ChartIndicatorCard from '../../components/BusinessIndicators/ChartIndicatorCard';
 import LoadingSpinner from '../../components/UI/LoadingSpinner';
