@@ -1,8 +1,6 @@
-import Layout from '../components/Layout/MainLayout';
 
 const AboutPage = () => {
   return (
-    <Layout>
       <div className="about-page">
         <h1>Acerca del Proyecto</h1>
         <p>
@@ -24,7 +22,6 @@ const AboutPage = () => {
           quien creó los dashboards con Dash y Plotly.
         </p>
       </div>
-    </Layout>
   );
 };
 

@@ -64,9 +64,7 @@ export const useMenu = (): UseMenuReturn => {
    * - Podríamos persistirlo en localStorage más adelante
    */
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({
-    // Inicializar algunos items expandidos por defectos
-    'sectors': true,
-    'tech-inventory': true
+    // Inicializar con todos colapsados al no aclarar nada
   });
 
   // MEMOIZACIÓN

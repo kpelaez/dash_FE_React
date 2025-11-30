@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import Layout from '../../components/Layout/MainLayout';
 import IndicatorCard from '../../components/BusinessIndicators/IndicatorCard';
 import LoadingSpinner from '../../components/UI/LoadingSpinner';
 import ErrorMessage from '../../components/UI/ErrorMessage';
@@ -38,29 +37,24 @@ const BusinessIndicatorsPage: React.FC = () => {
 
   if(loading) {
     return (
-        <Layout>
             <div className="min-h-screen flex items-center justify-content">
                 <LoadingSpinner />
             </div>
-        </Layout>
     );
   }
   
   if (error) {
     return (
-        <Layout>
             <div className="min-h-screen flex items-center justify-content">
                 <ErrorMessage
                     message={error}
                     onRetry={handleRefresh}
                 />
             </div>
-        </Layout>
     )
   }
   
   return (
-    <Layout>
       <div className="business-indicators-page p-4 md:p-6 lg:p-8">
         {/* Header */}
         <div className="mb-6 md:mb-8">
@@ -124,7 +118,6 @@ const BusinessIndicatorsPage: React.FC = () => {
           </div>
         )}
       </div>
-    </Layout>
   );
 }
 

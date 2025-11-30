@@ -1,4 +1,3 @@
-import Layout from '../components/Layout/MainLayout';
 import { Laptop, ShieldCheck, PlaneTakeoff, ChevronRight } from 'lucide-react';
 
 const ComingSoonSection = ()=> {
@@ -86,7 +85,6 @@ const ComingSoonSection = ()=> {
 
 const HomePage = () => {
   return (
-    <Layout>
       <div className="home-page h-full w-full">
         <section className="hero">
           <h1>Bienvenido a StoneFixer</h1>
@@ -112,7 +110,6 @@ const HomePage = () => {
         <br />
         <ComingSoonSection />
       </div>
-    </Layout>
   )
 }
 

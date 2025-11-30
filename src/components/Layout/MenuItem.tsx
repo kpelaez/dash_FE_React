@@ -73,7 +73,7 @@ export const MenuItem: React.FC<MenuItemProps> = ({
    * - Accesibilidad: estados claros (hover, active, focus)
    * - Performance: Tailwind purge elimina clases no usadas
    */
-  const paddingLeft = variant === 'collapsed' ? 'px-2' : `pl-${Math.min(4 + level * 2, 12)}`;
+  const paddingLeft = variant === 'collapsed' ? 'px-3' : level === 0 ? 'pl-40' :`pl-${4 + level * 4}`;
 
   const heightClass = variant === 'mobile' ? 'min-h-[48px]' : `min-h-[40px]`;
 
@@ -82,20 +82,25 @@ export const MenuItem: React.FC<MenuItemProps> = ({
     flex items-center w-full
     ${heightClass}
     ${paddingLeft}
+    pr-3
     transition-all duration-150
     relative
+    rounded-lg
+    my-0.5
   `;
 
   // Estilos cuando esta activo
   const activeStyles = isActive
    ? `
-     bg-gradient-to-r from-emerald-50 to-transparent
+     bg-emerald-50
      text-emerald-700 font-semibold
      border-l-4 border-emerald-600
+     shadow-sm
      `
    : `
      text-gray-700
-     hover:bg-gray-100
+     hover:bg-emerald-50
+     hover:text-emerald-700
      border-l-4 border-transparent
    `;
 
@@ -105,13 +110,14 @@ export const MenuItem: React.FC<MenuItemProps> = ({
    // Estilos para modo colapsado
   const collapsedStyles = variant === 'collapsed'
     ? 'justify-center p-3 mx-2 rounded-xl hover:bg-emerald-50'
-    : 'pr-4';
+    : '';
   
   const itemStyles = `
     ${baseStyles}
     ${activeStyles}
     ${parentStyles}
     ${collapsedStyles}
+    group
   `;
 
   const renderIcon = () => {
@@ -120,13 +126,18 @@ export const MenuItem: React.FC<MenuItemProps> = ({
     const Icon = item.icon;
     const iconSize = variant === 'collapsed' ? 24 : 20;
 
+    const iconColor = isActive 
+      ? 'text-emerald-600' 
+      : 'text-emerald-600 opacity-70 group-hover:opacity-100';
+
     return (
         <Icon
           size={iconSize}
           className={`
             flex-shrink-0
             ${variant === 'collapsed' ? '' : 'mr-3'}
-            ${isActive ? 'text-emerald-600' : 'text-gray-500'}
+            ${iconColor}
+            transition-opacity duration-150
             `}
         />
     );
@@ -144,7 +155,8 @@ export const MenuItem: React.FC<MenuItemProps> = ({
     return (
       <ChevronIcon 
         size={16} 
-        className="ml-auto text-gray-400 flex-shrink-0"
+        className="ml-auto text-emerald-600 opacity-70 flex-shrink-0 transition-transform duration-200"
+        style={{ transform: isExpanded ? 'rotate(0deg)' : 'rotate(0deg)' }}
       />
     );
   };

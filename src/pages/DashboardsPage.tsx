@@ -4,7 +4,6 @@ import { DASHBOARDS, DashboardConfig } from '../config/dashboards';
 import { useAuthStore } from '../stores/authStore';
 import { useEffect, useState } from 'react';
 import useMobile from '../hooks/useMobile';
-// import ResponsiveLayout from '../components/Layout/ResponsiveLayout';
 import MobileDashboardGrid from '../components/Dashboard/MobileDashboardGrid';
 
 const DashboardsPage = () => {
@@ -28,7 +27,6 @@ const DashboardsPage = () => {
   
 
   return (
-    // <ResponsiveLayout>
       <Layout>
         <div className="py-6">
           <div className="px-4 sm:px-6 md:px-8">
@@ -71,7 +69,6 @@ const DashboardsPage = () => {
       {isMobile && (
         <MobileDashboardGrid dashboards={filteredDashboards} />
       )}
-    {/* </ResponsiveLayout> */}
     </Layout>
   );
 };

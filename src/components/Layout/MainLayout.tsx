@@ -102,22 +102,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         <main className={`
           flex-1
           overflow-y-auto
-          p-4 md:p-6 lg:p-8
           ${className}
         `}>
-          {/* 
-            CONTENEDOR INTERNO
-            - max-w: limita ancho en pantallas muy grandes
-            - mx-auto: centra el contenido
-            - Esto previene líneas de texto demasiado largas
-          */}
-          <div className="
-            max-w-7xl
-            mx-auto
-            w-full
-          ">
             {children}
-          </div>
         </main>
       </div>
       

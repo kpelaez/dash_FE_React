@@ -1,6 +1,5 @@
 import { useState, FormEvent} from 'react';
 import { useAuthStore } from '../stores/authStore';
-import Layout from '../components/Layout/MainLayout';
 import { CheckCircle, AlertCircle } from 'lucide-react';
 
 interface RegisterFormData {
@@ -181,7 +180,6 @@ const UserRegisterPage = ()=>{
     }
 
   return (
-    <Layout>
       <div className="max-w-2xl mx-auto">
         <div className="bg-white shadow-md rounded-lg p-6">
           <h1 className="text-2xl font-bold mb-6">Registrar Nuevo Usuario</h1>
@@ -324,7 +322,6 @@ const UserRegisterPage = ()=>{
           </form>
         </div>
       </div>
-    </Layout>
   );
 }
 
