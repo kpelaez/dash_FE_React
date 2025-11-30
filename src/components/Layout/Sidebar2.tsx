@@ -141,6 +141,35 @@ export const Sidebar: React.FC<SidebarProps> = ({className = ''}) => {
     };
   }, [isMobileMenuOpen, closeMobileMenu]);
 
+  /**
+   * Cerrar sidebar al cambiar de ruta en mobile
+   */
+  useEffect(() => {
+    const handleRouteChange = () => {
+      if (window.innerWidth < 1024) {  // ✅ Cambiado de 768 a 1024
+        closeMobileMenu();
+      }
+    };
+
+    window.addEventListener('popstate', handleRouteChange);
+    return () => window.removeEventListener('popstate', handleRouteChange);
+  }, [closeMobileMenu]);
+
+  /**
+   * Prevenir scroll del body cuando el mobile menu está abierto
+   */
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMobileMenuOpen]);
+
 
   // HANDLRES
 
@@ -148,10 +177,13 @@ export const Sidebar: React.FC<SidebarProps> = ({className = ''}) => {
    * Cerrar menú móvil cuando se hace clic en un item
    * Mejora la UX: después de navegar, el drawer se cierra automáticamente
    */
-  const handleMenuItemClick = () => {
-    if (isMobileMenuOpen) {
-        closeMobileMenu();
+ const handleMenuItemClick = () => {
+    if (window.innerWidth < 1024) {  // ✅ Cambiado de 768 a 1024
+      closeMobileMenu();
     }
+
+    window.addEventListener('popstate', handleMenuItemClick);
+    return () => window.removeEventListener('popstate', handleMenuItemClick);
   };
 
   // RENDER: BOTÓN MÓVIL (HAMBURGER)
@@ -167,24 +199,17 @@ export const Sidebar: React.FC<SidebarProps> = ({className = ''}) => {
       type="button"
       onClick={toggleMobileMenu}
       className="
-        md:hidden
-        fixed top-4 left-4 z-50
-        p-3 rounded-xl
+        fixed top-3 left-3 z-50
+        lg:hidden
+        p-2.5 rounded-lg
         bg-white shadow-lg
+        text-gray-700 hover:bg-emerald-50
+        transition-colors
         border border-gray-200
-        hover:bg-gray-50
-        active:scale-95
-        transition-all duration-150
-        safe-area-inset-left
       "
-      aria-label={isMobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
-      aria-expanded={isMobileMenuOpen}
+      aria-label="Abrir menú"
     >
-      {isMobileMenuOpen ? (
-        <X size={20} className="text-gray-700" />
-      ) : (
-        <Menu size={20} className="text-gray-700" />
-      )}
+      <Menu size={22} />
     </button>
   );
 
@@ -197,17 +222,13 @@ export const Sidebar: React.FC<SidebarProps> = ({className = ''}) => {
    * - Accessibility: focus trap visual
    */
   const renderMobileBackdrop = () => {
-    if (!isMobileMenuOpen) return null;
-    
-    return (
+    isMobileMenuOpen && (
       <div
         className="
-          md:hidden
-          fixed inset-0 z-40
+          fixed inset-0 z-30
           bg-black/50
-          backdrop-blur-sm
+          lg:hidden
           transition-opacity duration-300
-          animate-in fade-in
         "
         onClick={closeMobileMenu}
         aria-hidden="true"
@@ -228,12 +249,12 @@ export const Sidebar: React.FC<SidebarProps> = ({className = ''}) => {
   const renderSidebarContent = () => (
     <>
       {/* HEADER */}
-      <div className="
-        flex items-center justify-between
-        p-4 border-b border-gray-200
-        bg-gradient-to-r from-white to-gray-50
+      <div className={`
         flex-shrink-0
-      ">
+        ${isCollapsed ? 'p-4' : 'p-6'}
+        border-b border-gray-200
+        bg-white
+      `}>
         {!isCollapsed ? (
           <>
             <StonefixerFullLogo />
@@ -243,22 +264,24 @@ export const Sidebar: React.FC<SidebarProps> = ({className = ''}) => {
               type="button"
               onClick={toggleCollapse}
               className="
-                hidden md:flex
+                hidden lg:flex
                 p-2 rounded-lg
                 text-gray-500 hover:bg-gray-100
                 transition-colors
+                mt-4
               "
               aria-label={isCollapsed ? 'Expandir sidebar' : 'Colapsar sidebar'}
             >
               <ChevronLeft size={18} />
             </button>
             
-            {/* Botón cerrar (solo móvil) */}
+            {/* Botón cerrar (solo móvil/tablet) */}
             <button
               type="button"
               onClick={closeMobileMenu}
               className="
-                md:hidden
+                lg:hidden
+                absolute top-6 right-6
                 p-2 rounded-lg
                 text-gray-500 hover:bg-gray-100
                 transition-colors
@@ -380,14 +403,14 @@ export const Sidebar: React.FC<SidebarProps> = ({className = ''}) => {
           
           /* Width responsive */
           ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
-          md:translate-x-0
-          w-[80vw] max-w-[320px]
-          ${isCollapsed ? 'md:w-20' : 'md:w-[280px]'}
+          lg:translate-x-0
+          w-[85vw] max-w-[320px]
+          ${isCollapsed ? 'lg:w-20' : 'lg:w-[280px]'}
           
           /* Estilos visuales */
           bg-white
           border-r border-gray-200
-          shadow-2xl md:shadow-none
+          shadow-2xl lg:shadow-none
           
           /* Layout interno */
           flex flex-col

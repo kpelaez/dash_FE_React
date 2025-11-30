@@ -73,7 +73,7 @@ export const MenuItem: React.FC<MenuItemProps> = ({
    * - Accesibilidad: estados claros (hover, active, focus)
    * - Performance: Tailwind purge elimina clases no usadas
    */
-  const paddingLeft = variant === 'collapsed' ? 'px-3' : level === 0 ? 'pl-40' :`pl-${4 + level * 4}`;
+  const paddingLeft = variant === 'collapsed' ? 'px-3' : level === 0 ? 'pl-4' :`pl-${4 + level * 4}`;
 
   const heightClass = variant === 'mobile' ? 'min-h-[48px]' : `min-h-[40px]`;
 

@@ -62,7 +62,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
     return (
         <div className="
-      flex md:grid md:grid-cols-[auto_1fr]
+      flex lg:grid lg:grid-cols-[auto_1fr]
       h-screen
       overflow-hidden
       bg-gray-50
@@ -122,6 +122,19 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           - Mejor UX al hacer scroll programático (anchor links, etc)
           - Nativo del browser, no necesita JS
         */
+
+        /* Fallback para navegadores antiguos */
+        html, body, #root {
+          height: 100vh;
+          height: 100dvh;  /* Override con dvh si está soportado */
+        }
+
+        /* Aplicar a contenedores principales */
+        .h-screen {
+          height: 100vh;
+          height: 100dvh;
+        }
+
         html {
           scroll-behavior: smooth;
         }
