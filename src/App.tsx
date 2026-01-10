@@ -29,6 +29,8 @@ import IndicatorsComparisonPage from './pages/BusinessIndicators/IndicatorCompar
 import BusinessIndicatorsChartPage from './pages/BusinessIndicators/BusinessIndicatorsChartPage';
 import NetworkDebug from './components/Debug/NetworkDebug';
 
+// Nueva pagina modulo agenda stock
+import ShiftSchedulePage from './pages/ShiftSchedulePage/ShiftSchedulePage';
 
 
 function App() {
@@ -119,8 +121,11 @@ function App() {
           } />
 
 
-          <Route
-            ></Route>
+          <Route 
+            path="/teams/administracion/stock/schedule" 
+            element={<ShiftSchedulePage />} 
+          />
+          
           <Route 
             path="/about" 
             element={

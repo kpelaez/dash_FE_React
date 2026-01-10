@@ -83,7 +83,7 @@ const menuItems: MenuItems[] = [
             },
             {
             title: 'Stock',
-            path: '/teams/administracion/stock',
+            path: '/teams/administracion/stock/schedule',
             },
           ]
           },
