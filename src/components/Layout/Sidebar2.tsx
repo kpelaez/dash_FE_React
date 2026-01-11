@@ -146,7 +146,7 @@ export const Sidebar: React.FC<SidebarProps> = ({className = ''}) => {
    */
   useEffect(() => {
     const handleRouteChange = () => {
-      if (window.innerWidth < 1024) {  // ✅ Cambiado de 768 a 1024
+      if (window.innerWidth < 1024) { 
         closeMobileMenu();
       }
     };

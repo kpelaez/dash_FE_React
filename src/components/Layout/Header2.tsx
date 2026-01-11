@@ -106,50 +106,6 @@ export const Header: React.FC<HeaderProps> = ({ className = ''}) => {
   };
 
   // ==========================================
-  // RENDER: SEARCH BAR
-  // ==========================================
-  
-  // const renderSearchBar = () => (
-  //   <div className="
-  //     hidden md:flex
-  //     items-center
-  //     max-w-md w-full
-  //     bg-gray-100 rounded-lg
-  //     px-4 py-2
-  //     transition-all
-  //     focus-within:bg-white
-  //     focus-within:ring-2
-  //     focus-within:ring-emerald-500
-  //     focus-within:ring-opacity-50
-  //   ">
-  //     <Search size={18} className="text-gray-400 mr-2" />
-  //     <input
-  //       type="text"
-  //       placeholder="Buscar..."
-  //       className="
-  //         w-full
-  //         bg-transparent
-  //         outline-none
-  //         text-sm
-  //         text-gray-700
-  //         placeholder-gray-400
-  //       "
-  //       disabled // Habilitar cuando implementes búsqueda
-  //     />
-  //   </div>
-  // );
-
-  /**
-   * NOTA: Search bar y notificaciones comentados temporalmente
-   * hasta que se implemente la funcionalidad real.
-   * 
-   * Para habilitar:
-   * 1. Descomentar las funciones renderSearchBar() y renderNotifications()
-   * 2. Agregar las funciones en el return principal
-   */
-
-
-  // ==========================================
   // RENDER: USER MENU
   // ==========================================
   
