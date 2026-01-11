@@ -7,20 +7,11 @@ import AboutPage from './pages/AboutPage';
 import SingleDashboardPage from './pages/SingleDashboardPage';
 import UserRegisterPage from './pages/UserRegisterPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
-// Paginas Mobile
-import MobileLoginPage from './pages/MobileLoginPage';
-import MobileHomePage from './pages/MobileHomePage';
 
 // ProtectedRoutes
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import RoleProtectedRoute from './components/Auth/RoleProtectedRoute';
 
-// Hook para deteccion mobile
-import useMobile from './hooks/useMobile';
-
-// Layout Responsive
-import ResponsiveLayout from './components/Layout/ResponsiveLayout';
-import { useEffect } from 'react';
 
 
 //Nueva pagina de indicadores de negocio
@@ -34,43 +25,13 @@ import ShiftSchedulePage from './pages/ShiftSchedulePage/ShiftSchedulePage';
 
 
 function App() {
-  const { isMobile, touchDevice } = useMobile();
-
-  useEffect(() => {
-    // Agregar clases CSS al body para optimizaciones móviles
-    if (isMobile || touchDevice) {
-      document.body.classList.add('mobile-optimized');
-      
-      // Prevenir zoom en iOS cuando se enfocan inputs
-      const viewport = document.querySelector('meta[name="viewport"]');
-      if (viewport) {
-        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
-      }
-    } else {
-      document.body.classList.remove('mobile-optimized');
-    }
-
-    // Cleanup
-    return () => {
-      document.body.classList.remove('mobile-optimized');
-    };
-  }, [isMobile, touchDevice]);
-
-  // Función para decidir qué componente de página usar
-  const renderPage = (DesktopComponent: React.ComponentType, MobileComponent?: React.ComponentType) => {
-    if (isMobile && MobileComponent) {
-      return <MobileComponent />;
-    }
-    return <DesktopComponent />;
-  };
-
-  
+ 
   return (
     <div className="app-container">
       <Router>
         <Routes>
           {/* Ruta pública */}
-          <Route path="/login" element={renderPage(LoginPage, MobileLoginPage)} />
+          <Route path="/login" element={<LoginPage />} />
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
           
           {/* Rutas protegidas basicas (cualquier usuario autenticado) */}
@@ -78,7 +39,7 @@ function App() {
             path="/" 
             element={
               <ProtectedRoute>
-                {renderPage(HomePage, MobileHomePage)}
+                {<HomePage />}
               </ProtectedRoute>
             } 
           />
@@ -103,13 +64,13 @@ function App() {
           
           {/* Nuevas rutas para indicadores de negocio */}
           <Route path="/business-indicators" element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRoles={['admin', 'manager']}>
               <BusinessIndicatorsPage />
             </ProtectedRoute>
           } />
 
           <Route path="/business-indicators-charts" element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRoles={['admin', 'manager']}>
               <BusinessIndicatorsChartPage />
             </ProtectedRoute>
           } />
@@ -138,9 +99,9 @@ function App() {
           <Route 
             path="/admin/register-user" 
             element={
-              <RoleProtectedRoute requiredRoles={['admin']}>
+              <ProtectedRoute requiredRoles={['admin', 'manager']}>
                 <UserRegisterPage />
-              </RoleProtectedRoute>
+              </ProtectedRoute>
             } 
           />
           <Route

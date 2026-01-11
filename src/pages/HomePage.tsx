@@ -1,4 +1,3 @@
-import Layout from '../components/Layout/Layout';
 import { Laptop, ShieldCheck, PlaneTakeoff, ChevronRight } from 'lucide-react';
 
 const ComingSoonSection = ()=> {
@@ -86,33 +85,49 @@ const ComingSoonSection = ()=> {
 
 const HomePage = () => {
   return (
-    <Layout>
-      <div className="home-page h-full w-full">
-        <section className="hero">
-          <h1>Bienvenido a StoneFixer</h1>
-        </section>
-        <br />
-        <section className="features">
-          <h2>Características</h2>
-          <div className="feature-grid">
-            <div className="feature-card">
-              <h3>Visualizaciones Interactivas</h3>
-              <p>Explora datos a través de gráficos y tablas interactivas</p>
-            </div>
-            <div className="feature-card">
-              <h3>Múltiples Dashboards</h3>
-              <p>Accede a diferentes paneles de información según tus necesidades</p>
-            </div>
-            <div className="feature-card">
-              <h3>Diseño Responsive</h3>
-              <p>Visualiza los dashboards en cualquier dispositivo</p>
-            </div>
+      <div className="p-6 h-full overflow-y-auto">
+      <section className="mb-8">
+        <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          Bienvenido a StoneFixer
+        </h1>
+      </section>
+      
+      <section className="mb-8">
+        <h2 className="text-2xl font-semibold text-gray-800 mb-6">
+          Características
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 hover:border-emerald-300 transition-colors">
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              Visualizaciones Interactivas
+            </h3>
+            <p className="text-gray-600">
+              Explora datos a través de gráficos y tablas interactivas
+            </p>
           </div>
-        </section>
-        <br />
-        <ComingSoonSection />
-      </div>
-    </Layout>
+          
+          <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 hover:border-emerald-300 transition-colors">
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              Múltiples Dashboards
+            </h3>
+            <p className="text-gray-600">
+              Accede a diferentes paneles de información según tus necesidades
+            </p>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 hover:border-emerald-300 transition-colors">
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              Diseño Responsive
+            </h3>
+            <p className="text-gray-600">
+              Visualiza los dashboards en cualquier dispositivo
+            </p>
+          </div>
+        </div>
+      </section>
+      
+      <ComingSoonSection />
+    </div>
   )
 }
 

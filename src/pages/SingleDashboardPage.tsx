@@ -1,11 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Layout from '../components/Layout/Layout';
-import DashboardViewer from '../components/Dashboard/DashboardViewer';
 import { DASHBOARDS, DashboardConfig } from '../config/dashboards';
 import { useAuthStore } from '../stores/authStore';
 import useMobile from '../hooks/useMobile';
-import MobileDashboardViewer from '../components/Dashboard/MobileDashboardViewer';
 
 const SingleDashboardPage = () => {
   const { dashboardId } = useParams<{ dashboardId: string }>();
@@ -45,33 +42,6 @@ const SingleDashboardPage = () => {
     setIsLoading(false);
   }, [dashboardId, hasAnyRole]);
 
-  // Función para renderizar el dashboard según el dispositivo
-  const renderDashboardViewer = () => {
-    if (!dashboard) return null;
-
-    if (isMobile) {
-      return (
-        <MobileDashboardViewer
-          id={dashboard.id}
-          url={dashboard.url}
-          title={dashboard.title}
-          description={dashboard.description}
-          fullScreen={true}
-        />
-      );
-    }
-
-    return (
-      <DashboardViewer
-        id={dashboard.id}
-        url={dashboard.url}
-        title={dashboard.title}
-        description={dashboard.description}
-        height="800px"
-        showExpandButton={false}
-      />
-    );
-  };
 
   // Función para renderizar el contenido del layout
   const renderContent = () => {
@@ -134,25 +104,16 @@ const SingleDashboardPage = () => {
             </button>
           </div>
         )}
-        
-        {renderDashboardViewer()}
       </div>
     );
   };
 
-  // Para móvil, no usar el Layout wrapper ya que MobileDashboardViewer maneja su propio layout
-  if (isMobile) {
-    return renderContent();
-  }
-
   return (
-    <Layout>
       <div className="py-6">
         <div className="px-4 sm:px-6 md:px-8">
           {renderContent()}
         </div>
       </div>
-    </Layout>
   );
 };
 

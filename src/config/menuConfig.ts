@@ -1,0 +1,321 @@
+/*
+ * CONFIGURACIÓN CENTRAL DEL MENÚ
+ * 
+ * ¿POR QUÉ ESTE ARCHIVO?
+ * 1. Single Source of Truth: Un solo lugar para definir todas las rutas
+ * 2. Type Safety: TypeScript nos protege de errores
+ * 3. Fácil mantenimiento: Agregar/quitar rutas es trivial
+ * 4. Reutilizable: Sidebar, MobileNav, Breadcrumbs pueden usar esto
+ * 
+ * REGLAS:
+ * - Cada item DEBE tener un título único
+ * - Los paths deben empezar con "/"
+ * - Los roles deben coincidir con el sistema de autenticación
+ */
+
+import { LucideIcon } from 'lucide-react';
+import {
+    Home,
+    BarChart2,
+    Users,
+    Settings,
+    PlusCircle,
+    Laptop,
+    Package,
+    ClipboardList,
+    FileText,
+    ShieldAlert,
+    Info
+} from 'lucide-react';
+
+/**
+ * Roles disponibles en el sistema
+ * IMPORTANTE: Estos deben coincidir con el backend
+ */
+export type UserRole = 'admin' | 'manager' | 'user';
+
+/**
+ * Definicion de un item del menu
+ */
+export interface MenuItem {
+    id: string;
+    title: string;
+    path?:string; /* Ruta a la que navega (opcional si tiene children) */
+    icon?:LucideIcon;
+    children?:MenuItem[];
+    requiredRoles?:UserRole[]; /* Roles que pueden ver este item (si no se especifica, visible para todos) */
+    badge?:string | number; /* Badge opcional (ej: "Beta", "Nuevo", número de notificaciones) */
+    disabled?: boolean; /* Si está deshabilitado */
+}
+
+// CONFIGURACIÓN DEL MENÚ
+
+/**
+ * ¿POR QUÉ ESTA ESTRUCTURA?
+ * - Permite crear jerarquías de cualquier profundidad
+ * - Fácil de leer y modificar
+ * - Los IDs permiten estado de expansión persistente
+ * - Los iconos mejoran la UX y accesibilidad visual
+ */
+
+export const menuItems: MenuItem[] = [
+  {
+    id: 'home',
+    title: 'Inicio',
+    path: '/',
+    icon: Home,
+    requiredRoles: ['admin', 'manager', 'user']
+  },
+  {
+    id: 'business-indicators',
+    title: 'Indicadores',
+    path: '/business-indicators',
+    icon: BarChart2,
+    requiredRoles: ['admin', 'manager']
+  },
+  {
+    id: 'sectors',
+    title: 'Sectores',
+    icon: Users,
+    requiredRoles: ['admin', 'manager'],
+    children: [
+      {
+        id: 'sectors-directorio',
+        title: 'Directorio',
+        path: '/teams/directorio'
+      },
+      {
+        id: 'sectors-dat',
+        title: 'D.A.T.',
+        path: '/teams/desarrollo'
+      },
+      {
+        id: 'sectors-rrhh',
+        title: 'Recursos Humanos',
+        path: '/teams/rrhh'
+      },
+      {
+        id: 'sectors-comex',
+        title: 'Comercio Exterior',
+        path: '/teams/comex'
+      },
+      {
+        id: 'sectors-comercial',
+        title: 'Comercial',
+        path: '/teams/comercial',
+        children: [
+          {
+            id: 'comercial-vendedores',
+            title: 'Vendedores',
+            path: '/teams/comercial/vendedores'
+          },
+          {
+            id: 'comercial-asistencia',
+            title: 'Asistencia Técnica',
+            path: '/teams/comercial/asistencia-tecnica'
+          },
+          {
+            id: 'comercial-admin-ventas',
+            title: 'Administración de Ventas',
+            path: '/teams/comercial/admin-ventas'
+          }
+        ]
+      },
+      {
+        id: 'sectors-administracion',
+        title: 'Administración',
+        path: '/teams/administracion',
+        children: [
+          {
+            id: 'admin-pago-proveedores',
+            title: 'Pago a Proveedores',
+            path: '/teams/administracion/pago-proveedores'
+          },
+          {
+            id: 'admin-facturacion',
+            title: 'Facturación',
+            path: '/teams/administracion/facturacion'
+          },
+          {
+            id: 'admin-logistica-inversa',
+            title: 'Logística Inversa',
+            path: '/teams/administracion/logistica-inversa'
+          },
+          {
+            id: 'admin-tesoreria',
+            title: 'Tesorería',
+            path: '/teams/administracion/tesoreria'
+          },
+          {
+            id: 'admin-stock',
+            title: 'Stock',
+            path: '/teams/administracion/stock'
+          }
+        ]
+      }
+    ]
+  },
+  
+  {
+    id: 'tech-inventory',
+    title: 'Inventario Tecnológico',
+    icon: Laptop,
+    requiredRoles: ['admin', 'manager'],
+    children: [
+      {
+        id: 'tech-assets',
+        title: 'Activos',
+        path: '/tech-inventory/assets',
+        icon: Package
+      },
+      {
+        id: 'tech-assignments',
+        title: 'Asignaciones',
+        path: '/tech-inventory/assignments',
+        icon: ClipboardList
+      },
+      {
+        id: 'tech-maintenance',
+        title: 'Mantenimiento',
+        path: '/tech-inventory/maintenance',
+        icon: ShieldAlert
+      },
+      {
+        id: 'tech-reports',
+        title: 'Reportes',
+        path: '/tech-inventory/reports',
+        icon: FileText
+      }
+    ]
+  },
+  
+  {
+    id: 'sf-admin',
+    title: 'SF Administración',
+    icon: Settings,
+    requiredRoles: ['admin'],
+    children: [
+      {
+        id: 'admin-register-user',
+        title: 'Registrar Usuario',
+        path: '/admin/register-user',
+        icon: PlusCircle
+      },
+      {
+        id: 'admin-users',
+        title: 'Listar Usuarios',
+        path: '/admin/users',
+        icon: Users
+      }
+    ]
+  },
+  
+  {
+    id: 'about',
+    title: 'Acerca de',
+    path: '/about',
+    icon: Info,
+    requiredRoles: ['admin', 'manager', 'user']
+  }
+]
+
+// UTILIDADES
+
+/**
+ * ¿POR QUÉ ESTAS FUNCIONES?
+ * - Separan la lógica de negocio de la presentación
+ * - Reutilizables en cualquier componente
+ * - Fáciles de testear
+ * - Type-safe
+ */
+
+/**
+ * Filtra los items del menú según los roles del usuario
+ * @param items - Items del menú
+ * @param userRoles - Roles del usuario actual
+ * @returns Items filtrados que el usuario puede ver
+ */
+export const filterMenuByRoles = ( items: MenuItem[], userRoles: UserRole[]): MenuItem[] => {
+    return items
+        .filter(item => {
+            if(!item.requiredRoles || item.requiredRoles.length === 0) {
+                return true;
+            }
+
+            return item.requiredRoles.some(role => userRoles.includes(role));
+        })
+        .map(item => {
+            if(item.children && item.children.length > 0) {
+                const filteredChildren = filterMenuByRoles(item.children, userRoles);
+
+                if (filteredChildren.length === 0) {
+                    return null;
+                }
+
+                return {
+                    ...item,
+                    children: filteredChildren
+                };
+            }
+
+            return item;
+        })
+        .filter((item): item is MenuItem => item !== null);
+};
+
+/**
+ * Encuentra un item del menú por su path
+ * Útil para breadcrumbs, título de página, etc.
+ */
+export const findMenuItemByPath = (items: MenuItem[], path:string): MenuItem | null => {
+    for( const item of items) {
+        if(item.path === path){
+            return item;
+        }
+
+        if (item.children) {
+            const found = findMenuItemByPath(item.children, path);
+            if (found) return found;
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Obtiene todos los paths del menú (útil para validación de rutas)
+ */
+export const getAllMenuPaths = (items: MenuItem[]): string[] => {
+    const paths: string[] = [];
+
+    const traverse = (menuItems: MenuItem[]) => {
+        menuItems.forEach(item => {
+            if (item.path) {
+                paths.push(item.path);
+            }
+            if (item.children) {
+                traverse(item.children);
+            }
+        });
+    };
+
+    traverse(items);
+    return paths;
+};
+
+/**
+ * Verifica si un path está dentro de un item del menú (útil para "active state")
+ */
+export const isPathActive = (item: MenuItem, currentPath: string): boolean => {
+    // Coincidencia exacta
+    if (item.path === currentPath) {
+        return true;
+    }
+
+    // Si tiene hijos, verificar recursivamente
+    if (item.children) {
+        return item.children.some(child => isPathActive(child, currentPath));
+    }
+
+    return false;
+}
