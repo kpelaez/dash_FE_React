@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import ResponsiveLayout from '../components/Layout/ResponsiveLayout';
 import { 
   Laptop, 
   ShieldCheck, 
@@ -56,7 +55,6 @@ const MobileHomePage = () => {
   };
 
   return (
-    <ResponsiveLayout>
       <div className="space-y-6">
         {/* Hero Section */}
         <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-6 text-white">
@@ -231,7 +229,6 @@ const MobileHomePage = () => {
           </div>
         </div>
       </div>
-    </ResponsiveLayout>
   );
 };
 

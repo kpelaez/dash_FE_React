@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import Layout from '../../components/Layout/Layout';
 import IndicatorCard from '../../components/BusinessIndicators/IndicatorCard';
 import ChartIndicatorCard from '../../components/BusinessIndicators/ChartIndicatorCard';
 import LoadingSpinner from '../../components/UI/LoadingSpinner';
@@ -38,29 +37,24 @@ const IndicatorsComparisonPage: React.FC = () => {
 
   if (loading) {
     return (
-      <Layout>
         <div className="min-h-screen flex items-center justify-center">
           <LoadingSpinner message="Cargando comparación de diseños..." />
         </div>
-      </Layout>
     );
   }
 
   if (error) {
     return (
-      <Layout>
         <div className="min-h-screen flex items-center justify-center">
           <ErrorMessage 
             message={error} 
             onRetry={handleRefresh}
           />
         </div>
-      </Layout>
     );
   }
 
   return (
-    <Layout>
       <div className="indicators-comparison-page p-4 md:p-6 lg:p-8">
         {/* Header */}
         <div className="mb-6 md:mb-8">
@@ -311,7 +305,6 @@ const IndicatorsComparisonPage: React.FC = () => {
           </div>
         </div>
       </div>
-    </Layout>
   );
 };
 

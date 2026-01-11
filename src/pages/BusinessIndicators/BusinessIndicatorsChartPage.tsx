@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import Layout from '../../components/Layout/Layout';
 import ChartIndicatorCard from '../../components/BusinessIndicators/ChartIndicatorCard';
 import LoadingSpinner from '../../components/UI/LoadingSpinner';
 import ErrorMessage from '../../components/UI/ErrorMessage';
@@ -62,29 +61,24 @@ const BusinessIndicatorsChartPage: React.FC = () => {
 
   if (loading) {
     return (
-      <Layout>
         <div className="min-h-screen flex items-center justify-center">
           <LoadingSpinner message="Cargando indicadores con gráficos..." />
         </div>
-      </Layout>
     );
   }
 
   if (error) {
     return (
-      <Layout>
         <div className="min-h-screen flex items-center justify-center">
           <ErrorMessage 
             message={error} 
             onRetry={handleRefresh}
           />
         </div>
-      </Layout>
     );
   }
 
   return (
-    <Layout>
       <div className="business-indicators-chart-page p-4 md:p-6 lg:p-8">
         {/* Header */}
         <div className="mb-6 md:mb-8">
@@ -265,7 +259,6 @@ const BusinessIndicatorsChartPage: React.FC = () => {
           </div>
         </div>
       </div>
-    </Layout>
   );
 };
 
