@@ -134,11 +134,13 @@ const CalendarView = ({
       {/* Calendario */}
       <div className="fullcalendar-wrapper">
         <FullCalendar
+          key={currentMonth.toISOString()}
+          ref={calendarRef}
           plugins={[dayGridPlugin, interactionPlugin]}
           initialView="dayGridMonth"
           locale={esLocale}
           headerToolbar={false}
-          initialDate={new Date()}
+          initialDate={currentMonth}
           events={events}
           selectable={true}
           selectMirror={true}

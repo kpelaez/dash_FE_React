@@ -1,7 +1,7 @@
 // src/pages/ShiftSchedulePage/ShiftSchedulePage.tsx
 import { useState, useEffect } from 'react';
 import { format, startOfMonth, endOfMonth, addMonths } from 'date-fns';
-import Layout from '../../components/Layout/Layout';
+import Layout from '../../components/Layout/MainLayout';
 import CalendarView from './components/CalendarView';
 import StatsPanel from './components/StatsPanel';
 import AlertsBanner from './components/AlertsBanner';
@@ -13,33 +13,41 @@ const ShiftSchedulePage = () => {
   const [shifts, setShifts] = useState<ShiftSchedule[]>([]);
   const [stats, setStats] = useState<ShiftScheduleStats[]>([]);
   const [alerts, setAlerts] = useState<ShiftAlert[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingShifts, setLoadingShifts] = useState(true); // ← Separado
+  const [loadingStats, setLoadingStats] = useState(true);   // ← Separado
   const [error, setError] = useState<string | null>(null);
 
   // Cargar datos
   const loadData = async () => {
     try {
-      setLoading(true);
       setError(null);
-
       const startDate = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
       const endDate = format(endOfMonth(currentMonth), 'yyyy-MM-dd');
 
-      // Cargar en paralelo
-      const [shiftsData, statsData, alertsData] = await Promise.all([
-        shiftScheduleService.getShiftSchedules(startDate, endDate),
+      // Cargar shifts primero (lo más importante)
+      setLoadingShifts(true);
+      shiftScheduleService.getShiftSchedules(startDate, endDate)
+        .then(data => {
+          setShifts(data);
+          setLoadingShifts(false);
+        })
+        .catch(err => console.error('Error loading shifts:', err));
+
+      // Cargar stats y alerts en paralelo (menos crítico)
+      setLoadingStats(true);
+      Promise.all([
         shiftScheduleService.getStats(startDate, endDate),
         shiftScheduleService.getAlerts()
-      ]);
+      ])
+        .then(([statsData, alertsData]) => {
+          setStats(statsData);
+          setAlerts(alertsData.alerts);
+          setLoadingStats(false);
+        })
+        .catch(err => console.error('Error loading stats:', err));
 
-      setShifts(shiftsData);
-      setStats(statsData);
-      setAlerts(alertsData.alerts);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error cargando datos');
-      console.error('Error loading shift data:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -99,13 +107,15 @@ const ShiftSchedulePage = () => {
         )}
 
         {/* Estadísticas */}
-        {stats.length > 0 && (
+        {loadingStats ? (
+          <div className="bg-gray-100 rounded-lg h-32 animate-pulse" />
+        ) : stats.length > 0 ? (
           <StatsPanel stats={stats} currentMonth={currentMonth} />
-        )}
+        ) : null}
 
         {/* Calendario */}
         <div className="bg-white rounded-lg shadow-lg p-6">
-          {loading ? (
+          {loadingShifts && shifts.length === 0 ? (
             <div className="flex justify-center items-center h-96">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
             </div>
@@ -118,6 +128,15 @@ const ShiftSchedulePage = () => {
               onShiftUpdated={handleShiftUpdated}
               onShiftDeleted={handleShiftDeleted}
             />
+          )}
+
+          {/* Indicador de carga superpuesto */}
+          {loadingShifts && shifts.length > 0 && (
+            <div className="absolute top-4 right-4">
+              <div className="bg-white rounded-full p-2 shadow-lg">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-600"></div>
+              </div>
+            </div>
           )}
         </div>
       </div>
