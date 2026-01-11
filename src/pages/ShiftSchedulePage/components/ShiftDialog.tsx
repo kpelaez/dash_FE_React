@@ -37,10 +37,10 @@ const isMyShift = existingShift?.user_id === currentUserId;
 
   useEffect(() => {
     if (existingShift) {
-      setShiftType(existingShift.shift_type);
+      // setShiftType(existingShift.shift_type);
       setNotes(existingShift.notes || '');
     } else {
-      setShiftType('regular');
+      // setShiftType('regular');
       setNotes('');
     }
     setError(null);
@@ -65,7 +65,7 @@ const isMyShift = existingShift?.user_id === currentUserId;
       if (isEditing && existingShift) {
         // Actualizar turno existente
         await shiftScheduleService.updateShiftSchedule(existingShift.id, {
-          shift_type: shiftType,
+          // shift_type: shiftType,
           notes: notes.trim() || undefined,
         });
         onShiftUpdated();
@@ -73,7 +73,7 @@ const isMyShift = existingShift?.user_id === currentUserId;
         // Crear nuevo turno
         const newShift: ShiftScheduleCreate = {
           date: selectedDate,
-          shift_type: shiftType,
+          shift_type: 'early',
           notes: notes.trim() || undefined,
         };
         await shiftScheduleService.createShiftSchedule(newShift);
@@ -167,20 +167,6 @@ const isMyShift = existingShift?.user_id === currentUserId;
                 <div className="text-2xl mb-1">🌅</div>
                 <div className="font-semibold">Early</div>
                 <div className="text-xs">7:00 AM</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setShiftType('regular')}
-                className={`p-4 rounded-lg border-2 transition-all ${
-                  shiftType === 'regular'
-                    ? 'border-blue-500 bg-blue-50 text-blue-700'
-                    : 'border-gray-300 bg-white text-gray-700 hover:border-blue-300'
-                }`}
-              >
-                <div className="text-2xl mb-1">☀️</div>
-                <div className="font-semibold">Regular</div>
-                <div className="text-xs">9:00 AM</div>
               </button>
             </div>
           </div>

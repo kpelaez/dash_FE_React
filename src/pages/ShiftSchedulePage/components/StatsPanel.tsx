@@ -45,12 +45,6 @@ const StatsPanel = ({ stats, currentMonth }: StatsPanelProps) => {
                 </span>
               </div>
               
-              <div className="flex justify-between">
-                <span className="text-gray-600">Regular (9am):</span>
-                <span className="font-medium text-blue-600">
-                  {stat.regular_shifts}
-                </span>
-              </div>
               
               <div className="pt-2 border-t border-gray-200">
                 <div className="flex justify-between items-center">

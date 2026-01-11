@@ -36,11 +36,11 @@ const CalendarView = ({
   // Convertir shifts a eventos de FullCalendar
   const events = shifts.map((shift) => ({
     id: shift.id.toString(),
-    title: `${shift.shift_type === 'early' ? '🌅' : '☀️'} ${shift.user_full_name || 'Usuario'}`,
+    title: `🌅  ${shift.user_full_name || 'Usuario'}`,
     start: shift.date,
     allDay: true,
-    backgroundColor: shift.shift_type === 'early' ? '#f97316' : '#3b82f6',
-    borderColor: shift.shift_type === 'early' ? '#ea580c' : '#2563eb',
+    backgroundColor: '#f97316',
+    borderColor: '#ea580c',
     extendedProps: {
       shift: shift,
     },
@@ -161,10 +161,6 @@ const CalendarView = ({
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 bg-orange-500 rounded"></div>
           <span className="text-gray-700">🌅 Turno Early (7:00 AM)</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-blue-500 rounded"></div>
-          <span className="text-gray-700">☀️ Turno Regular (9:00 AM)</span>
         </div>
       </div>
 

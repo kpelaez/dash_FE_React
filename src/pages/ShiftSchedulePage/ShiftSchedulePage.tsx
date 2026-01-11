@@ -48,7 +48,15 @@ const ShiftSchedulePage = () => {
   }, [currentMonth]);
 
   const handleMonthChange = (direction: 'prev' | 'next') => {
-    setCurrentMonth(prev => addMonths(prev, direction === 'next' ? 1 : -1));
+    setCurrentMonth(prev => {
+    const newDate = new Date(prev);
+    if (direction === 'next') {
+      newDate.setMonth(newDate.getMonth() + 1);
+    } else {
+      newDate.setMonth(newDate.getMonth() - 1);
+    }
+    return newDate;
+    });
   };
 
   const handleShiftCreated = () => {
