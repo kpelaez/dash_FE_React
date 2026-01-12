@@ -81,7 +81,7 @@ function App() {
           <Route 
             path="/inventory/tech-assets" 
             element={
-              <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager']}>
+              <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager', 'user']}>
                 <TechAssetsPage />
               </RoleProtectedRoute>
             } 
@@ -154,14 +154,14 @@ function App() {
           />
 
           {/* Mis activos - accesible para todos los usuarios autenticados */}
-          {/* <Route 
+          <Route 
             path="/inventory/my-assets" 
             element={
               <ProtectedRoute>
-                <MyAssetsPage />
+                <TechAssetsPage />
               </ProtectedRoute>
             } 
-          /> */}
+          />
 
           {/* Reportes de inventario - requiere permisos de gestión */}
           {/* <Route 

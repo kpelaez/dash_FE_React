@@ -15,7 +15,7 @@ interface MenuItems {
 const menuItems: MenuItems[] = [
     {
       title: 'Inicio',
-      requiredRoles: ['admin','manager', 'user'],
+      requiredRoles: ['admin','manager', 'user', 'inventory_manager'],
       path: '/',
     },
     {
@@ -25,11 +25,12 @@ const menuItems: MenuItems[] = [
     },
     {
       title: 'Inventario Tecnologico',
-      requiredRoles: ['admin', 'manager', 'inventory_manager'],
+      requiredRoles: ['admin', 'manager', 'inventory_manager', 'user'],
       icon: <Package size={18} />,
       children: [
         {
           title: 'Dashboard',
+          requiredRoles: ['admin', 'manager', 'inventory_manager'],
           path: '/inventory/dashboard',
           icon: <div className="w-2 h-2 rounded-full bg-blue-400 mr-2"></div>
         },
@@ -40,11 +41,13 @@ const menuItems: MenuItems[] = [
         },
         {
           title: 'Asignaciones',
+          requiredRoles: ['admin', 'manager', 'inventory_manager'],
           path: '/inventory/assignments',
           icon: <Users size={16} />
         },
         {
           title: 'Mantenimiento',
+          requiredRoles: ['admin', 'manager', 'inventory_manager'],
           path: '/inventory/maintenance',
           icon: <Settings size={16} />
         },

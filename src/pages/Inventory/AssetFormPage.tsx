@@ -6,7 +6,6 @@ import CurrencyInput from '../../components/UI/CurrencyInput';
 import {
   Save,
   X,
-  DollarSign,
   Tag,
   AlertCircle,
   Laptop,
@@ -64,6 +63,28 @@ const statuses = [
   { value: 'out_of_order', label: 'Fuera de Servicio'},
 ];
 
+
+// BUG FIX #2: Conversión de fechas ISO a formato YYYY-MM-DD para inputs
+/**
+ * Convierte una fecha ISO string a formato YYYY-MM-DD para input type="date"
+ * @param isoDate Fecha en formato ISO (ej: "2024-01-15T00:00:00Z")
+ * @returns Fecha en formato YYYY-MM-DD (ej: "2024-01-15") o string vacío si es inválido
+ */
+const formatDateForInput = (isoDate: string | undefined | null): string => {
+  if (!isoDate){
+    return '';
+  }
+
+  try {
+    // Extraer solo la parte de la fecha (YYYY-MM-DD) ignorando la hora
+    const datePart = isoDate.split('T')[0];
+    return datePart;
+  } catch (error) {
+    console.error('Error formateando fecha:', error);
+    return '';
+  }
+};
+
 const AssetFormPage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -83,8 +104,11 @@ const AssetFormPage: React.FC = () => {
 
   // Cargar datos del activo si estamos editando
   useEffect(() => {
+
     if (isEditing && id) {
       const asset = techAssets.find(a => a.id === parseInt(id));
+      
+
       if (asset) {
         setFormData({
           name: asset.name || '',
@@ -94,17 +118,19 @@ const AssetFormPage: React.FC = () => {
           serial_number: asset.serial_number || '',
           asset_tag: asset.asset_tag || '',
           status: asset.status || AssetStatus.AVAILABLE,
-          purchase_date: asset.purchase_date || '',
+          purchase_date: formatDateForInput(asset.purchase_date),
           purchase_price: asset.purchase_price || 0,
           location: asset.location || '',
           description: asset.description || '',
           supplier: asset.supplier || '',
           invoice: asset.invoice || '',
-          warranty_expiry: asset.warranty_expiry || '',
+          warranty_expiry: formatDateForInput(asset.warranty_expiry),
           specifications: asset.specifications || '',
           notes: asset.notes || '',
           });
-      }
+        } else {
+          console.log('❌ No se encontró el asset con id:', id);
+        }
     }
   }, [isEditing, id, techAssets]);
 

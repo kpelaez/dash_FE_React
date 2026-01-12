@@ -77,13 +77,24 @@ class InventoryApiService {
                 throw new Error(errorMessage);
             }
 
-            // Manejar respuestas vacías (como 204)
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-                return await response.json();
-            } else {
-                return {} as T;
+            // BUG FIX: Verificar si la respuesta tiene contenido antes de parsear JSON
+            // Status 204 No Content no tiene body
+            if (response.status === 204 || response.headers.get('content-length') === '0') {
+                console.log('Respuesta sin contenido (204 No Content)');
+                return undefined as T;  // Retornar undefined para void responses
             }
+
+            // Verificar si hay contenido en la respuesta
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                // Si no es JSON, retornar texto plano o undefined
+                const text = await response.text();
+                return (text || undefined) as T;
+            }
+
+            // Solo parsear JSON si hay contenido
+            const data = await response.json();
+            return data;
             
         } catch (error) {
             console.error('API request failed:', error);
