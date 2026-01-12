@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import {useInventoryStore} from '../../stores/inventoryStore';
 import Layout from '../../components/Layout/Layout';
 import { TechAsset } from '../../types/inventory';
-import { Package, Plus, Search, Filter, Download, Upload, Edit, Trash2, Eye, MapPin, DollarSign, AlertCircle, Locate, User } from 'lucide-react';
+import { Package, Plus, Search, Filter, Download, Upload, Edit, Trash2, Eye, MapPin, AlertCircle, Locate, User } from 'lucide-react';
 import { useSearchParams, Link } from 'react-router-dom';
 
 
@@ -46,6 +46,7 @@ const TechAssetsPage = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedAssets, setSelectedAssets] = useState<number[]>([]);
+  const [filterAssignment, setFilterAssignment] = useState<string>('');
 
   // Usando hook Propio useInventoryStore
   const techAssets = useInventoryStore(state => state.techAssets);
@@ -78,11 +79,15 @@ const TechAssetsPage = () => {
       asset.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
       asset.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
       asset.serial_number.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesAssignment = filterAssignment === '' ||
+    (filterAssignment === 'assigned' && asset.user_assigned) ||
+    (filterAssignment === 'unassigned' && !asset.user_assigned);
 
     const matchesStatus = !selectedStatus || asset.status === selectedStatus;
     const matchesCategory = !selectedCategory || asset.category === selectedCategory;
 
-    return matchesSearch && matchesStatus && matchesCategory;
+    return matchesSearch && matchesStatus && matchesCategory && matchesAssignment;
   });
 
   const handleDeleteAsset = async (assetId: number, assetName: string) => {
@@ -274,6 +279,20 @@ const TechAssetsPage = () => {
                     <option value="accessory">Accesorio</option>
                   </select>
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Asignaciones
+                  </label>
+                  <select
+                    value={filterAssignment}
+                    onChange={(e) => setFilterAssignment(e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  >
+                    <option value="">Todos</option>
+                    <option value="assigned">Asignados</option>
+                    <option value="unassigned">Sin asignar</option>
+                  </select>
+                </div>
 
                 <div className="flex items-end">
                   <button
@@ -374,6 +393,9 @@ const TechAssetsPage = () => {
                       Estado
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Asignado a
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Sector
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -428,6 +450,18 @@ const TechAssetsPage = () => {
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[asset.status]}`}>
                           {statusLabels[asset.status]}
                         </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {asset.user_assigned ? (
+                          <div className="flex items-center">
+                            <User className="h-4 w-4 text-blue-500 mr-2" />
+                            <span className="text-gray-900 font-medium">
+                              {asset.user_assigned}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 italic">Sin asignar</span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         <div className="flex items-center">

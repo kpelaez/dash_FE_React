@@ -19,6 +19,7 @@ export interface TechAsset {
     warranty_provider?: string;
     location ?:string;
     department ?: string;
+    user_assigned ?: string;
     specifications ?: string;
     notes ?: string;
     created_at: string;
