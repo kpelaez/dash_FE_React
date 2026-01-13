@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import {useInventoryStore} from '../../stores/inventoryStore';
 import Layout from '../../components/Layout/Layout';
 import { TechAsset } from '../../types/inventory';
-import { Package, Plus, Search, Filter, Download, Upload, Edit, Trash2, Eye, MapPin, AlertCircle, Locate, User } from 'lucide-react';
+import  AssignmentHistoryModal  from '../../components/Inventory/AssignmentHistoryModal';
+import { Package, Plus, Search, Filter, Download, Upload, Edit, Trash2, Eye, MapPin, AlertCircle, Locate, User, History } from 'lucide-react';
 import { useSearchParams, Link } from 'react-router-dom';
 
 
@@ -47,6 +48,13 @@ const TechAssetsPage = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedAssets, setSelectedAssets] = useState<number[]>([]);
   const [filterAssignment, setFilterAssignment] = useState<string>('');
+
+  // States para History Modal
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [selectedAssetForHistory, setSelectedAssetForHistory] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
 
   // Usando hook Propio useInventoryStore
   const techAssets = useInventoryStore(state => state.techAssets);
@@ -125,6 +133,16 @@ const TechAssetsPage = () => {
       default:
         break;
     }
+  };
+
+  const handleShowHistory = (assetId: number, assetName: string) => {
+    setSelectedAssetForHistory({ id: assetId, name: assetName });
+    setIsHistoryModalOpen(true);
+  };
+
+  const handleCloseHistoryModal = () => {
+    setIsHistoryModalOpen(false);
+    setSelectedAssetForHistory(null);
   };
 
   const toggleAssetSelection = (assetId: number) => {
@@ -492,6 +510,14 @@ const TechAssetsPage = () => {
                           >
                             <Eye className="h-4 w-4" />
                           </Link>
+                          <button
+                            onClick={() => handleShowHistory(asset.id, asset.name)}
+                            className="text-purple-600 hover:text-purple-900"
+                            title="Ver historial de asignaciones"
+                          >
+                            <History className="h-4 w-4" />
+                          </button>
+
                           {asset.status === 'available' && (
                             <Link
                               to={`/inventory/assignments/new?asset_id=${asset.id}`}
@@ -558,6 +584,15 @@ const TechAssetsPage = () => {
           </div>
         </div>
       </div>
+      {/* Modal de historial de asignaciones */}
+      {selectedAssetForHistory && (
+        <AssignmentHistoryModal
+          isOpen={isHistoryModalOpen}
+          onClose={handleCloseHistoryModal}
+          assetId={selectedAssetForHistory.id}
+          assetName={selectedAssetForHistory.name}
+        />
+      )}
     </Layout>
   );
 };
