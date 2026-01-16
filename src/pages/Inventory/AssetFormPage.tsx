@@ -38,11 +38,11 @@ const initialFormData: TechAssetCreate = {
 
 const categories = [
   { value: 'Notebook', label: 'Notebook' },
-  { value: 'PC_Desktop', label: 'PC Desktop' },
+  { value: 'Desktop', label: 'PC Desktop' },
   { value: 'Monitor', label: 'Monitor' },
   { value: 'Impresora', label: 'Impresora' },
   { value: 'Celular', label: 'Celular' },
-  { value: 'Server', label: 'Servidor' },
+  { value: 'Servidor', label: 'Servidor' },
   { value: 'Accessorio', label: 'Accesorio' },
   { value: 'Tablet', label: 'Tablet'},
   { value: 'Mouse', label: 'Mouse'},
@@ -216,6 +216,7 @@ const AssetFormPage: React.FC = () => {
       alert('Primero selecciona una categoría');
       return;
     }
+    console.log("La categoria enviada es: ", formData.category); //debug
 
     setIsGeneratingTag(true);
     try {
