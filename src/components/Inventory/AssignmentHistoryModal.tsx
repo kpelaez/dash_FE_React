@@ -83,6 +83,25 @@ const AssignmentHistoryModal: React.FC<AssignmentHistoryModalProps> = ({
     });
   };
 
+  const formatAssignmentReason = (reason: string | undefined): string => {
+  if (!reason) return '—';
+  
+  const reasonMap: Record<string, string> = {
+    'work_assignment': 'Asignación de trabajo',
+    'permanent_assignment': 'Asignación permanente',
+    'temporary_assignment': 'Asignación temporal',
+    'project': 'Asignación por proyecto',
+    'replacement': 'Reemplazo de equipo',
+    'new_hire': 'Nuevo empleado',
+    'upgrade': 'Actualización de equipo',
+    'testing': 'Equipo de prueba',
+    'training': 'Capacitación',
+    'other': 'Otro motivo'
+  };
+
+  return reasonMap[reason] || reason;
+};
+
   const calculateDuration = (startDate: string, endDate?: string) => {
     const start = new Date(startDate);
     const end = endDate ? new Date(endDate) : new Date();
@@ -271,7 +290,7 @@ const AssignmentHistoryModal: React.FC<AssignmentHistoryModalProps> = ({
                                 <FileText className="h-4 w-4 mr-2 text-orange-500 mt-0.5 flex-shrink-0" />
                                 <div>
                                   <span className="font-medium">Motivo:</span>
-                                  <span className="ml-1">{assignment.assignment_reason}</span>
+                                  <span className="ml-1">{formatAssignmentReason(assignment.assignment_reason)}</span>
                                 </div>
                               </div>
                             )}

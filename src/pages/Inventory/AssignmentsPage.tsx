@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Layout from '../../components/Layout/Layout';
 import {
   Users,
@@ -365,9 +365,6 @@ const AssignmentsPage = () => {
                           </div>
                           <div className="ml-3">
                             <div className="text-sm font-medium text-gray-900">
-                              {assignment.assigned_by_name}
-                            </div>
-                            <div className="text-sm text-gray-500">
                               {assignment.assigned_to_name}
                             </div>
                           </div>
