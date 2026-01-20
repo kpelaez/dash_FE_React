@@ -116,10 +116,16 @@ export interface AssetAssignment {
   return_notes?: string;
   created_at: string;
   updated_at?: string;
-  // Datos extendidos
+  // Datos extendidos del activo tecnologico
   tech_asset_name?: string;
   tech_asset_serial?: string;
+  tech_asset_brand?: string;        
+  tech_asset_model?: string;        
+  tech_asset_asset_tag?: string;
+  
+  // Datos extendidos de usuarios
   assigned_to_name?: string;
+  assigned_to_email?: string;
   assigned_by_name?: string;
 }
 

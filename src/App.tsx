@@ -17,6 +17,7 @@ import MaintenancePage from './pages/Inventory/MaintenancePage';
 import MaintenanceFormPage from './pages/Inventory/MaintenanceFormPage';
 import AssetFormPage from './pages/Inventory/AssetFormPage';
 import AssignmentFormPage from './pages/Inventory/AssignmentFormPage';
+import MyAssetsPage from './pages/Inventory/MyAssetsPage';
 
 // import MyAssetsPage from './pages/Inventory/MyAssetsPage';
 // import InventoryReportsPage from './pages/Inventory/InventoryReportsPage';
@@ -158,7 +159,7 @@ function App() {
             path="/inventory/my-assets" 
             element={
               <ProtectedRoute>
-                <TechAssetsPage />
+                <MyAssetsPage />
               </ProtectedRoute>
             } 
           />
