@@ -18,7 +18,7 @@ import {
 } from '../types/inventory';
 
 // Configuracion base de la API
-const API_BASE_URL =  'http://127.0.0.1:8000' //|| import.meta.env.BASE_URL
+const API_BASE_URL =  'http://127.0.0.1:8000' //|| import.meta.env.VITE_API_URL
 
 class InventoryApiService {
     private getAuthHeaders(): HeadersInit {
@@ -112,7 +112,7 @@ class InventoryApiService {
         if (filters?.location) params.append('location', filters.location);
 
         const queryString = params.toString();
-        return this.request<TechAsset[]>(`/inventory/tech-assets${queryString ? `?${queryString}` : ''}`);
+        return this.request<TechAsset[]>(`/inventory/tech-assets${queryString ? `?${queryString}` : '/'}`);
     }
 
     async  getTechAsset(id: number): Promise<TechAsset> {

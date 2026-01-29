@@ -1,239 +1,117 @@
 // src/pages/Inventory/AssetFormPage.tsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import Layout from '../../components/Layout/Layout';
-import CurrencyInput from '../../components/UI/CurrencyInput';
-import {
-  Save,
-  X,
-  Tag,
-  AlertCircle,
-  Laptop,
-  Loader2,
-} from 'lucide-react';
-import {useInventoryStore} from '../../stores/inventoryStore';
-import { TechAssetCreate, TechAssetUpdate, AssetCategory, AssetStatus } from '../../types/inventory';
-import inventoryApi from '../../services/inventoryApi';
-
-
-const initialFormData: TechAssetCreate = {
-  name: '',
-  category: AssetCategory.NOTEBOOK,
-  brand: '',
-  model: '',
-  serial_number: '',
-  asset_tag: '',
-  status: AssetStatus.AVAILABLE,
-  purchase_date: '',
-  purchase_price: 0,
-  location: '',
-  description: '',
-  //
-  supplier: '',
-  invoice: '',
-  warranty_expiry:'',
-  specifications: '',
-  notes: '',
-};
-
-const categories = [
-  { value: 'Notebook', label: 'Notebook' },
-  { value: 'Desktop', label: 'PC Desktop' },
-  { value: 'Monitor', label: 'Monitor' },
-  { value: 'Impresora', label: 'Impresora' },
-  { value: 'Celular', label: 'Celular' },
-  { value: 'Servidor', label: 'Servidor' },
-  { value: 'Accessorio', label: 'Accesorio' },
-  { value: 'Tablet', label: 'Tablet'},
-  { value: 'Mouse', label: 'Mouse'},
-  { value: 'Teclado', label: 'Teclado'},
-  { value: 'Kit_teclado_mouse', label: 'Kit de teclado y mouse'},
-  { value: 'Software', label: 'Software'},
-  { value: 'Cable', label: 'Cable'},
-  { value: 'Router', label: 'Router'},
-  { value: 'Otro', label: 'Otro'},
-];
-
-
-const statuses = [
-  { value: 'available', label: 'Disponible' },
-  { value: 'assigned', label: 'Asignado' },
-  { value: 'in_maintenance', label: 'En Mantenimiento' },
-  { value: 'retired', label: 'Retirado' },
-  { value: 'out_of_order', label: 'Fuera de Servicio'},
-];
-
-
-// BUG FIX #2: Conversión de fechas ISO a formato YYYY-MM-DD para inputs
-/**
- * Convierte una fecha ISO string a formato YYYY-MM-DD para input type="date"
- * @param isoDate Fecha en formato ISO (ej: "2024-01-15T00:00:00Z")
- * @returns Fecha en formato YYYY-MM-DD (ej: "2024-01-15") o string vacío si es inválido
- */
-const formatDateForInput = (isoDate: string | undefined | null): string => {
-  if (!isoDate){
-    return '';
-  }
-
-  try {
-    // Extraer solo la parte de la fecha (YYYY-MM-DD) ignorando la hora
-    const datePart = isoDate.split('T')[0];
-    return datePart;
-  } catch (error) {
-    console.error('Error formateando fecha:', error);
-    return '';
-  }
-};
+import { Tag, Loader2 } from 'lucide-react';
+import { FormInput, FormSelect, FormTextarea } from '../../components/Form';
+import { 
+  techAssetCreateSchema, 
+  type TechAssetCreateFormData 
+} from '../../schemas/inventorySchemas';
+import { AssetCategory, AssetStatus } from '../../types/inventory';
+import { useInventoryStore } from '../../stores/inventoryStore';
+import inventoryApi from '../../services/inventoryApi'
 
 const AssetFormPage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const isEditing = Boolean(id);
-
-  const [formData, setFormData] = useState<TechAssetCreate>(initialFormData);
-  const [errors, setErrors] = useState<Partial<TechAssetCreate>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const isEditMode = Boolean(id);
+  
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(isEditMode);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [isGeneratingTag, setIsGeneratingTag] = useState(false);
 
-
+  // Obtener funciones del store
   const createTechAsset = useInventoryStore(state => state.createTechAsset);
   const updateTechAsset = useInventoryStore(state => state.updateTechAsset);
-  const techAssets = useInventoryStore(state => state.techAssets)
-  const error = useInventoryStore(state => state.error)
+  const techAssets = useInventoryStore(state => state.techAssets);
 
+  // Configurar React Hook Form con validación de Zod
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+    watch,
+    setValue,
+  } = useForm<TechAssetCreateFormData>({
+    resolver: zodResolver(techAssetCreateSchema),
+    defaultValues: {
+      status: AssetStatus.AVAILABLE,
+      purchase_date: new Date().toISOString().split('T')[0],
+    },
+  });
 
-  // Cargar datos del activo si estamos editando
+  // Watch category para el botón de generar tag
+  const selectedCategory = watch('category');
+
+  // Cargar datos si es edición
   useEffect(() => {
-
-    if (isEditing && id) {
-      const asset = techAssets.find(a => a.id === parseInt(id));
+    if (isEditMode && id) {
+      loadAssetData(parseInt(id));
+    }
+  }, [id, isEditMode]);
+  
+  const loadAssetData = (assetId: number) => {
+    try {
+      setIsLoadingData(true);
       
-
-      if (asset) {
-        setFormData({
-          name: asset.name || '',
-          category: asset.category || AssetCategory.OTRO,
-          brand: asset.brand || '',
-          model: asset.model || '',
-          serial_number: asset.serial_number || '',
-          asset_tag: asset.asset_tag || '',
-          status: asset.status || AssetStatus.AVAILABLE,
-          purchase_date: formatDateForInput(asset.purchase_date),
-          purchase_price: asset.purchase_price || 0,
-          location: asset.location || '',
-          description: asset.description || '',
-          supplier: asset.supplier || '',
-          invoice: asset.invoice || '',
-          warranty_expiry: formatDateForInput(asset.warranty_expiry),
-          specifications: asset.specifications || '',
-          notes: asset.notes || '',
-          });
-        } else {
-          console.log('❌ No se encontró el asset con id:', id);
-        }
-    }
-  }, [isEditing, id, techAssets]);
-
-  const validateForm = (): boolean => {
-    const newErrors: Partial<TechAssetCreate> = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = 'El nombre es requerido';
-    }
-
-    if (!formData.category) {
-      newErrors.category = AssetCategory._ERROR_MESSAGE;
-    }
-
-    if (!formData.brand.trim()) {
-      newErrors.brand = 'La marca es requerida';
-    }
-
-    if (!formData.model.trim()) {
-      newErrors.model = 'El modelo es requerido';
-    }
-
-    if (!formData.serial_number.trim()) {
-      newErrors.serial_number = 'El número de serie es requerido';
-    }
-
-    if (!formData.asset_tag) {
-      newErrors.asset_tag = 'La etiqueta del activo es requerida';
-    }
-
-    if (!formData.purchase_date) {
-      newErrors.purchase_date = 'La fecha de compra es requerida';
-    }
-
-    if (!formData.purchase_price || formData.purchase_price <= 0) {
-      newErrors.purchase_price = -1 //'El precio de compra debe ser mayor a 0';
-    }
-
-    if (!formData.location || !formData.location.trim()) {
-      newErrors.location = 'La ubicación es requerida';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-
-    if(name != 'purchase_price') {
-      setFormData(prev => ({
-        ...prev,
-        [name]: name === 'purchase_price' ? parseFloat(value) || 0 : value
-      }));
-    }
-
-    // Limpiar error del campo si existe
-    if (errors[name as keyof TechAssetCreate]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: undefined
-      }));
+      // Buscar el activo en el store
+      const asset = techAssets.find(a => a.id === assetId);
+      
+      if (!asset) {
+        setSubmitError('Activo no encontrado');
+        setIsLoadingData(false);
+        return;
+      }
+      
+      // Llenar el formulario con los datos existentes
+      reset({
+        name: asset.name,
+        description: asset.description || '',
+        brand: asset.brand,
+        model: asset.model,
+        serial_number: asset.serial_number,
+        asset_tag: asset.asset_tag || '',
+        category: asset.category,
+        status: asset.status,
+        purchase_price: asset.purchase_price || 0,
+        purchase_date: asset.purchase_date ? asset.purchase_date.split('T')[0] : '',
+        supplier: asset.supplier || '',
+        invoice: asset.invoice || '',
+        warranty_expiry: asset.warranty_expiry ? asset.warranty_expiry.split('T')[0] : '',
+        warranty_provider: asset.warranty_provider || '',
+        location: asset.location || '',
+        department: asset.department || '',
+        specifications: asset.specifications || '',
+        notes: asset.notes || '',
+      });
+    } catch (error) {
+      console.error('Error cargando activo:', error);
+      setSubmitError('Error al cargar los datos del activo');
+    } finally {
+      setIsLoadingData(false);
     }
   };
 
-  const handlePriceChange = (name: string, value: number) => {
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-
-    // limpiar error del campo si existe
-    if (errors[name as keyof TechAssetCreate]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: undefined
-      }));
-    }
-  };
-
+  // Función para generar asset tag
   const generateAssetTag = async () => {
-    if (!formData.category) {
+    if (!selectedCategory) {
       alert('Primero selecciona una categoría');
       return;
     }
-    console.log("La categoria enviada es: ", formData.category); //debug
+    console.log("La categoria enviada es: ", selectedCategory); //debug
 
     setIsGeneratingTag(true);
     try {
-      const response = await inventoryApi.generateAssetTag(formData.category);
+      const response = await inventoryApi.generateAssetTag(selectedCategory);
 
-      setFormData(prev => ({
-      ...prev,
-      asset_tag: response.asset_tag
-      }));
-
-      // Limpiar error si existía
-      if (errors.asset_tag) {
-        setErrors(prev => ({
-          ...prev,
-          asset_tag: undefined
-        }));
-      }
+      setValue('asset_tag', response.asset_tag)
+      
+      console.log('✅ Tag generado:', response.asset_tag);
     } catch (error) {
       console.error('Error generando asset tag: ',error);
       alert(`Error al generar el codigo del activo: ${error instanceof Error ? error.message : 'Error desconocido'}`);
@@ -242,503 +120,370 @@ const AssetFormPage: React.FC = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
-
-    setIsSubmitting(true);
-
+  const onSubmit = async (data: TechAssetCreateFormData) => {
     try {
-      // Asegurar que los datos están en el formato correcto
-      const dataToSubmit: TechAssetCreate = {
-        name: formData.name.trim(),
-        category: formData.category,
-        brand: formData.brand.trim(),
-        model: formData.model.trim(),
-        serial_number: formData.serial_number.trim(),
-        asset_tag: formData.asset_tag?.trim(),
-        status: formData.status,
-        purchase_date: new Date(formData.purchase_date).toISOString(),
-        purchase_price: Number(formData.purchase_price) || 0,
-        location: formData.location?.trim(),
-        description: formData.description || '',
-        supplier: formData.supplier || '',
-        invoice: formData.invoice || '',
-        warranty_expiry: formData.warranty_expiry && formData.warranty_expiry.trim() ? new Date(formData.warranty_expiry).toISOString() : undefined,
-        specifications: formData.specifications || '',
-        notes:  formData.notes || '',
-      };
-
-      console.log('Datos limpios a enviar:', dataToSubmit) // Para debug
-
-      if (isEditing && id) {
-        // Para actualizar, crear objeto con solo los campos que pueden cambiar
-        const updateData: TechAssetUpdate = {
-          name: dataToSubmit.name,
-          category: dataToSubmit.category,
-          brand: dataToSubmit.brand,
-          model: dataToSubmit.model,
-          serial_number: dataToSubmit.serial_number,
-          asset_tag: dataToSubmit.asset_tag,
-          status: dataToSubmit.status,
-          purchase_date: dataToSubmit.purchase_date,
-          purchase_price: dataToSubmit.purchase_price,
-          location: dataToSubmit.location,
-          description: dataToSubmit.description,
-          supplier: dataToSubmit.supplier,
-          invoice: dataToSubmit.invoice,
-          warranty_expiry:formData.warranty_expiry && formData.warranty_expiry.trim() ? new Date(formData.warranty_expiry).toISOString() : undefined,
-          specifications: dataToSubmit.specifications,
-          notes: dataToSubmit.notes,
-        };
-        
-        await updateTechAsset(parseInt(id), updateData);
+      setIsLoading(true);
+      setSubmitError(null);
+      
+      if (isEditMode && id) {
+        await updateTechAsset(parseInt(id), data);
+        alert('Activo actualizado exitosamente');
       } else {
-        await createTechAsset(dataToSubmit);
+        await createTechAsset(data);
+        alert('Activo creado exitosamente');
       }
-
+      
       navigate('/inventory/tech-assets');
-    } catch (error) {
-      console.error('Error al guardar activo:', error);
+    } catch (error: any) {
+      console.error('Error guardando activo:', error);
+      setSubmitError(
+        error.response?.data?.detail || 
+        'Error al guardar el activo. Por favor, intenta nuevamente.'
+      );
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
+  
+  // ✅ TRADUCCIÓN: Estados en español
+  const statusOptionsSpanish = [
+    { value: AssetStatus.AVAILABLE, label: 'Disponible' },
+    { value: AssetStatus.ASSIGNED, label: 'Asignado' },
+    { value: AssetStatus.IN_MAINTENANCE, label: 'En Mantenimiento' },
+    { value: AssetStatus.OUT_OF_ORDER, label: 'Fuera de Servicio' },
+    { value: AssetStatus.RETIRED, label: 'Retirado' },
+  ];
 
-  const handleCancel = () => {
-    navigate('/inventory/tech-assets');
-  };
+  // ✅ Opciones para los selects
+  const categoryOptions = Object.entries(AssetCategory)
+    .filter(([key]) => key !== 'DEFAULT' && key !== '_ERROR_MESSAGE')
+    .map(([, value]) => ({
+      value: value,
+      label: value.replace(/_/g, ' '),
+    }));
+  
+  const statusOptions = Object.entries(AssetStatus).map(([, value]) => ({
+    value: value,
+    label: value.charAt(0).toUpperCase() + value.slice(1).replace(/_/g, ' '),
+  }));
 
-  return (
-    <Layout>
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center space-x-3">
-            <div className="flex-shrink-0">
-              <Laptop className="h-8 w-8 text-emerald-600" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                {isEditing ? 'Editar Activo' : 'Nuevo Activo Tecnológico'}
-              </h1>
-              <p className="text-sm text-gray-500">
-                {isEditing 
-                  ? 'Modifica la información del activo tecnológico'
-                  : 'Registra un nuevo activo tecnológico en el inventario'
-                }
-              </p>
-            </div>
+  if (isLoadingData) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Cargando datos del activo...</p>
           </div>
         </div>
-
-        {/* Formulario */}
-        <form onSubmit={handleSubmit} className="space-y-8">
-          <div className="bg-white shadow rounded-lg">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Información General</h3>
-            </div>
-            <div className="px-6 py-4 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Nombre */}
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                    Nombre del Activo *
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 ${
-                      errors.name ? 'border-red-300 ring-red-500' : ''
-                    }`}
-                    placeholder=" Ej: MacBook Pro 13 inch"
-                  />
-                  {errors.name && (
-                    <p className="mt-1 text-sm text-red-600 flex items-center">
-                      <AlertCircle className="h-4 w-4 mr-1" />
-                      {errors.name}
-                    </p>
-                  )}
-                </div>
-
-                {/* Categoría */}
-                <div>
-                  <label htmlFor="category" className="block text-sm font-medium text-gray-700">
-                    Categoría *
-                  </label>
-                  <select
-                    id="category"
-                    name="category"
-                    value={formData.category}
-                    onChange={handleInputChange}
-                    className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 ${
-                      errors.category ? 'border-red-300 ring-red-500' : ''
-                    }`}
-                  >
-                    <option value="">Seleccionar categoría</option>
-                    {categories.map(cat => (
-                      <option key={cat.value} value={cat.value}>
-                        {cat.label}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.category && (
-                    <p className="mt-1 text-sm text-red-600 flex items-center">
-                      <AlertCircle className="h-4 w-4 mr-1" />
-                      {errors.category}
-                    </p>
-                  )}
-                </div>
-
-                {/* Marca */}
-                <div>
-                  <label htmlFor="brand" className="block text-sm font-medium text-gray-700">
-                    Marca *
-                  </label>
-                  <input
-                    type="text"
-                    id="brand"
-                    name="brand"
-                    value={formData.brand}
-                    onChange={handleInputChange}
-                    className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 ${
-                      errors.brand ? 'border-red-300 ring-red-500' : ''
-                    }`}
-                    placeholder=" Ej: Apple, Dell, HP"
-                  />
-                  {errors.brand && (
-                    <p className="mt-1 text-sm text-red-600 flex items-center">
-                      <AlertCircle className="h-4 w-4 mr-1" />
-                      {errors.brand}
-                    </p>
-                  )}
-                </div>
-
-                {/* Modelo */}
-                <div>
-                  <label htmlFor="model" className="block text-sm font-medium text-gray-700">
-                    Modelo *
-                  </label>
-                  <input
-                    type="text"
-                    id="model"
-                    name="model"
-                    value={formData.model}
-                    onChange={handleInputChange}
-                    className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 ${
-                      errors.model ? 'border-red-300 ring-red-500' : ''
-                    }`}
-                    placeholder=" Ej: MacBook Pro M2"
-                  />
-                  {errors.model && (
-                    <p className="mt-1 text-sm text-red-600 flex items-center">
-                      <AlertCircle className="h-4 w-4 mr-1" />
-                      {errors.model}
-                    </p>
-                  )}
-                </div>
-
-                {/* Número de Serie */}
-                <div>
-                  <label htmlFor="serial_number" className="block text-sm font-medium text-gray-700">
-                    Número de Serie *
-                  </label>
-                  <input
-                    type="text"
-                    id="serial_number"
-                    name="serial_number"
-                    value={formData.serial_number}
-                    onChange={handleInputChange}
-                    className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 ${
-                      errors.serial_number ? 'border-red-300 ring-red-500' : ''
-                    }`}
-                    placeholder=" Número de serie del dispositivo"
-                  />
-                  {errors.serial_number && (
-                    <p className="mt-1 text-sm text-red-600 flex items-center">
-                      <AlertCircle className="h-4 w-4 mr-1" />
-                      {errors.serial_number}
-                    </p>
-                  )}
-                </div>
-
-                {/* Etiqueta del Activo */}
-                <div>
-                  <label htmlFor="asset_tag" className="block text-sm font-medium text-gray-700">
-                    Etiqueta del Activo *
-                  </label>
-                  <div className="mt-1 flex rounded-md shadow-sm">
-                    <input
-                      type="text"
-                      id="asset_tag"
-                      name="asset_tag"
-                      value={formData.asset_tag}
-                      onChange={handleInputChange}
-                      className={`flex-1 rounded-l-md border-gray-300 focus:ring-emerald-500 focus:border-emerald-500 ${
-                        errors.asset_tag ? 'border-red-300 ring-red-500' : ''
-                      }`}
-                      placeholder=" Ej: LAP-001234"
-                      readOnly={isGeneratingTag}
-                    />
-                    <button
-                      type="button"
-                      onClick={generateAssetTag}
-                      disabled={isGeneratingTag || !formData.category}
-                      title="Generar etiqueta automaticamente"
-                      className="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 rounded-r-md bg-gray-50 text-gray-500 text-sm hover:bg-gray-100"
-                    >
-                      {isGeneratingTag ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Tag className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
-                  {errors.asset_tag && (
-                    <p className="mt-1 text-sm text-red-600 flex items-center">
-                      <AlertCircle className="h-4 w-4 mr-1" />
-                      {errors.asset_tag}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
+      </Layout>
+    );
+  }
+  
+  return (
+    <Layout>
+      <div className="max-w-4xl mx-auto py-8 px-4">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">
+            {isEditMode ? 'Editar Activo Tecnológico' : 'Nuevo Activo Tecnológico'}
+          </h1>
+          <p className="text-gray-600 mt-2">
+            {isEditMode 
+              ? 'Actualiza la información del activo' 
+              : 'Completa el formulario para registrar un nuevo activo'}
+          </p>
+        </div>
+        
+        {/* Error Message */}
+        {submitError && (
+          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700">
+            <p className="font-medium">Error al guardar</p>
+            <p className="text-sm">{submitError}</p>
           </div>
-
-          {/* Información de Compra */}
-          <div className="bg-white shadow rounded-lg">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Información de Compra</h3>
-            </div>
-            <div className="px-6 py-4 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Fecha de Compra */}
-                <div>
-                  <label htmlFor="purchase_date" className="block text-sm font-medium text-gray-700">
-                    Fecha de Compra *
-                  </label>
-                  <div className="mt-1 relative">
-                    <input
-                      type="date"
-                      id="purchase_date"
-                      name="purchase_date"
-                      value={formData.purchase_date}
-                      onChange={handleInputChange}
-                      className={`block w-full rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 ${
-                        errors.purchase_date ? 'border-red-300 ring-red-500' : ''
-                      }`}
-                    />
-                  </div>
-                  {errors.purchase_date && (
-                    <p className="mt-1 text-sm text-red-600 flex items-center">
-                      <AlertCircle className="h-4 w-4 mr-1" />
-                      {errors.purchase_date}
-                    </p>
-                  )}
-                </div>
-
-                {/* Precio de Compra */}
-                <div>
-                  <CurrencyInput
-                    id="purchase_price"
-                    name="purchase_price"
-                    value={formData.purchase_price || 0}
-                    onChange={handlePriceChange}
-                    error={errors.purchase_price}
-                    label="Precio de Compra"
-                    placeholder="0,00"
-                    required
-                  />
-                </div>
-
-                {/* Proveedor */}
-                <div>
-                  <label htmlFor="supplier" className="block text-sm font-medium text-gray-700">
-                    Proveedor
-                  </label>
-                  <div className='mt-1 relative'>
-                    <input
-                      type="text"
-                      id="supplier"
-                      name="supplier"
-                      value={formData.supplier}
-                      onChange={handleInputChange}
-                      className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500`}
-                      placeholder=" Proveedor del activo"
-                    />
-                  </div>
-                </div>
-
-                {/* Numero de Factura */}
-                <div>
-                  <label htmlFor="supplier" className="block text-sm font-medium text-gray-700">
-                    Número de Factura
-                  </label>
-                  <div className='mt-1 relative'>
-                    <input
-                      type="text"
-                      id="invoice"
-                      name="invoice"
-                      value={formData.invoice}
-                      onChange={handleInputChange}
-                      className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500`}
-                      placeholder=" A-****-********"
-                    />
-                  </div>
-                </div>
-
-                {/* Fecha de Garantia */}
-                <div>
-                  <label htmlFor="purchase_date" className="block text-sm font-medium text-gray-700">
-                    Fecha de Vencimiento Garantia
-                  </label>
-                  <div className="mt-1 relative">
-                    <input
-                      type="date"
-                      id="warranty_expiry"
-                      name="warranty_expiry"
-                      value={formData.warranty_expiry}
-                      onChange={handleInputChange}
-                      className={`block w-full rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500`}
-                    />
-                  </div>
-                </div>
-
-              </div>
-            </div>
-          </div>
-
-          {/* Ubicación y Descripción */}
-          <div className="bg-white shadow rounded-lg">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Ubicación y Detalles</h3>
-            </div>
-            <div className="px-6 py-4 space-y-6">
-              {/* Estado */}
-                <div>
-                  <label htmlFor="status" className="block text-sm font-medium text-gray-700">
-                    Estado
-                  </label>
-                  <select
-                    id="status"
-                    name="status"
-                    value={formData.status}
-                    onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500"
-                  >
-                    {statuses.map(status => (
-                      <option key={status.value} value={status.value}>
-                        {status.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-              {/* Ubicación */}
+        )}
+        
+        {/* Form */}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+          
+          {/* Información Básica */}
+          <div className="bg-white shadow-md rounded-lg p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              Información Básica
+            </h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormInput
+                label="Nombre del activo"
+                name="name"
+                placeholder="Ej: Laptop Dell Latitude"
+                register={register}
+                error={errors.name}
+                required
+              />
+              
+              <FormSelect
+                label="Categoría"
+                name="category"
+                options={categoryOptions}
+                register={register}
+                error={errors.category}
+                required
+              />
+              
+              <FormInput
+                label="Marca"
+                name="brand"
+                placeholder="Ej: Dell, HP, Lenovo"
+                register={register}
+                error={errors.brand}
+                required
+              />
+              
+              <FormInput
+                label="Modelo"
+                name="model"
+                placeholder="Ej: Latitude 7490"
+                register={register}
+                error={errors.model}
+                required
+              />
+              
+              <FormInput
+                label="Número de Serie"
+                name="serial_number"
+                placeholder="Ej: SN123456789"
+                register={register}
+                error={errors.serial_number}
+                required
+                helpText="Único para cada activo"
+              />
+              
               <div>
-                <label htmlFor="location" className="block text-sm font-medium text-gray-700">
-                  Ubicación Física del Activo
+                <label htmlFor="asset_tag" className="form-label">
+                  Etiqueta del Activo (Tag) <span className="text-red-500">*</span>
                 </label>
-                <div className="mt-1 relative">
+                <div className="flex gap-2">
                   <input
+                    id="asset_tag"
                     type="text"
-                    id="location"
-                    name="location"
-                    value={formData.location}
-                    onChange={handleInputChange}
-                    className={`block w-full pl-10 rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 ${
-                      errors.location ? 'border-red-300 ring-red-500' : ''
-                    }`}
-                    placeholder="Ej: Oficina Principal, Piso 2, Sala de Reuniones"
+                    placeholder="Ej: NBK-001"
+                    className={`form-input flex-1 ${errors.asset_tag ? 'border-red-500' : ''}`}
+                    {...register('asset_tag')}
+                    readOnly={isGeneratingTag}
                   />
+                  <button
+                    type="button"
+                    onClick={generateAssetTag}
+                    disabled={isGeneratingTag || !selectedCategory}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    title="Generar etiqueta automáticamente"
+                  >
+                    {isGeneratingTag ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Tag className="h-4 w-4" />
+                    )}
+                    Generar
+                  </button>
                 </div>
-                {errors.location && (
-                  <p className="mt-1 text-sm text-red-600 flex items-center">
-                    <AlertCircle className="h-4 w-4 mr-1" />
-                    {errors.location}
-                  </p>
+                {errors.asset_tag && (
+                  <p className="text-sm text-red-600 mt-1">{errors.asset_tag.message}</p>
                 )}
+                <p className="text-xs text-gray-500 mt-1">
+                  Código único para seguimiento y trazabilidad
+                </p>
               </div>
-
-              {/* Especificaciones */}
-                <div className="sm:col-span-2">
-                  <label htmlFor="specifications" className="block text-sm font-medium text-gray-700">
-                    Especificaciones Técnicas
-                  </label>
-                  <textarea
-                    id="specifications"
-                    name="specifications"
-                    rows={3}
-                    value={formData.specifications}
-                    onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500"
-                    placeholder=" RAM, procesador, almacenamiento, etc."
-                  />
-                </div>
-
-              {/* Notas */}
-              <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                  Descripción Extendida
-                </label>
-                <textarea
-                  id="description"
-                  name="description"
-                  rows={4}
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500"
-                  placeholder=" Información adicional sobre el activo (especificaciones, configuración, etc.)"
-                />
-              </div>
+              
+              <FormSelect
+                label="Estado"
+                name="status"
+                options={statusOptionsSpanish}
+                register={register}
+                error={errors.status}
+                required
+              />
+            </div>
+            
+            <div className="mt-6">
+              <FormTextarea
+                label="Descripción"
+                name="description"
+                placeholder="Describe el activo brevemente"
+                rows={3}
+                register={register}
+                error={errors.description}
+              />
             </div>
           </div>
-
-          {/* Botones de Acción */}
-          <div className="flex justify-end space-x-3">
+          
+          {/* Información de Compra */}
+          <div className="bg-white shadow-md rounded-lg p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              Información de Compra
+            </h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormInput
+                label="Fecha de Compra"
+                name="purchase_date"
+                type="date"
+                register={register}
+                error={errors.purchase_date}
+                required
+              />
+              
+              <FormInput
+                label="Precio de Compra"
+                name="purchase_price"
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                register={register}
+                error={errors.purchase_price}
+                helpText="En tu moneda local"
+              />
+                            
+              <FormInput
+                label="Proveedor"
+                name="supplier"
+                placeholder="Ej: TechSupplies SA"
+                register={register}
+                error={errors.supplier}
+              />
+              
+              <FormInput
+                label="Número de Factura"
+                name="invoice"
+                placeholder="A-0000-00000000"
+                register={register}
+                error={errors.invoice}
+                helpText="Formato: A-0000-00000000"
+              />
+            </div>
+          </div>
+          
+          {/* Garantía */}
+          <div className="bg-white shadow-md rounded-lg p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              Garantía
+            </h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormInput
+                label="Vencimiento de Garantía"
+                name="warranty_expiry"
+                type="date"
+                register={register}
+                error={errors.warranty_expiry}
+              />
+              
+              <FormInput
+                label="Proveedor de Garantía"
+                name="warranty_provider"
+                placeholder="Ej: Dell, HP"
+                register={register}
+                error={errors.warranty_provider}
+              />
+            </div>
+          </div>
+          
+          {/* Ubicación */}
+          <div className="bg-white shadow-md rounded-lg p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              Ubicación
+            </h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormInput
+                label="Ubicación"
+                name="location"
+                placeholder="Ej: Oficina Central, Piso 3"
+                register={register}
+                error={errors.location}
+              />
+              
+              <FormInput
+                label="Departamento"
+                name="department"
+                placeholder="Ej: IT, RRHH, Ventas"
+                register={register}
+                error={errors.department}
+              />
+            </div>
+          </div>
+          
+          {/* Especificaciones Técnicas */}
+          <div className="bg-white shadow-md rounded-lg p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              Especificaciones Técnicas
+            </h2>
+            
+            <FormTextarea
+              label="Especificaciones"
+              name="specifications"
+              placeholder="Ej: Intel i7, 16GB RAM, SSD 512GB"
+              rows={4}
+              maxLength={2000}
+              register={register}
+              error={errors.specifications}
+            />
+            
+            <div className="mt-6">
+              <FormTextarea
+                label="Notas Adicionales"
+                name="notes"
+                placeholder="Cualquier información adicional relevante"
+                rows={3}
+                maxLength={1000}
+                register={register}
+                error={errors.notes}
+              />
+            </div>
+          </div>
+          
+          {/* Botones */}
+          <div className="flex justify-end space-x-4">
             <button
               type="button"
-              onClick={handleCancel}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
+              onClick={() => navigate('/inventory/tech-assets')}
+              className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              disabled={isLoading || isSubmitting}
             >
-              <X className="h-4 w-4 mr-2" />
               Cancelar
             </button>
+            
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isLoading || isSubmitting}
+              className="px-6 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
             >
-              {isSubmitting ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
-              ) : (
-                <Save className="h-4 w-4 mr-2" />
+              {(isLoading || isSubmitting) && (
+                <svg 
+                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  fill="none" 
+                  viewBox="0 0 24 24"
+                >
+                  <circle 
+                    className="opacity-25" 
+                    cx="12" 
+                    cy="12" 
+                    r="10" 
+                    stroke="currentColor" 
+                    strokeWidth="4"
+                  ></circle>
+                  <path 
+                    className="opacity-75" 
+                    fill="currentColor" 
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
               )}
-              {isSubmitting ? 'Guardando...' : isEditing ? 'Actualizar Activo' : 'Crear Activo'}
+              {isEditMode ? 'Actualizar Activo' : 'Crear Activo'}
             </button>
           </div>
         </form>
-
-        {/* Mostrar errores generales */}
-        {error && (
-          <div className="mt-4 bg-red-50 border border-red-200 rounded-md p-4">
-            <div className="flex">
-              <AlertCircle className="h-5 w-5 text-red-400" />
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">Error</h3>
-                <div className="mt-2 text-sm text-red-700">
-                  <p>{error}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </Layout>
   );
