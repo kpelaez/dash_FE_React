@@ -127,24 +127,18 @@ export type TechAssetUpdateFormData = z.infer<typeof techAssetUpdateSchema>;
 
 // SCHEMA: ASIGNAR ACTIVO
 
-export const assetAssignmentCreateSchema = z.object({
-  tech_asset_id: z.coerce.number({
+export const assetAssignmentCreateSchema = z.object({  
+  // Campo requerido: se setea programáticamente cuando el usuario selecciona
+  // un activo en la lista. Se valida con setValue + trigger.
+  tech_asset_id: z.number({
     message: 'Debe seleccionar un activo',
   }).positive('ID de activo inválido'),
+
   
-  assigned_to_user_id: z.coerce.number({
+  assigned_to_user_id: z.number({
     message: 'Debe seleccionar un usuario',
   }).positive('ID de usuario inválido'),
-  
-  assigned_date: dateString('Fecha de asignación')
-    .refine((date) => {
-      const assignDate = new Date(date);
-      const today = new Date();
-      return assignDate <= today;
-    }, {
-      message: 'La fecha de asignación no puede ser futura',
-    }),
-  
+    
   expected_return_date: z.string()
     .optional()
     .refine((date) => {
@@ -162,22 +156,11 @@ export const assetAssignmentCreateSchema = z.object({
       message: 'La fecha de devolución no puede ser pasada',
     }),
   
-  assignment_reason: optionalString,
-  location_of_use: optionalString,
+  assignment_reason: requiredString('Razón de asignacion'),
+  location_of_use: requiredString('Ubicación de uso')
+    .min(2, 'La ubicación debe tener al menos 2 caracteres'),
   condition_at_assignment: optionalString,
   assignment_notes: optionalString,
-})
-.refine((data) => {
-  // Validación: Si hay fecha esperada, debe ser posterior a la asignación
-  if (data.expected_return_date && data.assigned_date) {
-    const assignDate = new Date(data.assigned_date);
-    const returnDate = new Date(data.expected_return_date);
-    return returnDate > assignDate;
-  }
-  return true;
-}, {
-  message: 'La fecha de devolución esperada debe ser posterior a la asignación',
-  path: ['expected_return_date'],
 });
 
 export type AssetAssignmentCreateFormData = z.infer<typeof assetAssignmentCreateSchema>;

@@ -137,7 +137,7 @@ export interface AssetAssignmentCreate {
   location_of_use?: string;
   condition_at_assignment?: string;
   assignment_notes?: string;
-  assigned_date: string;
+  assigned_date?: string;
 }
 
 export enum AssignmentStatus {
