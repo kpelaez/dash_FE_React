@@ -97,8 +97,8 @@ const AssignmentFormPage: React.FC = () => {
   const loadAvailableAssets = async () => {
     setIsLoadingAssets(true);
     try {
-      const assetsData = await inventoryApi.getTechAssets({ status: AssetStatus.AVAILABLE });
-      setAvailableAssets(assetsData);
+      const assetsData = await inventoryApi.getTechAssets({ status: AssetStatus.AVAILABLE, page_size: 10 });
+      setAvailableAssets(assetsData.items);
     } catch (error) {
       console.error('Error loading assets:', error);
     } finally {

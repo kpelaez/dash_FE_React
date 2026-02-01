@@ -23,6 +23,9 @@ interface InventoryState {
 
     // Datos
     techAssets: TechAsset[];
+    totalAssets: number;
+    currentPage: number;
+    itemsPerPage: number;
     assignments: AssetAssignment[];
     maintenances: AssetMaintenance[];
     myAssignments: AssetAssignment[];
@@ -37,7 +40,9 @@ interface InventoryState {
     notifications: Notification[];
 
     // Acciones para Tech Assets
-    fetchTechAssets: () => Promise<void>;
+    fetchTechAssets: (page?: number, pageSize?: number) => Promise<void>;
+    setPage: (page: number) => void;
+    setPageSize: (pageSize: number) => void;
     createTechAsset: (asset: TechAssetCreate) => Promise<TechAsset>;
     updateTechAsset: (id: number, asset: TechAssetUpdate) => Promise<TechAsset>;
     deleteTechAsset: (id: number) => Promise<void>;
@@ -82,6 +87,9 @@ export const useInventoryStore = create<InventoryState>()(
             isLoading: false,
             error: null,
             techAssets: [],
+            totalAssets: 0,
+            currentPage: 1,
+            itemsPerPage: 10,
             assignments: [],
             maintenances: [],
             myAssignments: [],
@@ -92,18 +100,30 @@ export const useInventoryStore = create<InventoryState>()(
             notifications: [],
 
             // Tech Assets
-            fetchTechAssets: async () =>{
+            fetchTechAssets: async (page?:number, pageSize?:number) =>{
                 set({ isLoading: true, error: null});
                 try {
+                    const currentPage = page ?? get().currentPage;
+                    const currentLimit = pageSize ?? get().itemsPerPage;
                     const { assetFilters} = get();
-                    const techAssets = await inventoryApi.getTechAssets(assetFilters);
-                    set({ techAssets, isLoading: false});
+                    const techAssets = await inventoryApi.getTechAssets({...assetFilters, page: currentPage, page_size: currentLimit});
+                    set({ techAssets: techAssets.items, totalAssets: techAssets.total, currentPage: techAssets.page, isLoading: false});
                 } catch (error) {
                     set({
                         error: inventoryApi.handleApiError(error),
                         isLoading: false
                     });
                 }
+            },
+
+            setPage: (page: number) => {
+                set({ currentPage: page });
+                get().fetchTechAssets(page);
+            },
+
+            setPageSize: (pageSize: number) => {
+                set({ itemsPerPage: pageSize, currentPage: 1 });
+                get().fetchTechAssets(1, pageSize);
             },
 
             createTechAsset: async (asset: TechAssetCreate) => {

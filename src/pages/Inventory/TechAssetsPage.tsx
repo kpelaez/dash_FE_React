@@ -5,6 +5,7 @@ import { TechAsset } from '../../types/inventory';
 import  AssignmentHistoryModal  from '../../components/Inventory/AssignmentHistoryModal';
 import { Package, Plus, Search, Filter, Download, Upload, Edit, Trash2, Eye, MapPin, AlertCircle, Locate, User, History } from 'lucide-react';
 import { useSearchParams, Link } from 'react-router-dom';
+import Pagination from '../../components/Pagination/Pagination';
 
 
 const statusColors = {
@@ -63,6 +64,13 @@ const TechAssetsPage = () => {
   const isLoading = useInventoryStore(state => state.isLoading);
   const error = useInventoryStore(state => state.error);
   const clearError = useInventoryStore(state => state.clearError);
+
+  //Paginacion
+  const totalAssets = useInventoryStore(state=> state.totalAssets);
+  const currentPage = useInventoryStore(state=> state.currentPage);
+  const itemsPerPage = useInventoryStore(state=> state.itemsPerPage);
+  const setPage = useInventoryStore(state=> state.setPage);
+  const setPageSize = useInventoryStore(state=> state.setPageSize);
 
   // Cargar activos al montar el componente
   useEffect(()=> {
@@ -549,6 +557,17 @@ const TechAssetsPage = () => {
               </table>
             </div>
           )}
+          {totalAssets > 0 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={Math.ceil(totalAssets / itemsPerPage)}
+                totalItems={totalAssets}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setPage}
+                onItemsPerPageChange={setPageSize}
+                showItemsPerPage={true}
+              />
+            )}
         </div>
 
         {/* Estadísticas resumidas */}
