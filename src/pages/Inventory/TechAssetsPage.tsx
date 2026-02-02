@@ -295,14 +295,16 @@ const TechAssetsPage = () => {
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-emerald-500 focus:border-emerald-500"
                   >
                     <option value="">Todas las categorías</option>
-                    <option value="laptop">Laptop</option>
-                    <option value="desktop">Desktop</option>
-                    <option value="monitor">Monitor</option>
-                    <option value="printer">Impresora</option>
-                    <option value="mobile_device">Dispositivo Móvil</option>
-                    <option value="network_equipment">Equipo de Red</option>
-                    <option value="server">Servidor</option>
-                    <option value="accessory">Accesorio</option>
+                    <option value="Notebook">Notebook</option>
+                    <option value="Desktop">Desktop</option>
+                    <option value="Monitor">Monitor</option>
+                    <option value="Kit_teclado_mouse">Kit de Teclado y Mouse</option>
+                    <option value="Impresora">Impresora</option>
+                    <option value="Tablet">Tablet</option>
+                    <option value="Celular">Celular</option>
+                    <option value="Router">Router</option>
+                    <option value="Servidor">Servidor</option>
+                    <option value="Accesorios">Accesorios</option>
                   </select>
                 </div>
                 <div>

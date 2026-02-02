@@ -145,7 +145,7 @@ const AssetFormPage: React.FC = () => {
     }
   };
   
-  // ✅ TRADUCCIÓN: Estados en español
+  // TRADUCCIÓN: Estados en español
   const statusOptionsSpanish = [
     { value: AssetStatus.AVAILABLE, label: 'Disponible' },
     { value: AssetStatus.ASSIGNED, label: 'Asignado' },
@@ -204,7 +204,11 @@ const AssetFormPage: React.FC = () => {
         )}
         
         {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+        <form onSubmit={handleSubmit(onSubmit, (errors) => {
+          // Este segundo callback se ejecuta si hay errores de validación
+          console.error('Errores de validación:', errors);
+          alert('Por favor corrige los errores en el formulario antes de continuar.');
+        })} className="space-y-8">
           
           {/* Información Básica */}
           <div className="bg-white shadow-md rounded-lg p-6">
@@ -455,10 +459,10 @@ const AssetFormPage: React.FC = () => {
             
             <button
               type="submit"
-              disabled={isLoading || isSubmitting}
+              disabled={isSubmitting}
               className="px-6 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
             >
-              {(isLoading || isSubmitting) && (
+              {(isSubmitting) && (
                 <svg 
                   className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" 
                   xmlns="http://www.w3.org/2000/svg" 

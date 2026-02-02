@@ -21,10 +21,13 @@ const dateString = (fieldName: string) =>
   z.string({
     message: `${fieldName} es requerida`,
   })
-  .transform((date) => new Date(date + 'T00:00:00Z').toISOString())
-  .refine((date) => !isNaN(Date.parse(date)), {
+  .refine((date) => {
+    if (!date || date === '') return false;
+    return !isNaN(Date.parse(date + 'T00:00:00Z'));
+  }, {
     message: `${fieldName} debe ser una fecha válida`,
-  });
+  })
+  .transform((date) => new Date(date + 'T00:00:00Z').toISOString());
 
 // SCHEMA: CREAR ACTIVO TECNOLÓGICO
 
