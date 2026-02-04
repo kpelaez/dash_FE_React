@@ -21,6 +21,8 @@ import {
 } from '../../schemas/inventorySchemas';
 import { FormInput, FormSelect, FormTextarea } from '../../components/Form';
 import inventoryApi from '../../services/inventoryApi';
+import toast from 'react-hot-toast';
+
 
 interface UserOption {
   id: number;
@@ -205,6 +207,13 @@ const AssignmentFormPage: React.FC = () => {
       const assetsToAssign =
         selectedAssets.length > 0 ? selectedAssets : [data.tech_asset_id];
 
+      // Mostrar loading mientras se crean las asignaciones
+      const loadingToast = toast.loading(
+        assetsToAssign.length === 1 
+          ? 'Creando asignación...' 
+          : `Creando ${assetsToAssign.length} asignaciones...`
+      );
+
       const promises = assetsToAssign.map((assetId) =>
         createAssignment({
           ...data,
@@ -218,16 +227,14 @@ const AssignmentFormPage: React.FC = () => {
 
       await Promise.all(promises);
 
-      const message =
-        assetsToAssign.length === 1
-          ? 'Activo asignado exitosamente'
-          : `${assetsToAssign.length} activos asignados exitosamente`;
-
-      navigate('/inventory/assignments', { state: { message } });
+      toast.dismiss(loadingToast);
+      toast.success(assetsToAssign.length === 1 ? 'Activo asignado exitosamente' : `${assetsToAssign.length} activos asignados exitosamente`);
+      
+      navigate('/inventory/assignments');
     } catch (err) {
-      setSubmitError(
-        err instanceof Error ? err.message : 'Error al crear la asignación'
-      );
+      const errorMessage = err instanceof Error ? err.message : 'Error al crear la asignación';
+      setSubmitError(errorMessage);
+      toast.error(errorMessage);
     }
   };
 

@@ -13,6 +13,7 @@ import {
 import { AssetCategory, AssetStatus } from '../../types/inventory';
 import { useInventoryStore } from '../../stores/inventoryStore';
 import inventoryApi from '../../services/inventoryApi'
+import toast from 'react-hot-toast';
 
 const AssetFormPage: React.FC = () => {
   const navigate = useNavigate();
@@ -103,15 +104,12 @@ const AssetFormPage: React.FC = () => {
       alert('Primero selecciona una categoría');
       return;
     }
-    console.log("La categoria enviada es: ", selectedCategory); //debug
-
     setIsGeneratingTag(true);
     try {
       const response = await inventoryApi.generateAssetTag(selectedCategory);
 
       setValue('asset_tag', response.asset_tag)
       
-      console.log('✅ Tag generado:', response.asset_tag);
     } catch (error) {
       console.error('Error generando asset tag: ',error);
       alert(`Error al generar el codigo del activo: ${error instanceof Error ? error.message : 'Error desconocido'}`);
@@ -127,19 +125,17 @@ const AssetFormPage: React.FC = () => {
       
       if (isEditMode && id) {
         await updateTechAsset(parseInt(id), data);
-        alert('Activo actualizado exitosamente');
+        toast.success('Activo actualizado exitosamente');
       } else {
         await createTechAsset(data);
-        alert('Activo creado exitosamente');
+        toast.success('Activo creado exitosamente');
       }
       
       navigate('/inventory/tech-assets');
     } catch (error: any) {
-      console.error('Error guardando activo:', error);
-      setSubmitError(
-        error.response?.data?.detail || 
-        'Error al guardar el activo. Por favor, intenta nuevamente.'
-      );
+      const errorMessage = error instanceof Error ? error.message : 'Error guardando activo:';
+      setSubmitError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -154,7 +150,7 @@ const AssetFormPage: React.FC = () => {
     { value: AssetStatus.RETIRED, label: 'Retirado' },
   ];
 
-  // ✅ Opciones para los selects
+  // Opciones para los selects
   const categoryOptions = Object.entries(AssetCategory)
     .filter(([key]) => key !== 'DEFAULT' && key !== '_ERROR_MESSAGE')
     .map(([, value]) => ({

@@ -1,11 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { useDebounce } from '../../hooks/useDebounce';
 import {useInventoryStore} from '../../stores/inventoryStore';
 import Layout from '../../components/Layout/Layout';
 import { TechAsset } from '../../types/inventory';
 import  AssignmentHistoryModal  from '../../components/Inventory/AssignmentHistoryModal';
-import { Package, Plus, Search, Filter, Download, Upload, Edit, Trash2, Eye, MapPin, AlertCircle, Locate, User, History } from 'lucide-react';
+import ConfirmDialog from '../../components/ConfirmDialog';
+import { Package, Plus, Search, Filter, Download, Upload, Edit, Trash2, Eye, MapPin, AlertCircle, Locate, User, History, Loader2 } from 'lucide-react';
 import { useSearchParams, Link } from 'react-router-dom';
 import Pagination from '../../components/Pagination/Pagination';
+import toast from 'react-hot-toast';
 
 
 const statusColors = {
@@ -43,12 +46,15 @@ const categoryColors = {
 
 const TechAssetsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [searchTerm, setSearchTerm] = useState('');
+  // const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedAssets, setSelectedAssets] = useState<number[]>([]);
   const [filterAssignment, setFilterAssignment] = useState<string>('');
+
+  // Estado local para el input (no dispara búsqueda inmediatamente)
+  const [searchInput, setSearchInput] = useState('');
 
   // States para History Modal
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
@@ -56,6 +62,18 @@ const TechAssetsPage = () => {
     id: number;
     name: string;
   } | null>(null);
+
+  // Estados para el ConfirmDialog
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    assetId: number | null;
+    assetName: string;
+  }>({
+    isOpen: false,
+    assetId: null,
+    assetName: '',
+  });
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Usando hook Propio useInventoryStore
   const techAssets = useInventoryStore(state => state.techAssets);
@@ -71,6 +89,16 @@ const TechAssetsPage = () => {
   const itemsPerPage = useInventoryStore(state=> state.itemsPerPage);
   const setPage = useInventoryStore(state=> state.setPage);
   const setPageSize = useInventoryStore(state=> state.setPageSize);
+  const setSearchTerm = useInventoryStore(state => state.setSearchTerm);
+
+  // Debounce de la búsqueda (espera 500ms después de que el usuario deja de escribir)
+  const debouncedSearchInput = useDebounce(searchInput, 500);
+
+  // Cuando el debounced search cambia, actualizar el store
+  useEffect(() => {
+    setSearchTerm(debouncedSearchInput);
+  }, [debouncedSearchInput, setSearchTerm]);
+
 
   // Cargar activos al montar el componente
   useEffect(()=> {
@@ -88,35 +116,67 @@ const TechAssetsPage = () => {
   }, [searchParams]);
 
   // Filtrar activos
-  const filteredAssets = techAssets.filter((asset: TechAsset) => {
-    const matchesSearch = 
-      asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (asset.asset_tag ?? "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      asset.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      asset.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      asset.serial_number.toLowerCase().includes(searchTerm.toLowerCase());
+  // const filteredAssets = techAssets.filter((asset: TechAsset) => {
+  //   const matchesSearch = 
+  //     asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //     (asset.asset_tag ?? "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //     asset.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //     asset.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //     asset.serial_number.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesAssignment = filterAssignment === '' ||
-    (filterAssignment === 'assigned' && asset.user_assigned) ||
-    (filterAssignment === 'unassigned' && !asset.user_assigned);
+  //   const matchesAssignment = filterAssignment === '' ||
+  //   (filterAssignment === 'assigned' && asset.user_assigned) ||
+  //   (filterAssignment === 'unassigned' && !asset.user_assigned);
 
-    const matchesStatus = !selectedStatus || asset.status === selectedStatus;
-    const matchesCategory = !selectedCategory || asset.category === selectedCategory;
+  //   const matchesStatus = !selectedStatus || asset.status === selectedStatus;
+  //   const matchesCategory = !selectedCategory || asset.category === selectedCategory;
 
-    return matchesSearch && matchesStatus && matchesCategory && matchesAssignment;
-  });
+  //   return matchesSearch && matchesStatus && matchesCategory && matchesAssignment;
+  // });
 
-  const handleDeleteAsset = async (assetId: number, assetName: string) => {
-    if (window.confirm(`¿Estás seguro de que quieres eliminar "${assetName}`)) {
-      try {
-        await deleteTechAsset(assetId);
-        setSelectedAssets( prev => prev.filter(id => id != assetId))
-      } catch (error) {
-        console.error('Error al eliminar activo:', error);
-        alert(`Error al eliminar el activo: ${error instanceof Error ? error.message : 'Error desconocido'}`);
-      }
-    }
+  const displayedAssets = techAssets;
+
+  // Handler del input de búsqueda
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchInput(e.target.value);  // Actualiza el input inmediatamente
+    // La búsqueda real se dispara después del debounce via useEffect
   };
+
+  // Limpiar filtros
+  const handleClearFilters = () => {
+    setSelectedStatus('');
+    setSelectedCategory('');
+    setFilterAssignment('');
+    setSearchInput('');  // ← Limpiar también el input de búsqueda
+    setSearchTerm('');   // ← Y el término en el store
+  };
+
+
+  const handleDeleteAsset = (assetId: number, assetName: string) => {
+  setConfirmDialog({
+    isOpen: true,
+    assetId,
+    assetName,
+  });
+};
+
+const handleConfirmDelete = async () => {
+  if (!confirmDialog.assetId) return;
+
+  setIsDeleting(true);
+  try {
+    await deleteTechAsset(confirmDialog.assetId);
+    setSelectedAssets(prev => prev.filter(id => id !== confirmDialog.assetId));
+    toast.success(`Activo "${confirmDialog.assetName}" eliminado exitosamente`);
+  } catch (error) {
+    console.error('Error al eliminar activo:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Error al eliminar el activo';
+    toast.error(errorMessage);
+  } finally {
+    setIsDeleting(false);
+    setConfirmDialog({ isOpen: false, assetId: null, assetName: '' });
+  }
+};
 
   const handleBulkAction = (action: string) => {
     if (selectedAssets.length === 0) {
@@ -163,9 +223,9 @@ const TechAssetsPage = () => {
 
   const toggleSelectAll = () => {
     setSelectedAssets(
-      selectedAssets.length === filteredAssets.length
+      selectedAssets.length === displayedAssets.length
         ? []
-        : filteredAssets.map((asset) => asset.id)
+        : displayedAssets.map((asset) => asset.id)
     );
   };
 
@@ -222,20 +282,23 @@ const TechAssetsPage = () => {
         </div>
 
         {/* Filtros y búsqueda */}
-        <div className="bg-white p-4 rounded-lg shadow">
+        <div className="bg-white p-4 rounded-lg shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row gap-4">
-            {/* Búsqueda */}
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Buscar por nombre, etiqueta, marca, modelo o serie..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
-                />
-              </div>
+            {/* Input de búsqueda */}
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar por nombre, etiqueta, marca, modelo o serie..."
+                value={searchInput}  // ← Conectado al estado local
+                onChange={handleSearchChange}  // ← Handler con debounce
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
+              />
+              {isLoading && searchInput && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                </div>
+              )}
             </div>
 
             {/* Botón de filtros */}
@@ -324,11 +387,7 @@ const TechAssetsPage = () => {
 
                 <div className="flex items-end">
                   <button
-                    onClick={() => {
-                      setSelectedStatus('');
-                      setSelectedCategory('');
-                      setSearchTerm('');
-                    }}
+                    onClick={handleClearFilters}
                     className="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
                   >
                     Limpiar Filtros
@@ -378,15 +437,14 @@ const TechAssetsPage = () => {
             <div className="flex justify-center items-center h-64">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
             </div>
-          ) : filteredAssets.length === 0 ? (
+          ) : displayedAssets.length === 0 ? (
             <div className="text-center py-12">
               <Package className="mx-auto h-12 w-12 text-gray-400" />
               <h3 className="mt-2 text-sm font-medium text-gray-900">No hay activos</h3>
               <p className="mt-1 text-sm text-gray-500">
-                {techAssets.length === 0 
-                  ? 'Comienza creando tu primer activo tecnológico.'
-                  : 'No se encontraron activos que coincidan con los filtros aplicados.'
-                }
+                {searchInput || selectedStatus || selectedCategory
+                  ? 'No se encontraron activos que coincidan con los filtros aplicados.'
+                  : 'Comienza creando tu primer activo tecnológico.'}
               </p>
               <div className="mt-6">
                 <Link
@@ -406,7 +464,7 @@ const TechAssetsPage = () => {
                     <th className="px-6 py-3 text-left">
                       <input
                         type="checkbox"
-                        checked={selectedAssets.length === filteredAssets.length}
+                        checked={selectedAssets.length === displayedAssets.length}
                         onChange={toggleSelectAll}
                         className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
                       />
@@ -439,7 +497,7 @@ const TechAssetsPage = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredAssets.map((asset: TechAsset) => (
+                  {displayedAssets.map((asset: TechAsset) => (
                     <tr key={asset.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <input
@@ -578,27 +636,27 @@ const TechAssetsPage = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-gray-900">
-                {filteredAssets.length}
+                {displayedAssets.length}
               </div>
               <div className="text-sm text-gray-500">
-                {filteredAssets.length === techAssets.length ? 'Total' : 'Filtrados'}
+                {displayedAssets.length === techAssets.length ? 'Total' : 'Filtrados'}
               </div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">
-                {filteredAssets.filter((a: TechAsset) => a.status === 'available').length}
+                {displayedAssets.filter((a: TechAsset) => a.status === 'available').length}
               </div>
               <div className="text-sm text-gray-500">Disponibles</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">
-                {filteredAssets.filter((a: TechAsset) => a.status === 'assigned').length}
+                {displayedAssets.filter((a: TechAsset) => a.status === 'assigned').length}
               </div>
               <div className="text-sm text-gray-500">Asignados</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-emerald-600">
-                ${filteredAssets.reduce((total: number, asset: TechAsset) => total + (asset.purchase_price ?? 0), 0).toLocaleString('es-AR')}
+                ${displayedAssets.reduce((total: number, asset: TechAsset) => total + (asset.purchase_price ?? 0), 0).toLocaleString('es-AR')}
               </div>
               <div className="text-sm text-gray-500">Valor Total</div>
             </div>
@@ -614,6 +672,18 @@ const TechAssetsPage = () => {
           assetName={selectedAssetForHistory.name}
         />
       )}
+      {/* Modal de confirmación de eliminación */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => !isDeleting && setConfirmDialog({ isOpen: false, assetId: null, assetName: '' })}
+        onConfirm={handleConfirmDelete}
+        title="Eliminar Activo"
+        message={`¿Estás seguro de que quieres eliminar "${confirmDialog.assetName}"? Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        variant="danger"
+        isLoading={isDeleting}
+      />
     </Layout>
   );
 };
