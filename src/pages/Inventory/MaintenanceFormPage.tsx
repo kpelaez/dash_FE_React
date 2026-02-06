@@ -97,9 +97,9 @@ const MaintenanceFormPage: React.FC = () => {
   const loadAvailableAssets = async () => {
     setIsLoadingAssets(true);
     try {
-      const assetsData = await inventoryApi.getTechAssets();
+      const assetsData = await inventoryApi.getTechAssets({page_size: 10});
       // Incluir todos los activos excepto los retirados
-      const mappedAssets: AssetOption[] = assetsData
+      const mappedAssets: AssetOption[] = assetsData.items
         .filter((asset: any) => asset.status !== 'retired')
         .map((asset: any) => ({
           id: asset.id,

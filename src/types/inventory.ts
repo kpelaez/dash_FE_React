@@ -137,7 +137,7 @@ export interface AssetAssignmentCreate {
   location_of_use?: string;
   condition_at_assignment?: string;
   assignment_notes?: string;
-  assigned_date: string;
+  assigned_date?: string;
 }
 
 export enum AssignmentStatus {
@@ -254,6 +254,8 @@ export interface AssetFilters {
   brand?: string;
   location?: string;
   department?: string;
+  page?: number;
+  page_size?: number;
 }
 
 export interface AssignmentFilters {
@@ -281,9 +283,10 @@ export interface ApiResponse<T> {
 export interface PaginatedResponse<T> {
   items: T[];
   total: number;
+  skip: number;
+  limit: number;
   page: number;
-  size: number;
-  pages: number;
+  total_pages: number;
 }
 
 // Tipos para formularios
@@ -384,3 +387,4 @@ export interface SelectOption {
   label: string;
   disabled?: boolean;
 }
+

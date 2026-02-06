@@ -14,11 +14,12 @@ import {
     AssignmentStatistics,
     MaintenanceMetrics,
     AssetCategory,
-    AssetStatus
+    AssetStatus,
+    PaginatedResponse
 } from '../types/inventory';
 
 // Configuracion base de la API
-const API_BASE_URL =  'http://127.0.0.1:8000' //|| import.meta.env.BASE_URL
+const API_BASE_URL =  'http://127.0.0.1:8000' //|| import.meta.env.VITE_API_URL
 
 class InventoryApiService {
     private getAuthHeaders(): HeadersInit {
@@ -103,8 +104,13 @@ class InventoryApiService {
     }
 
     // ============ TECH ASSETS ============
-    async getTechAssets(filters?: AssetFilters): Promise<TechAsset[]> {
+    async getTechAssets(filters?: AssetFilters): Promise<PaginatedResponse<TechAsset>> {
         const params = new URLSearchParams();
+
+        // Paginación
+        if (filters?.page !== undefined) params.append('page', filters.page.toString());
+        if (filters?.page_size !== undefined) params.append('page_size', filters.page_size.toString());
+
 
         if (filters?.category) params.append('category', filters.category);
         if (filters?.status) params.append('status', filters.status);
@@ -112,7 +118,9 @@ class InventoryApiService {
         if (filters?.location) params.append('location', filters.location);
 
         const queryString = params.toString();
-        return this.request<TechAsset[]>(`/inventory/tech-assets${queryString ? `?${queryString}` : ''}`);
+
+        return this.request<PaginatedResponse<TechAsset>>(`/inventory/tech-assets${queryString ? `?${queryString}` : '/'}`);
+        
     }
 
     async  getTechAsset(id: number): Promise<TechAsset> {

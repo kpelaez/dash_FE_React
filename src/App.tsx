@@ -19,8 +19,10 @@ import AssetFormPage from './pages/Inventory/AssetFormPage';
 import AssignmentFormPage from './pages/Inventory/AssignmentFormPage';
 import MyAssetsPage from './pages/Inventory/MyAssetsPage';
 
-// import MyAssetsPage from './pages/Inventory/MyAssetsPage';
 // import InventoryReportsPage from './pages/Inventory/InventoryReportsPage';
+
+// Toaster
+import { Toaster } from 'react-hot-toast';
 
 
 // ProtectedRoutes
@@ -33,165 +35,198 @@ function App() {
 
   return (
     <div className="app-container">
-      <Router>
-        <Routes>
-          {/* Ruta pública */}
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/unauthorized" element={<UnauthorizedPage />} />
-          
-          {/* Rutas protegidas basicas (cualquier usuario autenticado) */}
-          <Route 
-            path="/" 
-            element={
-              <ProtectedRoute>
-                <HomePage />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/dashboards" 
-            element={
-              <RoleProtectedRoute requiredRoles={['admin', 'manager']}>
-                <DashboardsPage />
-              </RoleProtectedRoute>
-            } 
-          />
+      <Toaster
+        position="top-right"
+        reverseOrder={false}
+        toastOptions={{
+          // Estilos por defecto
+          duration: 4000,
+          style: {
+            background: '#fff',
+            color: '#363636',
+            padding: '16px',
+            borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+          },
+          // Estilos por tipo
+          success: {
+            duration: 3000,
+            iconTheme: {
+              primary: '#10b981',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            duration: 5000,
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          },
+          loading: {
+            duration: Infinity,
+          },
+        }}
+      />
+        <Router>
+          <Routes>
+            {/* Ruta pública */}
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/unauthorized" element={<UnauthorizedPage />} />
+            
+            {/* Rutas protegidas basicas (cualquier usuario autenticado) */}
+            <Route 
+              path="/" 
+              element={
+                <ProtectedRoute>
+                  <HomePage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboards" 
+              element={
+                <RoleProtectedRoute requiredRoles={['admin', 'manager']}>
+                  <DashboardsPage />
+                </RoleProtectedRoute>
+              } 
+            />
 
-          {/* Rutas protegidas por roles */}
-          <Route 
-            path="/dashboards/:dashboardId" 
-            element={
-              <RoleProtectedRoute requiredRoles={['admin', 'manager']}>
-                <SingleDashboardPage />
-              </RoleProtectedRoute>
-            }  
-          />
-          {/* RUTAS DEL MÓDULO DE INVENTARIO */}
-          
-          {/* Dashboard de inventario - accesible para roles básicos de inventario */}
-          <Route 
-            path="/inventory/dashboard" 
-            element={
-              <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager', 'user']}>
-                <InventoryDashboardPage />
-              </RoleProtectedRoute>
-            } 
-          />
+            {/* Rutas protegidas por roles */}
+            <Route 
+              path="/dashboards/:dashboardId" 
+              element={
+                <RoleProtectedRoute requiredRoles={['admin', 'manager']}>
+                  <SingleDashboardPage />
+                </RoleProtectedRoute>
+              }  
+            />
+            {/* RUTAS DEL MÓDULO DE INVENTARIO */}
+            
+            {/* Dashboard de inventario - accesible para roles básicos de inventario */}
+            <Route 
+              path="/inventory/dashboard" 
+              element={
+                <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager', 'user']}>
+                  <InventoryDashboardPage />
+                </RoleProtectedRoute>
+              } 
+            />
 
-          {/* Gestión de activos tecnológicos - requiere permisos de gestión */}
-          <Route 
-            path="/inventory/tech-assets" 
-            element={
-              <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager', 'user']}>
-                <TechAssetsPage />
-              </RoleProtectedRoute>
-            } 
-          />
+            {/* Gestión de activos tecnológicos - requiere permisos de gestión */}
+            <Route 
+              path="/inventory/tech-assets" 
+              element={
+                <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager', 'user']}>
+                  <TechAssetsPage />
+                </RoleProtectedRoute>
+              } 
+            />
 
-          {/* Gestion de activos tecnologicos - requiere permisos de gestion */}
-          <Route
-            path="/inventory/tech-assets/new"
-            element={
-              <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager']}>
-                <AssetFormPage />
-              </RoleProtectedRoute>
-            }
-          />
+            {/* Gestion de activos tecnologicos - requiere permisos de gestion */}
+            <Route
+              path="/inventory/tech-assets/new"
+              element={
+                <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager']}>
+                  <AssetFormPage />
+                </RoleProtectedRoute>
+              }
+            />
 
-          <Route
-            path="/inventory/tech-assets/:id"
-            element={
-              <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager']}>
-                <AssetDetailPage />
-              </RoleProtectedRoute>
-            }
-          />
+            <Route
+              path="/inventory/tech-assets/:id"
+              element={
+                <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager']}>
+                  <AssetDetailPage />
+                </RoleProtectedRoute>
+              }
+            />
 
-          <Route
-            path="/inventory/tech-assets/:id/edit"
-            element={
-              <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager']}>
-                <AssetFormPage />
-              </RoleProtectedRoute>
-            }
-          />
+            <Route
+              path="/inventory/tech-assets/:id/edit"
+              element={
+                <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager']}>
+                  <AssetFormPage />
+                </RoleProtectedRoute>
+              }
+            />
 
-          {/* Gestión de asignaciones - requiere permisos de gestión */}
-          <Route 
-            path="/inventory/assignments" 
-            element={
-              <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager']}>
-                <AssignmentsPage />
-              </RoleProtectedRoute>
-            } 
-          />
+            {/* Gestión de asignaciones - requiere permisos de gestión */}
+            <Route 
+              path="/inventory/assignments" 
+              element={
+                <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager']}>
+                  <AssignmentsPage />
+                </RoleProtectedRoute>
+              } 
+            />
 
-          <Route
-            path="/inventory/assignments/new"
-            element={
-              <RoleProtectedRoute requiredRoles={['admin']}>
-                <AssignmentFormPage />
-              </RoleProtectedRoute>
-            }   
-          />
+            <Route
+              path="/inventory/assignments/new"
+              element={
+                <RoleProtectedRoute requiredRoles={['admin']}>
+                  <AssignmentFormPage />
+                </RoleProtectedRoute>
+              }   
+            />
 
-          {/* Gestión de mantenimiento - accesible para técnicos también */}
-          <Route 
-            path="/inventory/maintenance" 
-            element={
-              <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager', 'technician']}>
-                <MaintenancePage />
-              </RoleProtectedRoute>
-            } 
-          />
+            {/* Gestión de mantenimiento - accesible para técnicos también */}
+            <Route 
+              path="/inventory/maintenance" 
+              element={
+                <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager', 'technician']}>
+                  <MaintenancePage />
+                </RoleProtectedRoute>
+              } 
+            />
 
-          <Route 
-            path="/inventory/maintenance/new" 
-            element={
-              <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager', 'technician']}>
-                <MaintenanceFormPage />
-              </RoleProtectedRoute>
-            } 
-          />
+            <Route 
+              path="/inventory/maintenance/new" 
+              element={
+                <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager', 'technician']}>
+                  <MaintenanceFormPage />
+                </RoleProtectedRoute>
+              } 
+            />
 
-          {/* Mis activos - accesible para todos los usuarios autenticados */}
-          <Route 
-            path="/inventory/my-assets" 
-            element={
-              <ProtectedRoute>
-                <MyAssetsPage />
-              </ProtectedRoute>
-            } 
-          />
+            {/* Mis activos - accesible para todos los usuarios autenticados */}
+            <Route 
+              path="/inventory/my-assets" 
+              element={
+                <ProtectedRoute>
+                  <MyAssetsPage />
+                </ProtectedRoute>
+              } 
+            />
 
-          {/* Reportes de inventario - requiere permisos de gestión */}
-          {/* <Route 
-            path="/inventory/reports" 
-            element={
-              <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager']}>
-                <InventoryReportsPage />
-              </RoleProtectedRoute>
-            } 
-          /> */}
-          <Route 
-            path="/about" 
-            element={
-              <ProtectedRoute>
-                <AboutPage />
-              </ProtectedRoute>
-            } 
-          />
-          {/* Ruta para el registro de usuarios */}
-          <Route 
-            path="/admin/register-user" 
-            element={
-              <RoleProtectedRoute requiredRoles={['admin']}>
-                <UserRegisterPage />
-              </RoleProtectedRoute>
-            } 
-          />
-        </Routes>
-      </Router>
+            {/* Reportes de inventario - requiere permisos de gestión */}
+            {/* <Route 
+              path="/inventory/reports" 
+              element={
+                <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager']}>
+                  <InventoryReportsPage />
+                </RoleProtectedRoute>
+              } 
+            /> */}
+            <Route 
+              path="/about" 
+              element={
+                <ProtectedRoute>
+                  <AboutPage />
+                </ProtectedRoute>
+              } 
+            />
+            {/* Ruta para el registro de usuarios */}
+            <Route 
+              path="/admin/register-user" 
+              element={
+                <RoleProtectedRoute requiredRoles={['admin']}>
+                  <UserRegisterPage />
+                </RoleProtectedRoute>
+              } 
+            />
+          </Routes>
+        </Router>
     </div>
   )
 }

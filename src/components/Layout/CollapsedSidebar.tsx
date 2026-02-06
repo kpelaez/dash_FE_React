@@ -47,7 +47,7 @@ const CollapsibleSidebar = () => {
     {
       title: 'Activos Tecnologicos',
       icon: <Laptop size={isCollapsed ? 20 : 18} />,
-      requiredRoles: ['admin', 'manager', 'inventory_manager'],
+      requiredRoles: ['admin', 'manager', 'inventory_manager', 'user'],
       children: [
         {
           title: 'Dashboard',

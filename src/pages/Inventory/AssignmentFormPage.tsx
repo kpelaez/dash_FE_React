@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import Layout from '../../components/Layout/Layout';
 import {
   Package,
@@ -8,11 +10,19 @@ import {
   AlertCircle,
   User,
   Loader2,
-  MapPin
+  MapPin,
+  CheckCircle,
 } from 'lucide-react';
-import {useInventoryStore} from '../../stores/inventoryStore';
-import { AssetAssignmentCreate, TechAsset, AssignmentStatus, AssetStatus } from '../../types/inventory';
+import { useInventoryStore } from '../../stores/inventoryStore';
+import { AssetStatus } from '../../types/inventory';
+import {
+  assetAssignmentCreateSchema,
+  type AssetAssignmentCreateFormData,
+} from '../../schemas/inventorySchemas';
+import { FormInput, FormSelect, FormTextarea } from '../../components/Form';
 import inventoryApi from '../../services/inventoryApi';
+import toast from 'react-hot-toast';
+
 
 interface UserOption {
   id: number;
@@ -31,16 +41,25 @@ interface AssetOption {
   status: string;
 }
 
+// ─── Opciones estáticas de los selects ──────────────────────────────────────
 
-// interface AssignmentFormData {
-//   tech_asset_id: number | '';
-//   user_id: number | '';
-//   assigned_date: string;
-//   expected_return_date: string;
-//   notes: string;
-//   location: string;
-//   condition_at_assignment: string;
-// }
+const ASSIGNMENT_REASON_OPTIONS = [
+  { value: 'work_assignment',         label: 'Asignación de trabajo' },
+  { value: 'home_office',             label: 'Trabajo remoto / Home office' },
+  { value: 'project',                 label: 'Proyecto específico' },
+  { value: 'temporary_replacement',   label: 'Reemplazo temporal' },
+  { value: 'permanent_assignment',    label: 'Asignación permanente' },
+  { value: 'training',                label: 'Capacitación / Training' },
+  { value: 'other',                   label: 'Otro' },
+];
+
+const CONDITION_OPTIONS = [
+  { value: 'excellent',     label: 'Excelente' },
+  { value: 'good',          label: 'Buena' },
+  { value: 'fair',          label: 'Regular' },
+  { value: 'poor',          label: 'Deficiente' },
+  { value: 'needs_repair',  label: 'Necesita reparación' },
+];
 
 interface User {
   id: number;
@@ -49,39 +68,48 @@ interface User {
   is_active: boolean;
 }
 
-const initialFormData: AssetAssignmentCreate = {
-  tech_asset_id: 0,
-  assigned_to_user_id: 0,
-  expected_return_date: '',
-  assignment_reason: '',
-  location_of_use: '',
-  condition_at_assignment: 'good',
-  assignment_notes: '',
-  assigned_date: '',
-};
-
 
 const AssignmentFormPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const [formData, setFormData] = useState<AssetAssignmentCreate>(initialFormData);
-  const [errors, setErrors] = useState<Partial<AssetAssignmentCreate>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [isLoadingAssets, setIsLoadingAssets] = useState(false);
+  const [submitError,     setSubmitError]     = useState<string | null>(null);
   
+  // ── Estado local para las listas de búsqueda (no son campos del formulario) ─
   const [users, setUsers] = useState<UserOption[]>([]);
   const [availableAssets, setAvailableAssets] = useState<AssetOption[]>([]);
   const [selectedAssets, setSelectedAssets] = useState<number[]>([]);
+  const [selectedUser,    setSelectedUser]    = useState<UserOption | null>(null);
 
   // Estados para búsqueda
   const [assetSearch, setAssetSearch] = useState('');
   const [userSearch, setUserSearch] = useState('');
   
   const createAssignment = useInventoryStore(state => state.createAssignment);
-  const error = useInventoryStore(state => state.error);
-  
+
+  // ── React Hook Form ────────────────────────────────────────────────────────
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors, isSubmitting },
+    trigger,
+  } = useForm<AssetAssignmentCreateFormData>({
+    resolver: zodResolver(assetAssignmentCreateSchema),
+    defaultValues: {
+      tech_asset_id:            0,
+      assigned_to_user_id:      0,
+      assignment_reason:        '',
+      location_of_use:          '',
+      expected_return_date:     '',
+      condition_at_assignment:  'good',
+      assignment_notes:         '',
+    },
+  });
+
+
   const loadUsers = async () => {
     setIsLoadingUsers(true);
     try {
@@ -97,8 +125,8 @@ const AssignmentFormPage: React.FC = () => {
   const loadAvailableAssets = async () => {
     setIsLoadingAssets(true);
     try {
-      const assetsData = await inventoryApi.getTechAssets({ status: AssetStatus.AVAILABLE });
-      setAvailableAssets(assetsData);
+      const response = await inventoryApi.getTechAssets({ status: AssetStatus.AVAILABLE, page_size: 10 });
+      setAvailableAssets(response.items);
     } catch (error) {
       console.error('Error loading assets:', error);
     } finally {
@@ -118,12 +146,13 @@ const AssignmentFormPage: React.FC = () => {
     if (assetId) {
       const id = parseInt(assetId);
       setSelectedAssets([id]);
-      setFormData(prev => ({ ...prev, tech_asset_id: id }));
+      setValue('tech_asset_id', id);
     } else if (assetIds) {
       const ids = assetIds.split(',').map(id => parseInt(id));
       setSelectedAssets(ids);
+      if (ids.length > 0) setValue('tech_asset_id',ids[0]);
     }
-  }, [searchParams]);
+  }, [searchParams, setValue]);
 
 
   // Filtrar activos disponibles
@@ -140,437 +169,358 @@ const AssignmentFormPage: React.FC = () => {
     (user.department && user.department.toLowerCase().includes(userSearch.toLowerCase()))
   );
 
-  const validateForm = (): boolean => {
-    const newErrors: Partial<AssetAssignmentCreate> = {};
-
-    if (selectedAssets.length === 0 && !formData.tech_asset_id) {
-      newErrors.tech_asset_id = 0; // Usar 0 como indicador de error
-    }
-
-    if (!formData.assigned_to_user_id) {
-      newErrors.assigned_to_user_id = 0;
-    }
-
-    if (!formData.assignment_reason || !formData.assignment_reason.trim()) {
-      newErrors.assignment_reason = 'La razón de asignación es requerida';
-    }
-
-    if (!formData.location_of_use || !formData.location_of_use.trim()) {
-      newErrors.location_of_use = 'La ubicación de uso es requerida';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    
-    setFormData(prev => ({
-      ...prev,
-      [name]: name === 'assigned_to_user_id' || name === 'tech_asset_id' 
-        ? parseInt(value) || 0 
-        : value
-    }));
-
-    // Limpiar error del campo si existe
-    if (errors[name as keyof AssetAssignmentCreate]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: undefined
-      }));
-    }
-  };
-
-  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const { name, value } = e.target;
-
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-
-    // Limpiar error del campo si existe
-    if (errors[name as keyof AssetAssignmentCreate]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: undefined
-      }));
-    }
-  };
+  // ── Handlers para los campos custom
 
   const handleAssetToggle = (assetId: number) => {
-    setSelectedAssets(prev => {
-      const newSelection = prev.includes(assetId)
-        ? prev.filter(id => id !== assetId)
+    setSelectedAssets((prev) => {
+      const next = prev.includes(assetId)
+        ? prev.filter((id) => id !== assetId)
         : [...prev, assetId];
-      
-      // Si es asignación individual, actualizar formData
-      if (newSelection.length === 1) {
-        setFormData(prevForm => ({ ...prevForm, tech_asset_id: newSelection[0] }));
-      }
-      
-      return newSelection;
+
+      // Sincrona el campo oculto del formulario para que Zod lo valide
+      setValue('tech_asset_id', next.length > 0 ? next[0] : 0);
+      trigger('tech_asset_id');
+
+      return next;
     });
   };
-// =============================================
-  // const handleUserSelect = (user: User) => {
-  //   setFormData(prev => ({
-  //     ...prev,
-  //     user_id: user.id
-  //   }));
-  //   setUserSearch(`${user.full_name} (${user.email})`);
-  //   setShowUserDropdown(false);
-    
-  //   // Limpiar error si existe
-  //   if (errors.user_id) {
-  //     setErrors(prev => ({
-  //       ...prev,
-  //       user_id: undefined
-  //     }));
-  //   }
-  // };
 
+  const handleUserSelect = (user: UserOption) => {
+    setSelectedUser(user);
+    setValue('assigned_to_user_id', user.id);
+    trigger('assigned_to_user_id');
+  };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleUserDeselect = () => {
+    setSelectedUser(null);
+    setValue('assigned_to_user_id', 0);
+    trigger('assigned_to_user_id');
+  };
 
-    if (!validateForm()) {
-      return;
-    }
+  // ── Submit ─────────────────────────────────────────────────────────────────
 
-    setIsSubmitting(true);
+  const onSubmit = async (data: AssetAssignmentCreateFormData) => {
+    setSubmitError(null);
 
     try {
-      const assetsToAssign = selectedAssets.length > 0 ? selectedAssets : [formData.tech_asset_id];
-      
-      // Crear una asignación por cada activo seleccionado
-      const assignmentPromises = assetsToAssign.map(assetId => {
-        const assignmentData: AssetAssignmentCreate = {
-          ...formData,
+      // Si hay múltiples activos seleccionados, crear una asignación por cada uno
+      const assetsToAssign =
+        selectedAssets.length > 0 ? selectedAssets : [data.tech_asset_id];
+
+      // Mostrar loading mientras se crean las asignaciones
+      const loadingToast = toast.loading(
+        assetsToAssign.length === 1 
+          ? 'Creando asignación...' 
+          : `Creando ${assetsToAssign.length} asignaciones...`
+      );
+
+      const promises = assetsToAssign.map((assetId) =>
+        createAssignment({
+          ...data,
           tech_asset_id: assetId,
-          expected_return_date: formData.expected_return_date 
-            ? new Date(formData.expected_return_date).toISOString() 
-            : undefined
-        };
-        
-        return createAssignment(assignmentData);
-      });
+          // Formatear fecha solo si tiene valor
+          expected_return_date: data.expected_return_date
+            ? new Date(data.expected_return_date + 'T00:00:00Z').toISOString()
+            : undefined,
+        })
+      );
 
-      await Promise.all(assignmentPromises);
+      await Promise.all(promises);
 
-      const message = assetsToAssign.length === 1 
-        ? 'Activo asignado exitosamente' 
-        : `${assetsToAssign.length} activos asignados exitosamente`;
-
-      navigate('/inventory/assignments', { 
-        state: { message } 
-      });
-    } catch (error) {
-      console.error('Error al crear asignación:', error);
-    } finally {
-      setIsSubmitting(false);
+      toast.dismiss(loadingToast);
+      toast.success(assetsToAssign.length === 1 ? 'Activo asignado exitosamente' : `${assetsToAssign.length} activos asignados exitosamente`);
+      
+      navigate('/inventory/assignments');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Error al crear la asignación';
+      setSubmitError(errorMessage);
+      toast.error(errorMessage);
     }
   };
+
 
   return (
     <Layout>
       <div className="max-w-4xl mx-auto">
         <div className="bg-white shadow-sm rounded-lg">
           <div className="px-4 py-5 sm:p-6">
+
+            {/* Header */}
             <div className="mb-6">
               <h2 className="text-2xl font-bold text-gray-900">
-                {selectedAssets.length > 1 ? 'Asignar Múltiples Activos' : 'Asignar Activo'}
+                {selectedAssets.length > 1
+                  ? `Asignar ${selectedAssets.length} Activos`
+                  : 'Asignar Activo'}
               </h2>
-              <p className="mt-1 text-sm text-gray-500">
-                Asigna activos tecnológicos a usuarios de la organización
+              <p className="text-gray-600 mt-1">
+                Selecciona un activo disponible y un usuario para realizar la asignación.
               </p>
             </div>
 
-            {error && (
-              <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
-                <div className="flex">
-                  <AlertCircle className="h-5 w-5 text-red-400" />
-                  <div className="ml-3">
-                    <h3 className="text-sm font-medium text-red-800">Error</h3>
-                    <div className="mt-2 text-sm text-red-700">
-                      <p>{error}</p>
-                    </div>
-                  </div>
-                </div>
+            {/* Error global de submit */}
+            {submitError && (
+              <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700">
+                <p className="font-medium">Error al guardar</p>
+                <p className="text-sm">{submitError}</p>
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Selección de Usuario */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <User className="inline h-4 w-4 mr-1" />
-                  Usuario Asignado *
-                </label>
-                
-                {/* Búsqueda de usuarios */}
-                <div className="relative mb-3">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    type="text"
-                    value={userSearch}
-                    onChange={(e) => setUserSearch(e.target.value)}
-                    placeholder="Buscar usuario por nombre, email o departamento..."
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
-                  />
-                </div>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
 
-                <div className="max-h-48 overflow-y-auto border border-gray-300 rounded-md">
-                  {isLoadingUsers ? (
-                    <div className="flex justify-center items-center h-20">
-                      <Loader2 className="h-5 w-5 animate-spin text-emerald-600" />
-                    </div>
-                  ) : filteredUsers.length === 0 ? (
-                    <div className="p-4 text-center text-gray-500">
-                      No se encontraron usuarios
-                    </div>
-                  ) : (
-                    filteredUsers.map((user) => (
-                      <label key={user.id} className="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-200 last:border-b-0">
-                        <input
-                          type="radio"
-                          name="assigned_to_user_id"
-                          value={user.id}
-                          checked={formData.assigned_to_user_id === user.id}
-                          onChange={handleInputChange}
-                          className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300"
-                        />
-                        <div className="ml-3">
-                          <div className="text-sm font-medium text-gray-900">{user.full_name}</div>
-                          <div className="text-sm text-gray-500">
-                            {user.email}
-                            {user.department && ` • ${user.department}`}
-                          </div>
-                        </div>
-                      </label>
-                    ))
-                  )}
-                </div>
-                {errors.assigned_to_user_id && (
-                  <p className="mt-1 text-sm text-red-600 flex items-center">
-                    <AlertCircle className="h-4 w-4 mr-1" />
-                    Selecciona un usuario
-                  </p>
-                )}
-              </div>
+              {/* ═══════════ SECCIÓN: Selección de Activo ═══════════ */}
+              <div className="bg-gray-50 rounded-lg p-5">
+                <h3 className="text-lg font-semibold text-gray-800 mb-1 flex items-center">
+                  <Package className="h-5 w-5 mr-2 text-emerald-600" />
+                  Activo a Asignar
+                </h3>
+                <p className="text-sm text-gray-500 mb-3">
+                  Selecciona uno o más activos disponibles.
+                </p>
 
-              {/* Selección de Activos */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Package className="inline h-4 w-4 mr-1" />
-                  Activos a Asignar *
-                </label>
-
-                {selectedAssets.length > 0 && (
-                  <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                    <p className="text-sm text-blue-800 font-medium">
-                      {selectedAssets.length} activo(s) preseleccionado(s)
-                    </p>
-                  </div>
-                )}
-                
                 {/* Búsqueda de activos */}
                 <div className="relative mb-3">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-5 w-5 text-gray-400" />
-                  </div>
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <input
                     type="text"
+                    placeholder="Buscar activos..."
                     value={assetSearch}
                     onChange={(e) => setAssetSearch(e.target.value)}
-                    placeholder="Buscar activo por nombre, etiqueta, marca o modelo..."
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+                    className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                   />
                 </div>
 
-                <div className="max-h-64 overflow-y-auto border border-gray-300 rounded-md">
+                {/* Lista de activos */}
+                <div className="border border-gray-200 rounded-md max-h-56 overflow-y-auto">
                   {isLoadingAssets ? (
                     <div className="flex justify-center items-center h-20">
                       <Loader2 className="h-5 w-5 animate-spin text-emerald-600" />
                     </div>
                   ) : filteredAssets.length === 0 ? (
-                    <div className="p-4 text-center text-gray-500">
-                      No hay activos disponibles para asignar
+                    <div className="p-4 text-center text-gray-500 text-sm">
+                      No hay activos disponibles
                     </div>
                   ) : (
-                    filteredAssets.map((asset) => (
-                      <label key={asset.id} className="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-200 last:border-b-0">
-                        <input
-                          type="checkbox"
-                          checked={selectedAssets.includes(asset.id)}
-                          onChange={() => handleAssetToggle(asset.id)}
-                          className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
-                        />
-                        <div className="ml-3">
-                          <div className="text-sm font-medium text-gray-900">
-                            {asset.name} • {asset.asset_tag}
+                    filteredAssets.map((asset) => {
+                      const isSelected = selectedAssets.includes(asset.id);
+                      return (
+                        <label
+                          key={asset.id}
+                          className="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleAssetToggle(asset.id)}
+                            className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
+                          />
+                          <div className="ml-3">
+                            <div className="text-sm font-medium text-gray-900">
+                              {asset.name}
+                              {asset.asset_tag && (
+                                <span className="ml-2 text-xs font-normal text-gray-400">
+                                  {asset.asset_tag}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {asset.brand} {asset.model} · {asset.category}
+                            </div>
                           </div>
-                          <div className="text-sm text-gray-500">
-                            {asset.brand} {asset.model} • {asset.category}
-                          </div>
-                        </div>
-                      </label>
-                    ))
+                        </label>
+                      );
+                    })
                   )}
                 </div>
-                {errors.tech_asset_id !== undefined && selectedAssets.length === 0 && (
-                  <p className="mt-1 text-sm text-red-600 flex items-center">
-                    <AlertCircle className="h-4 w-4 mr-1" />
-                    Selecciona al menos un activo
+
+                {/* Error de validación: activo */}
+                {errors.tech_asset_id && (
+                  <p className="mt-2 text-sm text-red-600 flex items-center">
+                    <AlertCircle className="h-4 w-4 mr-1 flex-shrink-0" />
+                    {errors.tech_asset_id.message}
                   </p>
                 )}
               </div>
 
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                {/* Razón de Asignación */}
-                <div className="sm:col-span-2">
-                  <label htmlFor="assignment_reason" className="block text-sm font-medium text-gray-700">
-                    Razón de Asignación *
-                  </label>
-                  <select
-                    id="assignment_reason"
-                    name="assignment_reason"
-                    value={formData.assignment_reason}
-                    onChange={handleSelectChange}
-                    className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 ${
-                      errors.assignment_reason ? 'border-red-300 ring-red-500' : ''
-                    }`}
-                  >
-                    <option value="">Selecciona una razón</option>
-                    <option value="work_assignment">Asignación de trabajo</option>
-                    <option value="home_office">Trabajo remoto/Home office</option>
-                    <option value="project">Proyecto específico</option>
-                    <option value="temporary_replacement">Reemplazo temporal</option>
-                    <option value="permanent_assignment">Asignación permanente</option>
-                    <option value="training">Capacitación/Training</option>
-                    <option value="other">Otro</option>
-                  </select>
-                  {errors.assignment_reason && (
-                    <p className="mt-1 text-sm text-red-600 flex items-center">
-                      <AlertCircle className="h-4 w-4 mr-1" />
-                      {errors.assignment_reason}
-                    </p>
-                  )}
-                </div>
+              {/* ═══════════ SECCIÓN: Selección de Usuario ═══════════ */}
+              <div className="bg-gray-50 rounded-lg p-5">
+                <h3 className="text-lg font-semibold text-gray-800 mb-1 flex items-center">
+                  <User className="h-5 w-5 mr-2 text-emerald-600" />
+                  Usuario Destinatario
+                </h3>
+                <p className="text-sm text-gray-500 mb-3">
+                  Selecciona el usuario que recibirá el activo.
+                </p>
 
-                {/* Ubicación de Uso */}
-                <div>
-                  <label htmlFor="location_of_use" className="block text-sm font-medium text-gray-700">
-                    <MapPin className="inline h-4 w-4 mr-1" />
-                    Ubicación de Uso *
-                  </label>
-                  <input
-                    type="text"
-                    id="location_of_use"
-                    name="location_of_use"
-                    value={formData.location_of_use}
-                    onChange={handleInputChange}
-                    className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 ${
-                      errors.location_of_use ? 'border-red-300 ring-red-500' : ''
-                    }`}
-                    placeholder="Ej: Oficina Central, Casa del empleado, Sucursal Norte"
-                  />
-                  {errors.location_of_use && (
-                    <p className="mt-1 text-sm text-red-600 flex items-center">
-                      <AlertCircle className="h-4 w-4 mr-1" />
-                      {errors.location_of_use}
-                    </p>
-                  )}
-                </div>
+                {/* Si ya hay usuario seleccionado, mostrar chip */}
+                {selectedUser ? (
+                  <div className="flex items-center justify-between p-3 bg-emerald-50 border border-emerald-200 rounded-md">
+                    <div className="flex items-center">
+                      <CheckCircle className="h-4 w-4 text-emerald-600 mr-2" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          {selectedUser.full_name}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {selectedUser.email}
+                          {selectedUser.department && ` · ${selectedUser.department}`}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleUserDeselect}
+                      className="text-xs text-emerald-700 hover:text-emerald-900 underline"
+                    >
+                      Cambiar
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    {/* Búsqueda de usuarios */}
+                    <div className="relative mb-3">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <input
+                        type="text"
+                        placeholder="Buscar usuarios..."
+                        value={userSearch}
+                        onChange={(e) => setUserSearch(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                      />
+                    </div>
 
-                {/* Fecha de Retorno Esperada */}
-                <div>
-                  <label htmlFor="expected_return_date" className="block text-sm font-medium text-gray-700">
-                    <Calendar className="inline h-4 w-4 mr-1" />
-                    Fecha de Retorno Esperada
-                  </label>
-                  <input
-                    type="date"
-                    id="expected_return_date"
-                    name="expected_return_date"
-                    value={formData.expected_return_date}
-                    onChange={handleInputChange}
-                    min={new Date().toISOString().split('T')[0]}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500"
-                  />
-                  <p className="mt-1 text-xs text-gray-500">
-                    Opcional. Fecha estimada para la devolución del activo.
+                    {/* Lista de usuarios */}
+                    <div className="border border-gray-200 rounded-md max-h-48 overflow-y-auto">
+                      {isLoadingUsers ? (
+                        <div className="flex justify-center items-center h-16">
+                          <Loader2 className="h-5 w-5 animate-spin text-emerald-600" />
+                        </div>
+                      ) : filteredUsers.length === 0 ? (
+                        <div className="p-4 text-center text-gray-500 text-sm">
+                          No se encontraron usuarios
+                        </div>
+                      ) : (
+                        filteredUsers.map((user) => (
+                          <button
+                            key={user.id}
+                            type="button"
+                            onClick={() => handleUserSelect(user)}
+                            className="w-full text-left flex items-center p-3 hover:bg-emerald-50 border-b border-gray-100 last:border-b-0 transition-colors"
+                          >
+                            <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center mr-3">
+                              <User className="h-4 w-4 text-emerald-600" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">
+                                {user.full_name}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {user.email}
+                                {user.department && ` · ${user.department}`}
+                              </p>
+                            </div>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </>
+                )}
+
+                {/* Error de validación: usuario */}
+                {errors.assigned_to_user_id && (
+                  <p className="mt-2 text-sm text-red-600 flex items-center">
+                    <AlertCircle className="h-4 w-4 mr-1 flex-shrink-0" />
+                    {errors.assigned_to_user_id.message}
                   </p>
-                </div>
+                )}
+              </div>
 
-                {/* Condición del Activo */}
-                <div>
-                  <label htmlFor="condition_at_assignment" className="block text-sm font-medium text-gray-700">
-                    Condición del Activo
-                  </label>
-                  <select
-                    id="condition_at_assignment"
-                    name="condition_at_assignment"
-                    value={formData.condition_at_assignment}
-                    onChange={handleSelectChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500"
-                  >
-                    <option value="excellent">Excelente</option>
-                    <option value="good">Buena</option>
-                    <option value="fair">Regular</option>
-                    <option value="poor">Deficiente</option>
-                    <option value="needs_repair">Necesita reparación</option>
-                  </select>
-                </div>
+              {/* ═══════════ SECCIÓN: Detalles de la Asignación ═══════════ */}
+              <div className="bg-white border border-gray-200 rounded-lg p-5">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                  Detalles de la Asignación
+                </h3>
 
-                {/* Notas de Asignación */}
-                <div className="sm:col-span-2">
-                  <label htmlFor="assignment_notes" className="block text-sm font-medium text-gray-700">
-                    Notas de Asignación
-                  </label>
-                  <textarea
-                    id="assignment_notes"
-                    name="assignment_notes"
-                    rows={3}
-                    value={formData.assignment_notes}
-                    onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500"
-                    placeholder="Información adicional sobre la asignación..."
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  {/* Razón de Asignación — usa register() */}
+                  <div className="sm:col-span-2">
+                    <FormSelect
+                      label="Razón de Asignación"
+                      name="assignment_reason"
+                      options={ASSIGNMENT_REASON_OPTIONS}
+                      register={register}
+                      error={errors.assignment_reason}
+                      required
+                      placeholder="Selecciona una razón"
+                    />
+                  </div>
+
+                  {/* Ubicación de Uso — usa register() */}
+                  <div className="sm:col-span-2">
+                    <FormInput
+                      label="Ubicación de Uso"
+                      name="location_of_use"
+                      placeholder="Ej: Oficina Central, Casa del empleado, Sucursal Norte"
+                      register={register}
+                      error={errors.location_of_use}
+                      required
+                    />
+                  </div>
+
+                  {/* Fecha de Retorno Esperada — usa register() */}
+                  <FormInput
+                    label="Fecha de Retorno Esperada"
+                    name="expected_return_date"
+                    type="date"
+                    register={register}
+                    error={errors.expected_return_date}
+                    min={new Date().toISOString().split('T')[0]}
+                    helpText="Opcional. Fecha estimada para la devolución."
                   />
+
+                  {/* Condición del Activo — usa register() */}
+                  <FormSelect
+                    label="Condición del Activo"
+                    name="condition_at_assignment"
+                    options={CONDITION_OPTIONS}
+                    register={register}
+                    error={errors.condition_at_assignment}
+                  />
+
+                  {/* Notas — usa register() */}
+                  <div className="sm:col-span-2">
+                    <FormTextarea
+                      label="Notas de Asignación"
+                      name="assignment_notes"
+                      placeholder="Información adicional sobre la asignación..."
+                      register={register}
+                      error={errors.assignment_notes}
+                      rows={3}
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Botones de Acción */}
-              <div className="pt-5">
-                <div className="flex justify-end space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => navigate('/inventory/assignments')}
-                    className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
-                    disabled={isSubmitting}
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="animate-spin -ml-1 mr-3 h-4 w-4" />
-                        Asignando...
-                      </>
-                    ) : (
-                      `Asignar ${selectedAssets.length > 1 ? `${selectedAssets.length} Activos` : 'Activo'}`
-                    )}
-                  </button>
-                </div>
+              {/* ═══════════ BOTONES ═══════════ */}
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => navigate('/inventory/assignments')}
+                  disabled={isSubmitting}
+                  className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="inline-flex items-center px-5 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                  {selectedAssets.length > 1
+                    ? `Asignar ${selectedAssets.length} Activos`
+                    : 'Crear Asignación'}
+                </button>
               </div>
             </form>
           </div>
