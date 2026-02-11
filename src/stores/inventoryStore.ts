@@ -111,11 +111,25 @@ export const useInventoryStore = create<InventoryState>()(
                     const currentPage = page ?? get().currentPage;
                     const currentLimit = pageSize ?? get().itemsPerPage;
                     const { assetFilters, searchTerm} = get();
-                    const techAssets = await inventoryApi.getTechAssets({...assetFilters, page: currentPage, page_size: currentLimit, search: searchTerm || undefined});
-                    set({ techAssets: techAssets.items, totalAssets: techAssets.total, currentPage: techAssets.page, isLoading: false});
+
+                    const techAssets = await inventoryApi.getTechAssets({
+                        ...assetFilters, 
+                        page: currentPage, 
+                        page_size: currentLimit, 
+                        search: searchTerm || undefined
+                    });
+
+                    set({ 
+                        techAssets: techAssets?.items ?? [], 
+                        totalAssets: techAssets.total, 
+                        currentPage: techAssets.page, 
+                        isLoading: false
+                    });
                 } catch (error) {
                     set({
                         error: inventoryApi.handleApiError(error),
+                        techAssets: [],
+                        totalAssets: 0,
                         isLoading: false
                     });
                 }
@@ -237,10 +251,12 @@ export const useInventoryStore = create<InventoryState>()(
                 try {
                     const { assignmentFilters } = get();
                     const assignments = await inventoryApi.getAssignments(assignmentFilters);
-                    set({ assignments, isLoading: false });
+                    
+                    set({ assignments: assignments ?? [], isLoading: false });
                 } catch (error) {
                     set({ 
-                        error: inventoryApi.handleApiError(error), 
+                        error: inventoryApi.handleApiError(error),
+                        assignments: [], 
                         isLoading: false 
                     });
                 }

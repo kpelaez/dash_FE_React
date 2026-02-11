@@ -14,7 +14,8 @@ import {
   Package,
   AlertCircle,
   CheckCircle,
-  Clock
+  Clock,
+  FileText, CheckCircleIcon, AlertCircleIcon
 } from 'lucide-react';
 import { useInventoryStore } from '../../stores/inventoryStore';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -324,6 +325,9 @@ const AssignmentsPage = () => {
                       Asignado Por
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Documento
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Acciones
                     </th>
                   </tr>
@@ -369,6 +373,19 @@ const AssignmentsPage = () => {
                             </div>
                           </div>
                         </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {assignment.document_sent_to_humand ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <CheckCircleIcon className="h-3.5 w-3.5 mr-1" />
+                            Enviado
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                            <AlertCircleIcon className="h-3.5 w-3.5 mr-1" />
+                            Pendiente
+                          </span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[assignment.status]}`}>

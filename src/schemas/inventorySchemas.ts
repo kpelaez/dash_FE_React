@@ -164,6 +164,7 @@ export const assetAssignmentCreateSchema = z.object({
     .min(2, 'La ubicación debe tener al menos 2 caracteres'),
   condition_at_assignment: optionalString,
   assignment_notes: optionalString,
+  accessories: z.string().optional(),
 });
 
 export type AssetAssignmentCreateFormData = z.infer<typeof assetAssignmentCreateSchema>;

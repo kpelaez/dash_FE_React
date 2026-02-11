@@ -223,9 +223,9 @@ const handleConfirmDelete = async () => {
 
   const toggleSelectAll = () => {
     setSelectedAssets(
-      selectedAssets.length === displayedAssets.length
+      selectedAssets.length === (displayedAssets ?? []).length
         ? []
-        : displayedAssets.map((asset) => asset.id)
+        : (displayedAssets ?? []).map((asset) => asset.id)
     );
   };
 
@@ -636,27 +636,27 @@ const handleConfirmDelete = async () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-gray-900">
-                {displayedAssets.length}
+                {(displayedAssets ?? []).length}
               </div>
               <div className="text-sm text-gray-500">
-                {displayedAssets.length === techAssets.length ? 'Total' : 'Filtrados'}
+                {totalAssets > 0 ? `de ${totalAssets} total` : 'Total'}
               </div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">
-                {displayedAssets.filter((a: TechAsset) => a.status === 'available').length}
+                {(displayedAssets ?? []).filter((a: TechAsset) => a.status === 'available').length}
               </div>
               <div className="text-sm text-gray-500">Disponibles</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">
-                {displayedAssets.filter((a: TechAsset) => a.status === 'assigned').length}
+                {(displayedAssets ?? []).filter((a: TechAsset) => a.status === 'assigned').length}
               </div>
               <div className="text-sm text-gray-500">Asignados</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-emerald-600">
-                ${displayedAssets.reduce((total: number, asset: TechAsset) => total + (asset.purchase_price ?? 0), 0).toLocaleString('es-AR')}
+                ${(displayedAssets ?? []).reduce((total: number, asset: TechAsset) => total + (asset.purchase_price ?? 0), 0).toLocaleString('es-AR')}
               </div>
               <div className="text-sm text-gray-500">Valor Total</div>
             </div>

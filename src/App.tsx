@@ -21,6 +21,9 @@ import MyAssetsPage from './pages/Inventory/MyAssetsPage';
 
 // import InventoryReportsPage from './pages/Inventory/InventoryReportsPage';
 
+// Página generacion de Documento de asignación
+import AssignmentDetailPage from './pages/Inventory/AssignmentDetailPage';
+
 // Toaster
 import { Toaster } from 'react-hot-toast';
 
@@ -168,6 +171,15 @@ function App() {
                   <AssignmentFormPage />
                 </RoleProtectedRoute>
               }   
+            />
+
+            <Route 
+              path='/inventory/assignments/:id' 
+              element={
+                <RoleProtectedRoute requiredRoles={['admin', 'manager']}>
+                  <AssignmentDetailPage/>
+                </RoleProtectedRoute>  
+              }            
             />
 
             {/* Gestión de mantenimiento - accesible para técnicos también */}

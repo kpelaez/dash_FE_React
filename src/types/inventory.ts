@@ -127,6 +127,13 @@ export interface AssetAssignment {
   assigned_to_name?: string;
   assigned_to_email?: string;
   assigned_by_name?: string;
+
+  // Campos de Humand
+  accessories?: string;
+  document_sent_to_humand?: boolean;
+  document_sent_at?: string;
+  humand_document_name?: string;
+  humand_folder_id?: number;
 }
 
 export interface AssetAssignmentCreate {
@@ -138,6 +145,7 @@ export interface AssetAssignmentCreate {
   condition_at_assignment?: string;
   assignment_notes?: string;
   assigned_date?: string;
+  accessories?: string;
 }
 
 export enum AssignmentStatus {
@@ -388,3 +396,31 @@ export interface SelectOption {
   disabled?: boolean;
 }
 
+
+// NUEVOS TIPOS PARA DOCUMENTOS DE ASIGNACIÓN
+
+export interface AssignmentDocumentStatus {
+  assignment_id: number;
+  document_sent: boolean;
+  sent_at: string | null;
+  document_name: string | null;
+  folder_id: number | null;
+}
+
+export interface SendToHumandRequest {
+  send_notification: boolean;
+}
+
+export interface SendToHumandResponse {
+  message: string;
+  assignment_id: number;
+  employee_name: string;
+  asset_name: string;
+  sent_at: string;
+  humand_response: any;
+}
+
+export interface UserDNIUpdate {
+  dni: string;
+  consent: boolean;
+}

@@ -15,7 +15,8 @@ import {
     MaintenanceMetrics,
     AssetCategory,
     AssetStatus,
-    PaginatedResponse
+    PaginatedResponse,
+    UserDNIUpdate
 } from '../types/inventory';
 
 // Configuracion base de la API
@@ -119,8 +120,27 @@ class InventoryApiService {
 
         const queryString = params.toString();
 
-        return this.request<PaginatedResponse<TechAsset>>(`/inventory/tech-assets${queryString ? `?${queryString}` : '/'}`);
+        const response = await this.request<PaginatedResponse<TechAsset>>(`/inventory/tech-assets/${queryString ? `?${queryString}` : '/'}`);
         
+        if (Array.isArray(response)) {
+            return {
+                items: response,
+                total: response.length,
+                page: filters?.page ?? 1,
+                total_pages: 1,
+                skip:0,
+                limit: 0,
+            };
+        }
+
+        return {
+            items: response?.items ?? [],
+            total: response?.total ?? 0,
+            page: response?.page ?? 1,
+            total_pages: response?.total_pages ?? 1,
+            skip: response.skip,
+            limit: response.limit,
+        };
     }
 
     async  getTechAsset(id: number): Promise<TechAsset> {
@@ -382,6 +402,16 @@ class InventoryApiService {
         });
     }
 
+    /**
+     * Actualizar DNI de un usuario
+     */
+    async updateUserDNI(userId: number, dniData: UserDNIUpdate): Promise<{ message: string }> {
+    return this.request<{ message: string }>(`/users/${userId}/dni`, {
+        method: 'PATCH',
+        body: JSON.stringify(dniData)
+    });
+    }
+
     // === DASHBOARD ===
 
     async getDashboardData(): Promise<DashboardData> {
@@ -409,6 +439,8 @@ class InventoryApiService {
         }
         return 'Ha ocurrido un error inesperado';
     }
+
+
 }
 
 // Instancia singleton del servicio

@@ -106,6 +106,7 @@ const AssignmentFormPage: React.FC = () => {
       expected_return_date:     '',
       condition_at_assignment:  'good',
       assignment_notes:         '',
+      accessories: '',
     },
   });
 
@@ -114,9 +115,16 @@ const AssignmentFormPage: React.FC = () => {
     setIsLoadingUsers(true);
     try {
       const usersData = await inventoryApi.getUsers();
-      setUsers(usersData);
+      if (Array.isArray(usersData)) {
+        setUsers(usersData);
+      } else {
+        console.error('Expected array but got:', usersData);
+        setUsers([]);
+        toast.error('Error al cargar usuarios: formato incorrecto');
+      }
     } catch (error) {
       console.error('Error loading users:', error);
+      setUsers([]);
     } finally {
       setIsLoadingUsers(false);
     }
@@ -126,9 +134,20 @@ const AssignmentFormPage: React.FC = () => {
     setIsLoadingAssets(true);
     try {
       const response = await inventoryApi.getTechAssets({ status: AssetStatus.AVAILABLE, page_size: 10 });
-      setAvailableAssets(response.items);
-    } catch (error) {
+      if (response && Array.isArray(response.items)) {
+          setAvailableAssets(response.items);
+        } else if (Array.isArray(response)) {
+          // Si devuelve array directo (sin paginación)
+          setAvailableAssets(response);
+        } else {
+          console.error('Expected array or paginated response but got:', response);
+          setAvailableAssets([]);
+          toast.error('Error al cargar activos: formato incorrecto');
+        }
+    } catch (error: any) {
       console.error('Error loading assets:', error);
+      setAvailableAssets([]);
+      toast.error(error.message || 'Error al cargar activos disponibles');
     } finally {
       setIsLoadingAssets(false);
     }
@@ -495,6 +514,15 @@ const AssignmentFormPage: React.FC = () => {
                       register={register}
                       error={errors.assignment_notes}
                       rows={3}
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <FormTextarea
+                      label="Accesorios entregados"
+                      name="accessories"
+                      register={register}
+                      rows={2}
+                      placeholder="Ej: Cargador original, mouse Logitech M185, teclado mecánico Redragon"
                     />
                   </div>
                 </div>
