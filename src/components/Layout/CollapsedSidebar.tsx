@@ -4,7 +4,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { 
   ChevronLeft, ChevronRight, Home, BarChart2, Users, 
   Settings, Info, Menu, X, ChevronDown, PlusCircle, BookUser,
-  Laptop, ClipboardList
+  Laptop, ClipboardList,
+  UserCog
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 
@@ -159,9 +160,10 @@ const CollapsibleSidebar = () => {
           icon: <PlusCircle size={18} />
         },
         {
-          title: 'Listar Usuarios',
-          path: '/admin/users',
-          icon: <BookUser size={18} />,
+          title: 'Usuarios',
+          requiredRoles:['admin'],
+          path: '/users',
+          icon: <UserCog size={18} />,
         }
       ]
     },

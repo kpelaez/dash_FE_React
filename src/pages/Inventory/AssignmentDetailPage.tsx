@@ -33,6 +33,19 @@ const statusLabels = {
   damaged: 'Dañado'
 };
 
+const getConditionLabel = (condition: string | undefined): string => {
+  if (!condition) return 'No especificada';
+  
+  const conditionMap: Record<string, string> = {
+    'excellent': 'Excelente',
+    'good': 'Bueno',
+    'fair': 'Regular',
+    'poor': 'Malo'
+  };
+  
+  return conditionMap[condition] || condition;
+};
+
 const AssignmentDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -234,7 +247,7 @@ const AssignmentDetailPage = () => {
                   <div>
                     <p className="text-xs text-gray-500">Condición al Asignar</p>
                     <p className="text-sm font-medium text-gray-900">
-                      {assignment.condition_at_assignment || 'No especificada'}
+                      {getConditionLabel(assignment.condition_at_assignment) || 'No especificada'}
                     </p>
                   </div>
                 </div>

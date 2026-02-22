@@ -23,6 +23,7 @@ import MyAssetsPage from './pages/Inventory/MyAssetsPage';
 
 // Página generacion de Documento de asignación
 import AssignmentDetailPage from './pages/Inventory/AssignmentDetailPage';
+import UsersManagementPage from './pages/Users/UsersManagementPage';
 
 // Toaster
 import { Toaster } from 'react-hot-toast';
@@ -236,6 +237,14 @@ function App() {
                   <UserRegisterPage />
                 </RoleProtectedRoute>
               } 
+            />
+            <Route
+              path="/users"
+              element={
+                <RoleProtectedRoute requiredRoles={['admin']}>
+                  <UsersManagementPage />
+                </RoleProtectedRoute>
+              }
             />
           </Routes>
         </Router>

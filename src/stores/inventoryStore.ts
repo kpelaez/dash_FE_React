@@ -116,13 +116,14 @@ export const useInventoryStore = create<InventoryState>()(
                         ...assetFilters, 
                         page: currentPage, 
                         page_size: currentLimit, 
-                        search: searchTerm || undefined
+                        search: searchTerm || undefined,
                     });
 
                     set({ 
                         techAssets: techAssets?.items ?? [], 
                         totalAssets: techAssets.total, 
-                        currentPage: techAssets.page, 
+                        currentPage: techAssets.page,
+                        itemsPerPage: currentLimit, 
                         isLoading: false
                     });
                 } catch (error) {
@@ -137,12 +138,10 @@ export const useInventoryStore = create<InventoryState>()(
 
             setPage: (page: number) => {
                 set({ currentPage: page });
-                get().fetchTechAssets(page);
             },
 
             setPageSize: (pageSize: number) => {
                 set({ itemsPerPage: pageSize, currentPage: 1 });
-                get().fetchTechAssets(1, pageSize);
             },
 
             // NUEVA ACCIÓN: setSearchTerm
@@ -249,15 +248,19 @@ export const useInventoryStore = create<InventoryState>()(
             fetchAssignments: async () => {
                 set({ isLoading: true, error: null });
                 try {
-                    const { assignmentFilters } = get();
-                    const assignments = await inventoryApi.getAssignments(assignmentFilters);
-                    
-                    set({ assignments: assignments ?? [], isLoading: false });
-                } catch (error) {
+                    const response = await inventoryApi.getAssignments({ page: 1, page_size: 10 });
+
+                    // El backend ahora retorna { items: [], total: N, page: N, total_pages: N }
+                    const items = Array.isArray(response) ? response : (response?.items ?? []);
+
                     set({ 
-                        error: inventoryApi.handleApiError(error),
-                        assignments: [], 
+                        assignments: items,
                         isLoading: false 
+                    });
+                } catch (error) {
+                    set({
+                        error: error instanceof Error ? error.message : 'Error al cargar asignaciones',
+                        isLoading: false,
                     });
                 }
             },

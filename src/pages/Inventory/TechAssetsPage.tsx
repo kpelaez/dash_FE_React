@@ -101,9 +101,9 @@ const TechAssetsPage = () => {
 
 
   // Cargar activos al montar el componente
-  useEffect(()=> {
-    fetchTechAssets();
-  }, [fetchTechAssets]);
+ useEffect(()=> {
+    fetchTechAssets(currentPage, itemsPerPage);
+}, [currentPage, itemsPerPage]);  // Recargar cuando cambie página o tamaño
 
   // Manejar parametros de URL
   useEffect(()=>{
@@ -114,25 +114,6 @@ const TechAssetsPage = () => {
     if (status) setSelectedStatus(status);
     if (category) setSelectedCategory(category);
   }, [searchParams]);
-
-  // Filtrar activos
-  // const filteredAssets = techAssets.filter((asset: TechAsset) => {
-  //   const matchesSearch = 
-  //     asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //     (asset.asset_tag ?? "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //     asset.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //     asset.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //     asset.serial_number.toLowerCase().includes(searchTerm.toLowerCase());
-    
-  //   const matchesAssignment = filterAssignment === '' ||
-  //   (filterAssignment === 'assigned' && asset.user_assigned) ||
-  //   (filterAssignment === 'unassigned' && !asset.user_assigned);
-
-  //   const matchesStatus = !selectedStatus || asset.status === selectedStatus;
-  //   const matchesCategory = !selectedCategory || asset.category === selectedCategory;
-
-  //   return matchesSearch && matchesStatus && matchesCategory && matchesAssignment;
-  // });
 
   const displayedAssets = techAssets;
 
@@ -542,7 +523,10 @@ const handleConfirmDelete = async () => {
                           <div className="flex items-center">
                             <User className="h-4 w-4 text-blue-500 mr-2" />
                             <span className="text-gray-900 font-medium">
-                              {asset.user_assigned}
+                              {asset.user_assigned
+                                ? asset.user_assigned.split('(')[0].trim()
+                                : '—'
+                              }
                             </span>
                           </div>
                         ) : (

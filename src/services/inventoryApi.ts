@@ -20,7 +20,7 @@ import {
 } from '../types/inventory';
 
 // Configuracion base de la API
-const API_BASE_URL =  'http://127.0.0.1:8000' //|| import.meta.env.VITE_API_URL
+const API_BASE_URL =  'http://localhost:8000' //|| import.meta.env.VITE_API_URL
 
 class InventoryApiService {
     private getAuthHeaders(): HeadersInit {
@@ -208,14 +208,16 @@ class InventoryApiService {
 
     // === ASSIGNMENTS ===
 
-    async getAssignments(filters?: AssignmentFilters): Promise<AssetAssignment[]> {
+    async getAssignments(filters?: AssignmentFilters & { page?: number; page_size?: number}): Promise<PaginatedResponse<AssetAssignment>> {
         const params = new URLSearchParams();
         if (filters?.user_id) params.append('user_id', filters.user_id.toString());
         if (filters?.asset_id) params.append('asset_id', filters.asset_id.toString());
         if (filters?.status) params.append('status', filters.status);
 
         const queryString = params.toString();
-        return this.request<AssetAssignment[]>(`/inventory/assignments${queryString ? `?${queryString}` : ''}`);
+        const response = await this.request<PaginatedResponse<AssetAssignment>>(`/inventory/assignments${queryString ? `?${queryString}` : ''}`);
+        
+        return response;
     }
 
     async getAssignment(id: number): Promise<AssetAssignment> {
