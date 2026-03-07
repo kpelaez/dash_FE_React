@@ -1,0 +1,286 @@
+import { useState, ReactNode } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { ChevronDown, ChevronRight, Users, PlusCircle, Package, Laptop, Settings, ClipboardList } from 'lucide-react';
+import { useAuthStore } from '../../stores/authStore';
+
+interface MenuItems {
+    title: string;
+    path?: string;
+    icon?: ReactNode;
+    children?: MenuItems[];
+    requiredRoles?: string[];
+}
+
+// Datos del Menu
+const menuItems: MenuItems[] = [
+    {
+      title: 'Inicio',
+      requiredRoles: ['admin','manager', 'user', 'inventory_manager'],
+      path: '/',
+    },
+    {
+      title: 'Dashboards',
+      requiredRoles: ['admin', 'manager',],
+      path:'/dashboards',
+    },
+    {
+      title: 'Inventario Tecnologico',
+      requiredRoles: ['admin', 'manager', 'inventory_manager', 'user'],
+      icon: <Package size={18} />,
+      children: [
+        {
+          title: 'Dashboard',
+          requiredRoles: ['admin', 'manager', 'inventory_manager'],
+          path: '/inventory/dashboard',
+          icon: <div className="w-2 h-2 rounded-full bg-blue-400 mr-2"></div>
+        },
+        {
+          title: 'Activos Tecnológicos',
+          path: '/inventory/tech-assets',
+          icon: <Laptop size={16} />
+        },
+        {
+          title: 'Asignaciones',
+          requiredRoles: ['admin', 'manager', 'inventory_manager'],
+          path: '/inventory/assignments',
+          icon: <Users size={16} />
+        },
+        {
+          title: 'Mantenimiento',
+          requiredRoles: ['admin', 'manager', 'inventory_manager'],
+          path: '/inventory/maintenance',
+          icon: <Settings size={16} />
+        },
+        {
+          title: 'Mis Activos',
+          path: '/inventory/my-assets',
+          icon: <div className="w-2 h-2 rounded-full bg-green-400 mr-2"></div>
+        },
+        {
+          title: 'Reportes',
+          path: '/inventory/reports',
+          icon: <ClipboardList size={16} />
+        }
+      ]
+    },
+    {
+      title: 'Sectores',
+      requiredRoles: ['admin', 'manager',],
+      children: [
+          {
+            title: 'Directorio',
+            path:'/teams/directorio'
+          },
+          {
+          title: 'D.A.T.',
+          path: '/teams/desarrollo',
+          },
+          {
+          title: 'Recursos Humanos',
+          path: '/teams/rrhh',
+          },
+          {
+          title: 'Comercio Exterior',
+          path: '/teams/comex',
+          },
+          {
+          title: 'Comercial',
+          path: '/teams/comercial',
+          children: [
+            {
+            title: 'Vendedores',
+            path: '/teams/comercial/vendedores',
+            },
+            {
+            title: 'Asistencia tecnica',
+            path: '/teams/comercial/asistencia-tecnica',
+            },
+            {
+            title: 'Administracion de Ventas',
+            path: '/teams/comercial/admin-ventas',
+            },
+          ]
+          },
+          {
+          title: 'Administración',
+          path: '/teams/administracion',
+          children: [
+            {
+            title: 'Pago a Proveedores',
+            path: '/teams/administracion/pago-proveedores',
+            },
+            {
+            title: 'Facturacion',
+            path: '/teams/administracion/facturacion',
+            },
+            {
+            title: 'Logistica Inversa',
+            path: '/teams/administracion/logistica-inversa',
+            },
+            {
+            title: 'Tesorería',
+            path: '/teams/administracion/tesoreria',
+            },
+            {
+            title: 'Stock',
+            path: '/teams/administracion/stock',
+            },
+          ]
+          },
+      ]
+    },
+    {
+      title: 'SF Administración',
+      requiredRoles: ['admin'],
+      icon: <Users size={18} />,
+      children: [
+        {
+          title: 'Registrar Usuario',
+          path: '/admin/register-user',
+          icon: <PlusCircle size={18} />
+        },
+        {
+          title: 'Listar Usuarios',
+          path: '/admin/users',
+          icon: <Users size={18} />
+        }
+      ]
+    },
+    {
+      title: 'Acerca de',
+      requiredRoles: ['admin', 'user'],
+      path: '/about'
+    },
+]
+
+const Sidebar = () => {
+  const location = useLocation();
+  const hasAnyRole = useAuthStore(state => state.hasAnyRole);
+  const roles = useAuthStore(state=>state.roles)
+
+  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({
+    Teams: false, //Para iniciar expandido, se puede omitir
+    Administracion: false,
+    "Inventario Tecnológico": false,
+  });
+
+  //Funcion para alternar la expansion
+  const toggleExpand = (title: string) => {
+    setExpandedItems(prev => ({
+        ...prev,
+        [title]: !prev[title],
+    }));
+  };
+
+  // Función para determinar si una opción del menú debe mostrarse según el rol
+  const shouldShowMenuItem = (item: MenuItems): boolean => {
+    // Si no tiene restricción de roles, mostrar siempre
+    if (!item.requiredRoles) return true;
+    
+    // Verificar si el usuario tiene alguno de los roles requeridos
+    // IMPORTANTE: Asegúrate de que esta lógica esté funcionando correctamente
+    if (hasAnyRole) {
+      return hasAnyRole(item.requiredRoles);
+    } else {
+      // Fallback si hasAnyRole no está disponible
+      return item.requiredRoles.some(role => roles.includes(role));
+    }
+  };
+
+  // Renderizar un elemento del menu
+  const renderMenuItem = (item: MenuItems, level = 0) => {
+    const hasChildren = item.children && item.children.length > 0;
+    const isActive = location.pathname === item.path;
+    const isExpanded = expandedItems[item.title] || false;
+
+    // Verificar si es una ruta activa de inventario para destacar la sección
+    const isInventoryActive = location.pathname.startsWith('/inventory') && item.title === 'Inventario Tecnológico';
+    const isChildActive = hasChildren && item.children?.some(child => 
+      location.pathname === child.path || 
+      (child.children && child.children.some(grandchild => location.pathname === grandchild.path))
+    );
+  
+    //No mostrar si el usuario no tiene los roles requeridos
+    if(!shouldShowMenuItem(item)) return null;
+
+    // Si tiene hijos, verificar si al menos uno debe mostrarse
+    if(item.children && item.children.length > 0) {
+      const visibleChildren = item.children.filter(shouldShowMenuItem);
+      if (visibleChildren.length === 0) return null;
+      
+      // Actualizar children con solo los visibles
+      item = {... item, children: visibleChildren};
+    }
+
+
+    // Estilos basados en el nivel 
+    const paddingLeft = level === 0 ? 'pl-4': `pl-${4 + level * 5}`;
+
+    // Estilos especiales para el módulo de inventario
+    const getItemStyles = () => {
+      if (isActive || isInventoryActive || isChildActive) {
+        return 'bg-emerald-50 text-emerald-600 font-medium border-r-2 border-emerald-500';
+      }
+      return 'text-gray-700 hover:bg-gray-200';
+    };
+    return (
+      <div key={item.title}>
+        {/* Elemento principal */}
+        {item.path && !hasChildren ? (
+        <Link 
+            to={item.path}
+            className={`
+            flex items-center ${paddingLeft} py-3 pr-4 
+            ${isActive ? 'bg-emerald-50 text-emerald-600 font-medium' : 'text-gray-700 hover:bg-gray-200'}
+            transition-colors duration-150 ${getItemStyles()}
+            `}
+        >
+            {item.title}
+        </Link>
+        ) : (
+        <button
+            onClick={() => toggleExpand(item.title)}
+            className={`
+            flex items-center justify-between w-full ${paddingLeft} py-3 pr-4 
+            text-emerald-800 font-medium hover:bg-gray-200
+            transition-colors duration-150
+            `}
+        >
+            <span>{item.title}</span>
+            {hasChildren && (
+            isExpanded ? 
+            <ChevronDown size={18} className="text-gray-500" /> : 
+            <ChevronRight size={18} className="text-gray-500" />
+            )}
+        </button>
+        )}
+        
+        {/* Subelementos */}
+        {hasChildren && isExpanded && (
+        <div className={`ml-2 ${paddingLeft} ${getItemStyles()}`}>
+            {item.children!.map(child => renderMenuItem(child, level + 1))}
+        </div>
+        )}
+      </div>
+    );
+  }
+
+  const visibleMenuItems = menuItems.filter(shouldShowMenuItem);
+  return (
+    <div className="w-55 h-screen bg-white border-r border-gray-200 flex flex-col overflow-hidden">
+      {/* Logo */}
+      <div className="p-4 border-b border-gray-200 flex-shrink-0">
+        <div className="h-9 flex items-center justify-center">
+          <a href='/'><img src="/Logo-text-small.png" alt="logo empresa diminutivo" className="h-14" /></a>
+        </div>
+      </div>
+      
+      {/* Menú */}
+      <div className="flex-1 overflow-y-auto">
+        {visibleMenuItems.map(item => renderMenuItem(item))}
+      </div>
+    </div>
+  );
+}
+
+export default Sidebar

@@ -1,20 +1,7 @@
 import { create } from 'zustand';
-
-// FUNCIÓN PARA OBTENER LA URL BASE DINÁMICAMENTE
-const getAPIBaseURL = (): string => {
-  // Si estamos en desarrollo local (mismo dispositivo)
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-    return 'http://localhost:8000';
-  }
-  
-  // Si accedemos desde otro dispositivo en la red local
-  // Usar la misma IP que el frontend pero puerto 8000 para el backend
-  const hostname = window.location.hostname;
-  return `http://${hostname}:8000`;
-};
-
-// URL base de la API de autenticación (dinámicamente configurada)
-const API_URL = getAPIBaseURL();
+import toast from 'react-hot-toast';
+// Define la URL base de la API de autenticacion
+const API_URL = 'http://localhost:8000';
 
 interface LoginCredentials {
   email: string;
@@ -97,14 +84,17 @@ export const useAuthStore = create<AuthState>((set, get)=>({
 
       await get().getUser();
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error al iniciar sesión';
       set({
-        error: error instanceof Error ? error.message : 'Error desconocido',
+        error: errorMessage,
         isLoading: false,
         roles: [],
         isAuthenticated: false,
         token: null,
         user: null,
       });
+      toast.error(errorMessage);
+      throw error;
     }
   },
 
@@ -117,6 +107,7 @@ export const useAuthStore = create<AuthState>((set, get)=>({
       isAuthenticated: false,
       error: null
     });
+    toast.success('Sesión cerrada exitosamente');
   },
 
   getUser: async ()=>{
