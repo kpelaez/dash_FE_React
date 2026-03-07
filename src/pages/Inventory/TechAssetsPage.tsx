@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState} from 'react';
 import { useDebounce } from '../../hooks/useDebounce';
 import {useInventoryStore} from '../../stores/inventoryStore';
 import Layout from '../../components/Layout/Layout';
@@ -46,7 +46,6 @@ const categoryColors = {
 
 const TechAssetsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  // const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [showFilters, setShowFilters] = useState(false);
@@ -90,6 +89,7 @@ const TechAssetsPage = () => {
   const setPage = useInventoryStore(state=> state.setPage);
   const setPageSize = useInventoryStore(state=> state.setPageSize);
   const setSearchTerm = useInventoryStore(state => state.setSearchTerm);
+  const searchTerm = useInventoryStore(state => state.searchTerm);
 
   // Debounce de la búsqueda (espera 500ms después de que el usuario deja de escribir)
   const debouncedSearchInput = useDebounce(searchInput, 500);
@@ -97,17 +97,16 @@ const TechAssetsPage = () => {
   // Cuando el debounced search cambia, actualizar el store
   useEffect(() => {
     setSearchTerm(debouncedSearchInput);
-  }, [debouncedSearchInput, setSearchTerm]);
+  }, [debouncedSearchInput]);
 
 
   // Cargar activos al montar el componente
  useEffect(()=> {
     fetchTechAssets(currentPage, itemsPerPage);
-}, [currentPage, itemsPerPage]);  // Recargar cuando cambie página o tamaño
+}, [currentPage, itemsPerPage, searchTerm]);  // Recargar cuando cambie página o tamaño
 
   // Manejar parametros de URL
   useEffect(()=>{
-    const action = searchParams.get('action');
     const status = searchParams.get('status');
     const category = searchParams.get('category');
 

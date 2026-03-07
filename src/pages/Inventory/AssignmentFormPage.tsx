@@ -5,12 +5,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import Layout from '../../components/Layout/Layout';
 import {
   Package,
-  Calendar,
   Search,
   AlertCircle,
   User,
   Loader2,
-  MapPin,
   CheckCircle,
 } from 'lucide-react';
 import { useInventoryStore } from '../../stores/inventoryStore';

@@ -27,6 +27,10 @@ interface InventoryState {
     currentPage: number;
     itemsPerPage: number;
     assignments: AssetAssignment[];
+    totalAssignments: number;
+    assignmentsCurrentPage: number;
+    assignmentsPageSize: number;
+    assignmentSearchTerm: string;
     maintenances: AssetMaintenance[];
     myAssignments: AssetAssignment[];
     dashboardMetrics: InventoryMetrics | null;
@@ -53,7 +57,10 @@ interface InventoryState {
     clearAssetFilters: () => void;
 
     // Acciones para Assignments
-    fetchAssignments: () => Promise<void>;
+    fetchAssignments: (page?: number, pageSize?: number) => Promise<void>;
+    setAssignmentPage: (page: number) => void;
+    setAssignmentPageSize: (pageSize: number) => void;
+    setAssignmentSearchTerm: (term: string) => void;
     fetchMyAssignments: () => Promise<void>;
     createAssignment: (assignment: AssetAssignmentCreate) => Promise<AssetAssignment>;
     returnAsset: (assignmentId: number, returnData: any) => Promise<AssetAssignment>;
@@ -96,6 +103,10 @@ export const useInventoryStore = create<InventoryState>()(
             itemsPerPage: 10,
             searchTerm: '',
             assignments: [],
+            totalAssignments: 0,
+            assignmentsCurrentPage: 1,
+            assignmentsPageSize: 10,
+            assignmentSearchTerm: '',
             maintenances: [],
             myAssignments: [],
             dashboardMetrics: null,
@@ -105,33 +116,35 @@ export const useInventoryStore = create<InventoryState>()(
             notifications: [],
 
             // Tech Assets
-            fetchTechAssets: async (page?:number, pageSize?:number) =>{
-                set({ isLoading: true, error: null});
+            fetchTechAssets: async (page?: number, pageSize?: number) => {
+                set({ isLoading: true, error: null });
                 try {
+                    // Leer siempre del estado actual del store para tener la info más reciente
+                    // Los parámetros opcionales permiten override explícito si es necesario
                     const currentPage = page ?? get().currentPage;
                     const currentLimit = pageSize ?? get().itemsPerPage;
-                    const { assetFilters, searchTerm} = get();
+                    const { assetFilters, searchTerm } = get();
 
-                    const techAssets = await inventoryApi.getTechAssets({
-                        ...assetFilters, 
-                        page: currentPage, 
-                        page_size: currentLimit, 
+                    const response = await inventoryApi.getTechAssets({
+                        ...assetFilters,
+                        page: currentPage,
+                        page_size: currentLimit,
                         search: searchTerm || undefined,
                     });
 
-                    set({ 
-                        techAssets: techAssets?.items ?? [], 
-                        totalAssets: techAssets.total, 
-                        currentPage: techAssets.page,
-                        itemsPerPage: currentLimit, 
-                        isLoading: false
+                    set({
+                        techAssets: response?.items ?? [],
+                        totalAssets: response?.total ?? 0,
+                        currentPage: response?.page ?? currentPage,
+                        itemsPerPage: currentLimit,
+                        isLoading: false,
                     });
                 } catch (error) {
                     set({
                         error: inventoryApi.handleApiError(error),
                         techAssets: [],
                         totalAssets: 0,
-                        isLoading: false
+                        isLoading: false,
                     });
                 }
             },
@@ -144,10 +157,8 @@ export const useInventoryStore = create<InventoryState>()(
                 set({ itemsPerPage: pageSize, currentPage: 1 });
             },
 
-            // NUEVA ACCIÓN: setSearchTerm
             setSearchTerm: (term: string) => {
                 set({ searchTerm: term, currentPage: 1 });  // Resetear a página 1 al buscar
-                get().fetchTechAssets(1);  // Recargar con el nuevo término
             },
 
             createTechAsset: async (asset: TechAssetCreate) => {
@@ -245,24 +256,48 @@ export const useInventoryStore = create<InventoryState>()(
             },
 
             // === ASSIGNMENTS ===
-            fetchAssignments: async () => {
+            fetchAssignments: async (page?: number, pageSize?: number) => {
                 set({ isLoading: true, error: null });
                 try {
-                    const response = await inventoryApi.getAssignments({ page: 1, page_size: 10 });
+                    const currentPage = page ?? get().assignmentsCurrentPage;
+                    const currentLimit = pageSize ?? get().assignmentsPageSize;
+                    const { assignmentSearchTerm, assignmentFilters } = get();
 
-                    // El backend ahora retorna { items: [], total: N, page: N, total_pages: N }
-                    const items = Array.isArray(response) ? response : (response?.items ?? []);
+                    const response = await inventoryApi.getAssignments({
+                        page: currentPage,
+                        page_size: currentLimit,
+                        search: assignmentSearchTerm || undefined,
+                        status: assignmentFilters?.status || undefined,
+                        user_id: assignmentFilters?.user_id || undefined,
+                        asset_id: assignmentFilters?.asset_id || undefined,
+                    });
 
-                    set({ 
-                        assignments: items,
-                        isLoading: false 
+                    set({
+                        assignments: response?.items ?? [],
+                        totalAssignments: response?.total ?? 0,
+                        assignmentsCurrentPage: response?.page ?? currentPage,
+                        assignmentsPageSize: currentLimit,
+                        isLoading: false,
                     });
                 } catch (error) {
                     set({
                         error: error instanceof Error ? error.message : 'Error al cargar asignaciones',
+                        assignments: [],
+                        totalAssignments: 0,
                         isLoading: false,
                     });
                 }
+            },
+            setAssignmentPage: (page: number) => {
+                set({ assignmentsCurrentPage: page });
+            },
+
+            setAssignmentPageSize: (pageSize: number) => {
+                set({ assignmentsPageSize: pageSize, assignmentsCurrentPage: 1 });
+            },
+
+            setAssignmentSearchTerm: (term: string) => {
+                set({ assignmentSearchTerm: term, assignmentsCurrentPage: 1 });
             },
 
             fetchMyAssignments: async () => {

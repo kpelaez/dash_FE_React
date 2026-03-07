@@ -267,7 +267,7 @@ export interface AssetFilters {
 }
 
 export interface AssignmentFilters {
-  status?: AssignmentStatus;
+  status?: AssignmentStatus | undefined;
   user_id?: number;
   asset_id?: number;
   active_only?: boolean;
@@ -291,8 +291,6 @@ export interface ApiResponse<T> {
 export interface PaginatedResponse<T> {
   items: T[];
   total: number;
-  skip: number;
-  limit: number;
   page: number;
   total_pages: number;
 }

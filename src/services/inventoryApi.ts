@@ -105,7 +105,11 @@ class InventoryApiService {
     }
 
     // ============ TECH ASSETS ============
-    async getTechAssets(filters?: AssetFilters): Promise<PaginatedResponse<TechAsset>> {
+    async getTechAssets(filters?: AssetFilters & {
+        page?: number;
+        page_size?: number;
+        search?: string;
+    }): Promise<PaginatedResponse<TechAsset>> {
         const params = new URLSearchParams();
 
         // Paginación
@@ -122,24 +126,11 @@ class InventoryApiService {
 
         const response = await this.request<PaginatedResponse<TechAsset>>(`/inventory/tech-assets/${queryString ? `?${queryString}` : '/'}`);
         
-        if (Array.isArray(response)) {
-            return {
-                items: response,
-                total: response.length,
-                page: filters?.page ?? 1,
-                total_pages: 1,
-                skip:0,
-                limit: 0,
-            };
-        }
-
         return {
             items: response?.items ?? [],
             total: response?.total ?? 0,
             page: response?.page ?? 1,
             total_pages: response?.total_pages ?? 1,
-            skip: response.skip,
-            limit: response.limit,
         };
     }
 
@@ -208,11 +199,25 @@ class InventoryApiService {
 
     // === ASSIGNMENTS ===
 
-    async getAssignments(filters?: AssignmentFilters & { page?: number; page_size?: number}): Promise<PaginatedResponse<AssetAssignment>> {
+    async getAssignments(
+        filters?: AssignmentFilters & {
+            page?: number;
+            page_size?: number;
+            search?: string;
+            status?: string;
+        }
+    ): Promise<PaginatedResponse<AssetAssignment>> {
         const params = new URLSearchParams();
+
+        // Paginación — ESTOS son los que faltaban antes
+        if (filters?.page !== undefined) params.append('page', filters.page.toString());
+        if (filters?.page_size !== undefined) params.append('page_size', filters.page_size.toString());
+
+        // Filtros
         if (filters?.user_id) params.append('user_id', filters.user_id.toString());
         if (filters?.asset_id) params.append('asset_id', filters.asset_id.toString());
         if (filters?.status) params.append('status', filters.status);
+        if (filters?.search) params.append('search', filters.search);
 
         const queryString = params.toString();
         const response = await this.request<PaginatedResponse<AssetAssignment>>(`/inventory/assignments${queryString ? `?${queryString}` : ''}`);
