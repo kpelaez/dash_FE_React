@@ -22,7 +22,7 @@ const MyAssetsPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterCategory, setFilterCategory] = useState<string>('');
+  const [filterCategory] = useState<string>('');
 
   useEffect(() => {
     loadMyAssets();

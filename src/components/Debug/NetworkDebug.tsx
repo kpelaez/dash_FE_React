@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '../../stores/authStore';
-import businessIndicatorService from '../../services/businessIndicatorService';
 
 interface ConnectionTest {
   name: string;

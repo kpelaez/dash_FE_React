@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   ChevronLeft, ChevronRight, Home, BarChart2, Users, 
-  Settings, Info, Menu, X, ChevronDown, PlusCircle, BookUser,
+  Settings, Info, Menu, X, ChevronDown, PlusCircle,
   Laptop, ClipboardList,
   UserCog
 } from 'lucide-react';
@@ -288,7 +288,7 @@ const CollapsibleSidebar = () => {
   };
 
   // Función separada para renderizar subelementos (para manejar niveles anidados)
-  const renderSubMenuItem = (item: MenuItem, level: number) => {
+  const renderSubMenuItem = (item: MenuItem, _level: number) => {
     if (!shouldShowMenuItem(item)) return null;
 
     const hasChildren = item.children && item.children.length > 0;

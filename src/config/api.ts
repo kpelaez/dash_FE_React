@@ -60,7 +60,7 @@ export const getAuthHeaders = (token?: string) => {
 // Función para verificar si el backend está disponible
 export const checkBackendHealth = async (): Promise<boolean> => {
   const controller = new AbortController();
-  const id = window.setTimeout(() => controller.abort(), API_CONFIG.TIMEOUT);
+  window.setTimeout(() => controller.abort(), API_CONFIG.TIMEOUT);
 
   try {
     const response = await fetch(`${API_CONFIG.BASE_URL}/`, {

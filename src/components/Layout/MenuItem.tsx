@@ -31,34 +31,6 @@ interface MenuItemProps {
     variant?: 'default' | 'collapsed' | 'mobile';
 }
 
-// DISEÑO
-
-/**
- * ¿POR QUÉ CONSTANTES?
- * - Design tokens: valores reutilizables en todo el componente
- * - Fácil ajustar spacing sin buscar en todo el código
- * - Consistency: todos los items usan los mismos valores
- */
-const DESIGN_TOKENS = {
-  // Indentación por nivel
-  indentPerLevel: 16, // px
-  
-  // Altura mínima de los items (para touch targets en móvil)
-  minHeight: {
-    mobile: 48,   // Mínimo recomendado: 44px (iOS), usamos 48 para comodidad
-    desktop: 40
-  },
-  
-  // Transiciones
-  transition: 'all 150ms cubic-bezier(0.4, 0, 0.2, 1)',
-  
-  // Border radius
-  borderRadius: {
-    default: '0.5rem',  // 8px
-    collapsed: '0.75rem' // 12px (más redondeado en modo colapsado)
-  }
-} as const;
-
 export const MenuItem: React.FC<MenuItemProps> = ({
   item, level = 0, isExpanded = false, isActive = false, onToggle, onClick, variant = 'default'
 }) => {

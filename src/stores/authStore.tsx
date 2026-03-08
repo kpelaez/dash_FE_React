@@ -16,7 +16,7 @@ interface User { //<-Asi es el tipo de dato que nos va a devolver la funcion cur
   created_at: string;
 }
 
-interface RegisterData extends LoginCredentials {
+export interface RegisterData extends LoginCredentials {
   full_name?: string;
   is_active?: boolean;
   roles?: string[];

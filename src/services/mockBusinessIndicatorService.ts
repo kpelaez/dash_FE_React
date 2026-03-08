@@ -24,7 +24,7 @@ class MockBusinessIndicatorService {
   /**
    * Obtener todos los indicadores de negocio (MOCK)
    */
-  async getBusinessIndicators(params?: BusinessIndicatorsRequest): Promise<BusinessIndicator[]> {
+  async getBusinessIndicators(_params?: BusinessIndicatorsRequest): Promise<BusinessIndicator[]> {
     await this.simulateNetworkDelay(800); // Simular llamada al backend
 
     const mockIndicators: BusinessIndicator[] = [
@@ -120,8 +120,8 @@ class MockBusinessIndicatorService {
    */
   async getIndicatorHistory(
     indicatorId: string, 
-    dateFrom?: string, 
-    dateTo?: string
+    _dateFrom?: string, 
+    _dateTo?: string
   ): Promise<IndicatorHistory[]> {
     await this.simulateNetworkDelay(600);
 
