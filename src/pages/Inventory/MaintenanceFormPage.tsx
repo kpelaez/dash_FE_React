@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import Layout from '../../components/Layout/Layout';
-import { AssetMaintenanceCreate, TechAsset, MaintenanceType, MaintenancePriority, MaintenanceStatus } from '../../types/inventory';
+import Layout from '../../components/Layout/MainLayout';
+import { AssetMaintenanceCreate, MaintenanceType, MaintenancePriority, MaintenanceStatus } from '../../types/inventory';
 import { useInventoryStore } from '../../stores/inventoryStore';
-import { AlertCircle, Wrench, Package, Calendar, User, DollarSign, Loader2, Search, Clock } from 'lucide-react';
+import { AlertCircle, Wrench, Package, Calendar, User, Loader2, Search, Clock } from 'lucide-react';
 import inventoryApi from '../../services/inventoryApi';
 
 interface UserOption {
@@ -266,8 +266,6 @@ const MaintenanceFormPage: React.FC = () => {
     }
   };
 
-  // Calcular fecha mínima (hoy)
-  const today = new Date().toISOString().split('T')[0];
 
   return (
     <Layout>

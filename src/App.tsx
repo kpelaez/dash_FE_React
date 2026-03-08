@@ -33,14 +33,9 @@ import ProtectedRoute from './components/Auth/ProtectedRoute';
 import RoleProtectedRoute from './components/Auth/RoleProtectedRoute';
 import AssetDetailPage from './pages/Inventory/AssetDetailPage';
 
-//Nueva pagina de indicadores de negocio
-import BusinessIndicatorsPage from './pages/BusinessIndicators/BusinessIndicatorsPage';
-import IndicatorsComparisonPage from './pages/BusinessIndicators/IndicatorComparisonPage';
-import BusinessIndicatorsChartPage from './pages/BusinessIndicators/BusinessIndicatorsChartPage';
-import NetworkDebug from './components/Debug/NetworkDebug';
-
 // Nueva pagina modulo agenda stock
 import ShiftSchedulePage from './pages/ShiftSchedulePage/ShiftSchedulePage';
+import DashboardsPage from './pages/DashboardsPage';
 
 
 function App() {
@@ -100,6 +95,15 @@ function App() {
               element={
                 <RoleProtectedRoute requiredRoles={['admin', 'manager']}>
                   <DashboardsPage />
+                </RoleProtectedRoute>
+              } 
+            />
+
+            <Route 
+              path="/teams/stock/schedule" 
+              element={
+                <RoleProtectedRoute requiredRoles={['admin', 'manager', 'user']}>
+                  <ShiftSchedulePage />
                 </RoleProtectedRoute>
               } 
             />

@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import Layout from '../../components/Layout/Layout';
+import Layout from '../../components/Layout/MainLayout';
 import {useInventoryStore} from '../../stores/inventoryStore';
 import { TechAsset } from '../../types/inventory';
 import inventoryApi from '../../services/inventoryApi';

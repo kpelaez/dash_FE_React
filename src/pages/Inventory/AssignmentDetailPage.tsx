@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import Layout from '../../components/Layout/Layout';
+import Layout from '../../components/Layout/MainLayout';
 import {
   ArrowLeft,
   Package,

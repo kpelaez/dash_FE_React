@@ -1,7 +1,7 @@
 import { useEffect, useState} from 'react';
 import { useDebounce } from '../../hooks/useDebounce';
 import {useInventoryStore} from '../../stores/inventoryStore';
-import Layout from '../../components/Layout/Layout';
+import Layout from '../../components/Layout/MainLayout';
 import { TechAsset } from '../../types/inventory';
 import  AssignmentHistoryModal  from '../../components/Inventory/AssignmentHistoryModal';
 import ConfirmDialog from '../../components/ConfirmDialog';

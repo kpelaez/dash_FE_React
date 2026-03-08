@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ShieldCheck, ShieldAlert, Search, UserCog } from 'lucide-react';
-import Layout from '../../components/Layout/Layout';
+import Layout from '../../components/Layout/MainLayout';
 import { UserDNIModal } from '../../components/Inventory/UserDNIModal';
 import inventoryApi from '../../services/inventoryApi';
 import toast from 'react-hot-toast';

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import Layout from '../../components/Layout/Layout';
+import Layout from '../../components/Layout/MainLayout';
 import {
   Package,
   Search,

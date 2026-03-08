@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useDebounce } from '../../hooks/useDebounce';
-import Layout from '../../components/Layout/Layout';
+import Layout from '../../components/Layout/MainLayout';
 import {
   Plus, Search, Eye,
   ArrowLeftRight, RotateCcw, Calendar, User, Package,
@@ -56,7 +56,6 @@ const formatDate = (dateString: string | undefined) => {
 
 const AssignmentsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [showFilters, setShowFilters] = useState(false);
 
   // Input local de búsqueda (no se envía al backend hasta el debounce)
   const [searchInput, setSearchInput] = useState('');

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import Layout from '../../components/Layout/Layout';
+import Layout from '../../components/Layout/MainLayout';
 import { Tag, Loader2 } from 'lucide-react';
 import { FormInput, FormSelect, FormTextarea } from '../../components/Form';
 import { 
@@ -158,10 +158,6 @@ const AssetFormPage: React.FC = () => {
       label: value.replace(/_/g, ' '),
     }));
   
-  const statusOptions = Object.entries(AssetStatus).map(([, value]) => ({
-    value: value,
-    label: value.charAt(0).toUpperCase() + value.slice(1).replace(/_/g, ' '),
-  }));
 
   if (isLoadingData) {
     return (

@@ -1,7 +1,7 @@
 // src/pages/Inventory/MaintenancePage.tsx
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import Layout from '../../components/Layout/Layout';
+import Layout from '../../components/Layout/MainLayout';
 import {
   Settings,
   Plus,
@@ -17,7 +17,6 @@ import {
   AlertTriangle,
   Package,
   User,
-  FileText
 } from 'lucide-react';
 import {useInventoryStore} from '../../stores/inventoryStore';
 
@@ -103,7 +102,6 @@ const MaintenancePage: React.FC = () => {
   const [selectedMaintenances, setSelectedMaintenances] = useState<number[]>([]);
 
   const {
-    maintenances,
     fetchMaintenances,
     startMaintenance,
     completeMaintenance,
