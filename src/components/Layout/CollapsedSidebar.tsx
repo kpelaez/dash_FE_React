@@ -84,69 +84,64 @@ const CollapsibleSidebar = () => {
     },
     {
       title: 'Sectores',
-      icon: <Users size={isCollapsed ? 20 : 18} />,
-      requiredRoles: ['admin', 'manager'],
+      icon: <Users />,
+      requiredRoles: ['admin', 'manager', 'user'],
       children: [
-          {
-            title: 'Directorio',
-            path:'/teams/directorio'
-          },
-          {
+        {
+          title: 'Directorio',
+          path:'/teams/directorio'
+        },
+        {
           title: 'D.A.T.',
           path: '/teams/desarrollo',
-          },
-          {
+        },
+        {
           title: 'Recursos Humanos',
           path: '/teams/rrhh',
-          },
-          {
+        },
+        {
           title: 'Comercio Exterior',
           path: '/teams/comex',
-          },
-          {
-          title: 'Comercial',
-          path: '/teams/comercial',
+        },
+        {
+          title: 'Vendedores',
+          path: '/teams/vendedores',
+        },
+        {
+          title: 'Asistencia tecnica',
+          path: '/teams/asistencia-tecnica',
+        },
+        {
+          title: 'Administracion de Ventas',
+          path: '/teams/admin-ventas',
+        },
+        {
+          title: 'Pago a Proveedores',
+          path: '/teams/pago-proveedores',
+        },
+        {
+          title: 'Facturacion',
+          path: '/teams/facturacion',
+        },
+        {
+          title: 'Logistica',
+          path: '/teams/logistica',
+        },
+        {
+          title: 'Tesorería',
+          path: '/teams/tesoreria',
+        },
+        {
+          title: 'Stock',
+          path: '/teams/stock',
           children: [
             {
-            title: 'Vendedores',
-            path: '/teams/comercial/vendedores',
-            },
-            {
-            title: 'Asistencia tecnica',
-            path: '/teams/comercial/asistencia-tecnica',
-            },
-            {
-            title: 'Administracion de Ventas',
-            path: '/teams/comercial/admin-ventas',
-            },
+              title: 'Turnos',
+              path: '/teams/stock/schedule',
+              icon: <div className="w-2 h-2 rounded-full bg-emerald-400 mr-2"></div>
+            }
           ]
-          },
-          {
-          title: 'Administración',
-          path: '/teams/administracion',
-          children: [
-            {
-            title: 'Pago a Proveedores',
-            path: '/teams/administracion/pago-proveedores',
-            },
-            {
-            title: 'Facturacion',
-            path: '/teams/administracion/facturacion',
-            },
-            {
-            title: 'Logistica Inversa',
-            path: '/teams/administracion/logistica-inversa',
-            },
-            {
-            title: 'Tesorería',
-            path: '/teams/administracion/tesoreria',
-            },
-            {
-            title: 'Stock',
-            path: '/teams/administracion/stock',
-            },
-          ]
-          },
+        },
       ]
     },
     {

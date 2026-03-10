@@ -65,67 +65,63 @@ const menuItems: MenuItems[] = [
     },
     {
       title: 'Sectores',
-      requiredRoles: ['admin', 'manager',],
+      icon: <Users />,
+      requiredRoles: ['admin', 'manager', 'user'],
       children: [
           {
             title: 'Directorio',
             path:'/teams/directorio'
           },
           {
-          title: 'D.A.T.',
-          path: '/teams/desarrollo',
+            title: 'D.A.T.',
+            path: '/teams/desarrollo',
           },
           {
-          title: 'Recursos Humanos',
-          path: '/teams/rrhh',
+            title: 'Recursos Humanos',
+            path: '/teams/rrhh',
           },
           {
-          title: 'Comercio Exterior',
-          path: '/teams/comex',
+            title: 'Comercio Exterior',
+            path: '/teams/comex',
           },
           {
-          title: 'Comercial',
-          path: '/teams/comercial',
-          children: [
-            {
             title: 'Vendedores',
-            path: '/teams/comercial/vendedores',
-            },
-            {
-            title: 'Asistencia tecnica',
-            path: '/teams/comercial/asistencia-tecnica',
-            },
-            {
-            title: 'Administracion de Ventas',
-            path: '/teams/comercial/admin-ventas',
-            },
-          ]
+            path: '/teams/vendedores',
           },
           {
-          title: 'Administración',
-          path: '/teams/administracion',
-          children: [
-            {
+            title: 'Asistencia tecnica',
+            path: '/teams/asistencia-tecnica',
+          },
+          {
+            title: 'Administracion de Ventas',
+            path: '/teams/admin-ventas',
+          },
+          {
             title: 'Pago a Proveedores',
-            path: '/teams/administracion/pago-proveedores',
-            },
-            {
+            path: '/teams/pago-proveedores',
+          },
+          {
             title: 'Facturacion',
-            path: '/teams/administracion/facturacion',
-            },
-            {
-            title: 'Logistica Inversa',
-            path: '/teams/administracion/logistica-inversa',
-            },
-            {
+            path: '/teams/facturacion',
+          },
+          {
+            title: 'Logistica',
+            path: '/teams/logistica',
+          },
+          {
             title: 'Tesorería',
-            path: '/teams/administracion/tesoreria',
-            },
-            {
+            path: '/teams/tesoreria',
+          },
+          {
             title: 'Stock',
-            path: '/teams/administracion/stock',
-            },
-          ]
+            path: '/teams/stock',
+            children: [
+              {
+                title: 'Turnos',
+                path: '/teams/stock/schedule',
+                icon: <div className="w-2 h-2 rounded-full bg-emerald-400 mr-2"></div>
+              }
+            ]
           },
       ]
     },
