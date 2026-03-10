@@ -6,15 +6,7 @@ import {
   ShiftAlertsResponse 
 } from '../types/shiftSchedule';
 
-const getAPIBaseURL = (): string => {
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-    return 'http://localhost:8000';
-  }
-  const hostname = window.location.hostname;
-  return `http://${hostname}:8000`;
-};
-
-const API_BASE_URL = getAPIBaseURL();
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const ENDPOINT = '/api/shift-schedules';
 
 class ShiftScheduleService {
