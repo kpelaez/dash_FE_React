@@ -32,7 +32,7 @@ import {
  * Roles disponibles en el sistema
  * IMPORTANTE: Estos deben coincidir con el backend
  */
-export type UserRole = 'admin' | 'manager' | 'user';
+export type UserRole = 'admin' | 'manager' | 'user' | 'inventory_manager';
 
 /**
  * Definicion de un item del menu
@@ -92,11 +92,13 @@ export const menuItems: MenuItem[] = [
       {
         id: 'sectores-stock',
         title: 'Stock',
+        requiredRoles: ['admin', 'manager', 'user'],
         children: [
           {
             id: 'sectores-stock-turnos',
             title: 'Turnos',
             path: '/teams/stock/schedule',
+            requiredRoles: ['admin', 'manager', 'user'],
           }
         ]
       },
@@ -106,25 +108,28 @@ export const menuItems: MenuItem[] = [
     id: 'tech-inventory',
     title: 'Inventario Tecnológico',
     icon: Laptop,
-    requiredRoles: ['admin', 'manager'],
+    requiredRoles: ['admin', 'manager', 'inventory_manager', 'user'],
     children: [
       {
         id: 'tech-assets',
         title: 'Activos',
-        path: '/tech-inventory/assets',
-        icon: Package
+        path: '/inventory/tech-assets',
+        icon: Package,
+        requiredRoles: ['admin', 'manager', 'inventory_manager', 'user'],
       },
       {
         id: 'tech-assignments',
         title: 'Asignaciones',
-        path: '/tech-inventory/assignments',
-        icon: ClipboardList
+        path: '/inventory/assignments',
+        icon: ClipboardList,
+        requiredRoles: ['admin', 'manager', 'inventory_manager'],
       },
       {
         id: 'tech-maintenance',
         title: 'Mantenimiento',
-        path: '/tech-inventory/maintenance',
-        icon: ShieldAlert
+        path: '/inventory/maintenance',        
+        icon: ShieldAlert,
+        requiredRoles: ['admin', 'manager', 'inventory_manager'],
       },
       {
         id: 'tech-reports',
