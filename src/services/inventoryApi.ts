@@ -20,7 +20,8 @@ import {
 } from '../types/inventory';
 
 // Configuracion base de la API
-const API_BASE_URL =  import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// const API_BASE_URL =  import.meta.env.VITE_API_URL || 'http://localhost:8000';
+import {API_BASE_URL} from '../config/api';
 
 class InventoryApiService {
     private getAuthHeaders(): HeadersInit {
@@ -220,7 +221,7 @@ class InventoryApiService {
         if (filters?.search) params.append('search', filters.search);
 
         const queryString = params.toString();
-        const response = await this.request<PaginatedResponse<AssetAssignment>>(`/inventory/assignments${queryString ? `?${queryString}` : ''}`);
+        const response = await this.request<PaginatedResponse<AssetAssignment>>(`/inventory/assignments/${queryString ? `?${queryString}` : ''}`);
         
         return response;
     }

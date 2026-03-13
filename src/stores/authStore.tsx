@@ -1,14 +1,15 @@
 import { create } from 'zustand';
 import toast from 'react-hot-toast';
 // Define la URL base de la API de autenticacion
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+import { API_URL } from '../config/api';
 
 interface LoginCredentials {
   email: string;
   password: string;
 }
 
-interface User { //<-Asi es el tipo de dato que nos va a devolver la funcion current_user del back?
+interface User { 
   id: number;
   email: string;
   full_name: string | null;
@@ -125,7 +126,7 @@ export const useAuthStore = create<AuthState>((set, get)=>({
     set({ isLoading: true});
 
     try {
-      const response = await fetch(`${API_URL}/me`, { // <-- Asi es la ruta para obtener usuario en el back
+      const response = await fetch(`${API_URL}/users/me`, { // <-- Asi es la ruta para obtener usuario en el back
         headers: {
           'Authorization': `Bearer ${token}`
         }

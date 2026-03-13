@@ -24,11 +24,47 @@ export default defineConfig({
     strictPort: true,
     // Opcional: configurar proxy para el backedn
     proxy:{
-      '/api': {
+      // Shift schedules
+      '/api/shift-schedules': {
         target: 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
-      }
+      },
+      // Business indicators
+      '/api/business-indicators': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false,
+      },
+      // Assignment documents
+      '/api/v1': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false,
+      },
+      // Inventario
+      '/inventory': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false,
+      },
+      // Auth y usuarios
+      '/token': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/users': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false,
+      },
+      // Health check
+      '/health': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false,
+      },
     }
   },
   preview: {
