@@ -7,7 +7,7 @@ import {
 } from '../types/shiftSchedule';
 import { API_BASE_URL } from '../config/api';
 // const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-const ENDPOINT = '/api/shift-schedules';
+const ENDPOINT = '/shift-schedules';
 
 class ShiftScheduleService {
   

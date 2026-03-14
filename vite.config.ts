@@ -25,7 +25,7 @@ export default defineConfig({
     // Opcional: configurar proxy para el backedn
     proxy:{
       // Shift schedules
-      '/api/shift-schedules': {
+      '/shift-schedules': {
         target: 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
