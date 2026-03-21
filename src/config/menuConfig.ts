@@ -135,7 +135,8 @@ export const menuItems: MenuItem[] = [
         id: 'tech-reports',
         title: 'Reportes',
         path: '/tech-inventory/reports',
-        icon: FileText
+        icon: FileText,
+        requiredRoles: ['admin', 'manager', 'inventory_manager'],
       }
     ]
   },
