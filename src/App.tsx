@@ -119,13 +119,13 @@ function App() {
             {/* RUTAS DEL MÓDULO DE INVENTARIO */}
             
             {/* Dashboard de inventario - accesible para roles básicos de inventario */}
-            <Route
-              path="/tech-inventory/reports"
+            <Route 
+              path="/inventory/dashboard" 
               element={
-                <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager']}>
-                  <InventoryReportsPage />
+                <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager', 'user']}>
+                  <InventoryDashboardPage />
                 </RoleProtectedRoute>
-              }
+              } 
             />
 
             {/* Gestión de activos tecnológicos - requiere permisos de gestión */}
@@ -162,6 +162,15 @@ function App() {
               element={
                 <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager']}>
                   <AssetFormPage />
+                </RoleProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/tech-inventory/reports"
+              element={
+                <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager']}>
+                  <InventoryReportsPage />
                 </RoleProtectedRoute>
               }
             />
