@@ -17,8 +17,7 @@ import MaintenanceFormPage from './pages/Inventory/MaintenanceFormPage';
 import AssetFormPage from './pages/Inventory/AssetFormPage';
 import AssignmentFormPage from './pages/Inventory/AssignmentFormPage';
 import MyAssetsPage from './pages/Inventory/MyAssetsPage';
-
-// import InventoryReportsPage from './pages/Inventory/InventoryReportsPage';
+import InventoryReportsPage from './pages/Inventory/InventoryReportsPage';
 
 // Página generacion de Documento de asignación
 import AssignmentDetailPage from './pages/Inventory/AssignmentDetailPage';
@@ -120,13 +119,13 @@ function App() {
             {/* RUTAS DEL MÓDULO DE INVENTARIO */}
             
             {/* Dashboard de inventario - accesible para roles básicos de inventario */}
-            <Route 
-              path="/inventory/dashboard" 
+            <Route
+              path="/tech-inventory/reports"
               element={
-                <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager', 'user']}>
-                  <InventoryDashboardPage />
+                <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager']}>
+                  <InventoryReportsPage />
                 </RoleProtectedRoute>
-              } 
+              }
             />
 
             {/* Gestión de activos tecnológicos - requiere permisos de gestión */}
