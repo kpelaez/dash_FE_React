@@ -12,17 +12,17 @@ interface ProtectedRouteProps {
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({children, requiredRoles = []}) => {
     const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
     const hasAnyRole = useAuthStore(state=> state.hasAnyRole);
-
+    const user = useAuthStore(state => state.user);
     const getUser = useAuthStore(state => state.getUser);
     const isLoading = useAuthStore(state => state.isLoading);
     const location = useLocation();
 
     //Verificar el token al cargar el componente
     useEffect(()=>{
-        if(isAuthenticated) {
+        if(isAuthenticated && !isLoading && !user) {
             getUser();
         }
-    },[isAuthenticated, getUser]);
+    },[isAuthenticated,isLoading, user ,getUser]);
 
     // Mientras se verifica el token, indicador de carga
     if(isLoading) {
