@@ -112,7 +112,7 @@ export const useAuthStore = create<AuthState>((set, get)=>({
   },
 
   getUser: async ()=>{
-    const {token} = get();
+    const {token, user} = get();
 
     if (!token) {
       set({ 
@@ -122,6 +122,8 @@ export const useAuthStore = create<AuthState>((set, get)=>({
       })
       return;
     }
+
+    if (user) return;
 
     set({ isLoading: true});
 
@@ -138,19 +140,7 @@ export const useAuthStore = create<AuthState>((set, get)=>({
 
       const userData = await response.json();
 
-      const rolesResponse = await fetch(`${API_URL}/users/me/roles`,{
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      let roles = [];
-      if (rolesResponse.ok) {
-        roles = await rolesResponse.json();
-      }
-
-
-      set({ user: userData,roles: roles ,isLoading: false});
+      set({ user: userData, isLoading: false});
 
     } catch (error) {
       console.error('Error al obtener el usuario:', error);

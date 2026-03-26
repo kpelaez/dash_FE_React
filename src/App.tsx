@@ -17,8 +17,7 @@ import MaintenanceFormPage from './pages/Inventory/MaintenanceFormPage';
 import AssetFormPage from './pages/Inventory/AssetFormPage';
 import AssignmentFormPage from './pages/Inventory/AssignmentFormPage';
 import MyAssetsPage from './pages/Inventory/MyAssetsPage';
-
-// import InventoryReportsPage from './pages/Inventory/InventoryReportsPage';
+import InventoryReportsPage from './pages/Inventory/InventoryReportsPage';
 
 // Página generacion de Documento de asignación
 import AssignmentDetailPage from './pages/Inventory/AssignmentDetailPage';
@@ -163,6 +162,15 @@ function App() {
               element={
                 <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager']}>
                   <AssetFormPage />
+                </RoleProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/tech-inventory/reports"
+              element={
+                <RoleProtectedRoute requiredRoles={['admin', 'manager', 'inventory_manager']}>
+                  <InventoryReportsPage />
                 </RoleProtectedRoute>
               }
             />
