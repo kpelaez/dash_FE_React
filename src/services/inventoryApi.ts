@@ -140,7 +140,7 @@ class InventoryApiService {
     }
 
     async createTechAsset(asset: TechAssetCreate): Promise<TechAsset> {
-        return this.request<TechAsset>('/inventory/tech-assets', {
+        return this.request<TechAsset>('/inventory/tech-assets/', {
             method: 'POST',
             body: JSON.stringify(asset),
         });

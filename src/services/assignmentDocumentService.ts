@@ -4,7 +4,7 @@ import type {
   SendToHumandResponse
 } from '../types/inventory';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_URL || '');
 
 // Configurar axios con token
 const getAuthHeaders = () => {
@@ -64,23 +64,41 @@ export const assignmentDocumentService = {
     assignmentId: number, 
     sendNotification: boolean = true
   ): Promise<SendToHumandResponse> => {
-    const response = await axios.post(
-      `${API_URL}/api/v1/assignments/${assignmentId}/send-to-humand`,
-      { send_notification: sendNotification },
-      getAuthHeaders()
-    );
-    return response.data;
+    try {
+      const response = await axios.post(
+        `${API_URL}/api/v1/assignments/${assignmentId}/send-to-humand`,
+        {}, 
+        {
+          ...getAuthHeaders(),
+          params: { send_notification: sendNotification },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(extractErrorMessage(error));
+    }
   },
 
   /**
    * Obtener estado del documento
    */
   getDocumentStatus: async (assignmentId: number): Promise<AssignmentDocumentStatus> => {
-    const response = await axios.get(
-      `${API_URL}/api/v1/assignments/${assignmentId}/document-status`,
-      getAuthHeaders()
-    );
-    return response.data;
+    try {
+      const response = await axios.get(
+        `${API_URL}/api/v1/assignments/${assignmentId}/document-status`,
+        getAuthHeaders()
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(extractErrorMessage(error));
+    }
+  },
+
+  openPreviewInNewTab: async (assignmentId: number): Promise<void> => {
+    const blob = await assignmentDocumentService.generatePreview(assignmentId);
+    const url = window.URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    setTimeout(() => window.URL.revokeObjectURL(url), 5000);
   },
 
   /**

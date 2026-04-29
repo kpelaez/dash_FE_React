@@ -134,6 +134,8 @@ export interface AssetAssignment {
   document_sent_at?: string;
   humand_document_name?: string;
   humand_folder_id?: number;
+
+  assigned_to_has_dni?: boolean;
 }
 
 export interface AssetAssignmentCreate {
