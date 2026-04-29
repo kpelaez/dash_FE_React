@@ -414,7 +414,7 @@ class InventoryApiService {
      * Actualizar DNI de un usuario
      */
     async updateUserDNI(userId: number, dniData: UserDNIUpdate): Promise<{ message: string }> {
-    return this.request<{ message: string }>(`/api/users/${userId}/dni`, {
+    return this.request<{ message: string }>(`/users/${userId}/dni`, {
         method: 'PATCH',
         body: JSON.stringify(dniData)
     });
@@ -437,7 +437,7 @@ class InventoryApiService {
     // === UTILITIES ===
 
     async getUsers(): Promise<any[]> {
-        return this.request<any[]>('/api/users');
+        return this.request<any[]>('/users');
     }
 
     // Método para manejar errores de forma centralizada
