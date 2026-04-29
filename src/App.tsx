@@ -273,7 +273,7 @@ function App() {
               } 
             />
             <Route
-              path="/users"
+              path="/admin/users"
               element={
                 <RoleProtectedRoute requiredRoles={['admin']}>
                   <UsersManagementPage />

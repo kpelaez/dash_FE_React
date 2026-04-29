@@ -67,12 +67,26 @@ export const menuItems: MenuItem[] = [
     requiredRoles: ['admin', 'manager', 'user']
   },
   {
-    id: 'business-indicators',
-    title: 'Indicadores',
-    path: '/business-indicators',
+    id: 'dashboards',
+    title: 'Dashboards',
     icon: BarChart2,
-    requiredRoles: ['admin', 'manager']
+    requiredRoles: ['admin', 'manager'],
+    children: [
+      {
+        id: 'business-indicators',
+        title: 'Indicadores',
+        path: '/business-indicators',
+        icon: BarChart2,
+      },
+      {
+        id: 'contribucion-marginal',      
+        title: 'Contribución Marginal',
+        path: '/dashboards/contribucion-marginal',
+        icon: BarChart2,
+      }
+    ]
   },
+
   {
     id: 'sectores',
     title: 'Sectores',

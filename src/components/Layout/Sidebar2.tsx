@@ -178,13 +178,10 @@ export const Sidebar: React.FC<SidebarProps> = ({className = ''}) => {
    * Mejora la UX: después de navegar, el drawer se cierra automáticamente
    */
  const handleMenuItemClick = () => {
-    if (window.innerWidth < 1024) {  // ✅ Cambiado de 768 a 1024
-      closeMobileMenu();
-    }
-
-    window.addEventListener('popstate', handleMenuItemClick);
-    return () => window.removeEventListener('popstate', handleMenuItemClick);
-  };
+  if (window.innerWidth < 1024) {
+    closeMobileMenu();
+  }
+};
 
   // RENDER: BOTÓN MÓVIL (HAMBURGER)
   
@@ -222,19 +219,14 @@ export const Sidebar: React.FC<SidebarProps> = ({className = ''}) => {
    * - Accessibility: focus trap visual
    */
   const renderMobileBackdrop = () => {
-    isMobileMenuOpen && (
-      <div
-        className="
-          fixed inset-0 z-30
-          bg-black/50
-          lg:hidden
-          transition-opacity duration-300
-        "
-        onClick={closeMobileMenu}
-        aria-hidden="true"
-      />
-    );
-  };
+  return isMobileMenuOpen ? (
+    <div
+      className="fixed inset-0 z-30 bg-black/50 lg:hidden transition-opacity duration-300"
+      onClick={closeMobileMenu}
+      aria-hidden="true"
+    />
+  ) : null;
+};
 
   // RENDER: CONTENIDO DEL SIDEBAR
   /**
