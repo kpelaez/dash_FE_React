@@ -23,6 +23,9 @@ import InventoryReportsPage from './pages/Inventory/InventoryReportsPage';
 import AssignmentDetailPage from './pages/Inventory/AssignmentDetailPage';
 import UsersManagementPage from './pages/Users/UsersManagementPage';
 
+// Página generacion de Contribucion Marginal Dashboard
+import ContribucionMarginalDashboard from './pages/ContribucionMarginalDashboard'
+
 // Toaster
 import { Toaster } from 'react-hot-toast';
 
@@ -249,6 +252,17 @@ function App() {
                 </ProtectedRoute>
               } 
             />
+            {/* Ruta de Dashboard Contribucion Marginal */}
+            <Route 
+              path="/dashboards/contribucion-marginal" 
+              element={
+                <ProtectedRoute>
+                  <ContribucionMarginalDashboard />
+                </ProtectedRoute>
+              } 
+            />
+
+
             {/* Ruta para el registro de usuarios */}
             <Route 
               path="/admin/register-user" 
