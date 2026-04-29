@@ -437,7 +437,7 @@ class InventoryApiService {
     // === UTILITIES ===
 
     async getUsers(): Promise<any[]> {
-        return this.request<any[]>('/users');
+        return this.request<any[]>('/users/');
     }
 
     // Método para manejar errores de forma centralizada
