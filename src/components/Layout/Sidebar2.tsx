@@ -19,7 +19,8 @@
 import React, { useEffect } from 'react';
 import { Menu, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import MenuItem from './MenuItem';
-import { useMenu, useSidebarState } from '../../hooks/useMenu';
+import { useMenu,  } from '../../hooks/useMenu';
+import { useSidebarStore } from '../../stores/sidebarStore';
 
 
 // LOGO COMPONENTS
@@ -97,7 +98,7 @@ export const Sidebar: React.FC<SidebarProps> = ({className = ''}) => {
     toggleCollapse,
     toggleMobileMenu,
     closeMobileMenu
-  } = useSidebarState();
+  } = useSidebarStore();
 
   // EFECTOS
   
