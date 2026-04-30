@@ -26,6 +26,8 @@ import UsersManagementPage from './pages/Users/UsersManagementPage';
 // Página generacion de Contribucion Marginal Dashboard
 import ContribucionMarginalDashboard from './pages/ContribucionMarginalDashboard'
 
+// Agregar al bloque de imports de páginas
+
 // Toaster
 import { Toaster } from 'react-hot-toast';
 
@@ -38,6 +40,9 @@ import AssetDetailPage from './pages/Inventory/AssetDetailPage';
 // Nueva pagina modulo agenda stock
 import ShiftSchedulePage from './pages/ShiftSchedulePage/ShiftSchedulePage';
 import DashboardsPage from './pages/DashboardsPage';
+
+import MyOvertimePage from './pages/Overtime/MyOvertimePage';
+import OvertimeManagePage from './pages/Overtime/OvertimeManagePage';
 
 
 function App() {
@@ -109,6 +114,25 @@ function App() {
                 </RoleProtectedRoute>
               } 
             />
+
+            <Route
+              path="/teams/stock/overtime"
+              element={
+                <ProtectedRoute>
+                  <MyOvertimePage />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/overtime/manage"
+              element={
+                <RoleProtectedRoute requiredRoles={['admin', 'manager']}>
+                  <OvertimeManagePage />
+                </RoleProtectedRoute>
+              }
+            />       
+            
 
             {/* Rutas protegidas por roles */}
             <Route 
