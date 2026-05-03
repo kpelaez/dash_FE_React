@@ -135,7 +135,24 @@ export const useAuthStore = create<AuthState>((set, get)=>({
       });
 
       if(!response.ok) {
-        throw new Error('Error al obtener datos del usuario');
+        if (response.status === 401 || response.status === 403) {
+          // Token inválido o expirado
+          localStorage.removeItem('auth_token');
+          set({
+            error: 'Sesión expirada. Por favor iniciá sesión nuevamente.',
+            isLoading: false,
+            user: null,
+            roles: [],
+            isAuthenticated: false,
+            token: null,
+          });
+          return;
+        }
+
+        // Cualquier otro error (500, red, etc.) → NO destruir sesión
+        console.warn(`[AuthStore] getUser falló con status ${response.status} — manteniendo sesión`);
+        set({ isLoading: false });
+        return;
       }
 
       const userData = await response.json();
@@ -143,16 +160,9 @@ export const useAuthStore = create<AuthState>((set, get)=>({
       set({ user: userData, isLoading: false});
 
     } catch (error) {
-      console.error('Error al obtener el usuario:', error);
-      localStorage.removeItem('auth_token');
-      set({
-        error: error instanceof Error ? error.message : 'Error desconocido',
-        isLoading: false,
-        user: null,
-        roles: [],
-        isAuthenticated: false,
-        token: null,
-      });
+      // Error de red → NO destruir sesión
+      console.warn('[AuthStore] Error de red al obtener usuario — manteniendo sesión:', error);
+      set({ isLoading: false });
     }
   },
 
