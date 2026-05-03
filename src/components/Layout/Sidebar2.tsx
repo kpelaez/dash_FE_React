@@ -17,6 +17,7 @@
  */
 
 import React, { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Menu, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import MenuItem from './MenuItem';
 import { useMenu,  } from '../../hooks/useMenu';
@@ -100,6 +101,8 @@ export const Sidebar: React.FC<SidebarProps> = ({className = ''}) => {
     closeMobileMenu
   } = useSidebarStore();
 
+  const location = useLocation();
+
   // EFECTOS
   
   /**
@@ -146,15 +149,11 @@ export const Sidebar: React.FC<SidebarProps> = ({className = ''}) => {
    * Cerrar sidebar al cambiar de ruta en mobile
    */
   useEffect(() => {
-    const handleRouteChange = () => {
-      if (window.innerWidth < 1024) { 
-        closeMobileMenu();
-      }
-    };
+    if (window.innerWidth < 1024) {
+      closeMobileMenu();
+    }
+  }, [location.pathname]); // se dispara en cada cambio de ruta real
 
-    window.addEventListener('popstate', handleRouteChange);
-    return () => window.removeEventListener('popstate', handleRouteChange);
-  }, [closeMobileMenu]);
 
   /**
    * Prevenir scroll del body cuando el mobile menu está abierto

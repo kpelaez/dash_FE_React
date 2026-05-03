@@ -157,7 +157,12 @@ export const useAuthStore = create<AuthState>((set, get)=>({
 
       const userData = await response.json();
 
-      set({ user: userData, isLoading: false});
+      set({ 
+        user: userData, 
+        roles: userData.roles?.length ? userData.roles : get().roles,
+        isLoading: false,
+        error: null,
+      });
 
     } catch (error) {
       // Error de red → NO destruir sesión
