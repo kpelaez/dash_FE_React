@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useAuthStore } from '../../stores/authStore';
 import overtimeService from '../../services/overtimeService';
 import type { OvertimeEntryRead } from '../../types/overtime';
 

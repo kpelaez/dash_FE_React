@@ -29,7 +29,6 @@ const INITIAL_FORM = {
 export default function MyOvertimePage() {
   // ─── Store 
   const user    = useAuthStore(state => state.user);
-  const roles   = useAuthStore(state => state.roles);
 
   // const isManager = roles.some(r => ['admin', 'manager'].includes(r));
 
