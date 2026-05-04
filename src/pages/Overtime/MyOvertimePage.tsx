@@ -27,13 +27,13 @@ const INITIAL_FORM = {
 };
 
 export default function MyOvertimePage() {
-  // ─── Store ────────────────────────────────────────────────────────────────
+  // ─── Store 
   const user    = useAuthStore(state => state.user);
   const roles   = useAuthStore(state => state.roles);
 
-  const isManager = roles.some(r => ['admin', 'manager'].includes(r));
+  // const isManager = roles.some(r => ['admin', 'manager'].includes(r));
 
-  // ─── State ────────────────────────────────────────────────────────────────
+  // ─── State 
   const [balance,    setBalance]    = useState<OvertimeBalanceRead | null>(null);
   const [entries,    setEntries]    = useState<OvertimeEntryRead[]>([]);
   const [loading,    setLoading]    = useState(true);
@@ -42,7 +42,7 @@ export default function MyOvertimePage() {
   const [error,      setError]      = useState<string | null>(null);
   const [form,       setForm]       = useState<Omit<OvertimeEntryCreate, 'user_id'>>(INITIAL_FORM);
 
-  // ─── Data ─────────────────────────────────────────────────────────────────
+  // ─── Data
   const load = async () => {
     if (!user?.id) return;
     setLoading(true);
@@ -63,7 +63,7 @@ export default function MyOvertimePage() {
 
   useEffect(() => { load(); }, [user?.id]);
 
-  // ─── Handlers ─────────────────────────────────────────────────────────────
+  // ─── Handlers 
   const handleSubmit = async () => {
     if (!user?.id || !form.reason.trim()) return;
     setSubmitting(true);
@@ -90,7 +90,7 @@ export default function MyOvertimePage() {
     }
   };
 
-  // ─── Render ───────────────────────────────────────────────────────────────
+  // ─── Render 
   if (loading) return (
     <div className="flex items-center justify-center h-64">
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600" />

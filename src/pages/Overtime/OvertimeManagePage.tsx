@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '../../stores/authStore';
 import overtimeService from '../../services/overtimeService';
-import type { OvertimeEntryRead, OvertimeBalanceRead } from '../../types/overtime';
+import type { OvertimeEntryRead } from '../../types/overtime';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   pending:   { label: 'Pendiente',  color: 'bg-yellow-100 text-yellow-800' },
@@ -13,8 +13,6 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
 const TYPE_LABEL = { credit: '🕐 HE', debit: '🌴 Comp.' };
 
 export default function OvertimeManagePage() {
-  const user  = useAuthStore(state => state.user);
-  const roles = useAuthStore(state => state.roles);
 
   const [entries,    setEntries]    = useState<OvertimeEntryRead[]>([]);
   const [loading,    setLoading]    = useState(true);
