@@ -1,7 +1,6 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 import { useEffect, ReactNode } from "react";
-import MainLayout from "../Layout/MainLayout";
 
 
 interface ProtectedRouteProps {
@@ -40,7 +39,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({children, requiredRoles 
     }
 
   // Si esta autenticado, muestra el contenido protegido  
-  return <MainLayout>{children}</MainLayout>;
+  return <>{children}</>;
 }
 
 export default ProtectedRoute;

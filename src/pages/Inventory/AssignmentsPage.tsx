@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useDebounce } from '../../hooks/useDebounce';
-import Layout from '../../components/Layout/MainLayout';
 import {
   Plus, Search, Eye,
   ArrowLeftRight, RotateCcw, Calendar, User, Package,
@@ -168,7 +167,7 @@ const AssignmentsPage = () => {
   // ─── Render: Error ───
   if (error) {
     return (
-      <Layout>
+      <div>
         <div className="bg-red-50 border border-red-200 rounded-md p-4">
           <div className="flex">
             <AlertCircle className="h-5 w-5 text-red-400" />
@@ -184,12 +183,12 @@ const AssignmentsPage = () => {
             </div>
           </div>
         </div>
-      </Layout>
+      </div>
     );
   }
 
   return (
-    <Layout>
+    <div>
       <div className="space-y-6">
 
         {/* Header */}
@@ -434,7 +433,7 @@ const AssignmentsPage = () => {
         </div>
 
       </div>
-    </Layout>
+    </div>
   );
 };
 

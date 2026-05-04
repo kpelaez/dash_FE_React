@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import Layout from '../../components/Layout/MainLayout';
 import { AssetMaintenanceCreate, MaintenanceType, MaintenancePriority, MaintenanceStatus } from '../../types/inventory';
 import { useInventoryStore } from '../../stores/inventoryStore';
 import { AlertCircle, Wrench, Package, Calendar, User, Loader2, Search, Clock } from 'lucide-react';
@@ -268,7 +267,7 @@ const MaintenanceFormPage: React.FC = () => {
 
 
   return (
-    <Layout>
+    <div>
       <div className="max-w-4xl mx-auto">
         <div className="bg-white shadow-sm rounded-lg">
           <div className="px-4 py-5 sm:p-6">
@@ -665,7 +664,7 @@ const MaintenanceFormPage: React.FC = () => {
           </div>
         </div>
       </div>
-    </Layout>
+    </div>
   );
 };
 

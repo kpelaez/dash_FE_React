@@ -1,7 +1,6 @@
 import { useEffect, useState} from 'react';
 import { useDebounce } from '../../hooks/useDebounce';
 import {useInventoryStore} from '../../stores/inventoryStore';
-import Layout from '../../components/Layout/MainLayout';
 import { TechAsset } from '../../types/inventory';
 import  AssignmentHistoryModal  from '../../components/Inventory/AssignmentHistoryModal';
 import ConfirmDialog from '../../components/ConfirmDialog';
@@ -212,7 +211,7 @@ const handleConfirmDelete = async () => {
   // Si hay error en la pagina mostrar el aviso
   if (error) {
     return (
-      <Layout>
+      <div>
         <div className="bg-red-50 border border-red-200 rounded-md p-4">
           <div className="flex">
             <AlertCircle className="h-5 w-5 text-red-400" />
@@ -235,12 +234,12 @@ const handleConfirmDelete = async () => {
             </div>
           </div>
         </div>
-      </Layout>
+      </div>
     );
   }
 
   return (
-    <Layout>
+    <div>
       <div className="space-y-6">
         {/* Header */}
         <div className="sm:flex sm:items-center sm:justify-between">
@@ -667,7 +666,7 @@ const handleConfirmDelete = async () => {
         variant="danger"
         isLoading={isDeleting}
       />
-    </Layout>
+    </div>
   );
 };
 

@@ -25,6 +25,7 @@ interface MenuItemProps {
     item: MenuItemType;
     level?: number;
     isExpanded?: boolean;
+    expandedItems?: Record<string, boolean>;
     isActive?: boolean;
     onToggle?: (itemId: string) => void;
     onClick?: () => void;
@@ -32,10 +33,18 @@ interface MenuItemProps {
 }
 
 export const MenuItem: React.FC<MenuItemProps> = ({
-  item, level = 0, isExpanded = false, isActive = false, onToggle, onClick, variant = 'default'
+  item, 
+  level = 0, 
+  isExpanded = false,
+  expandedItems = {},
+  isActive = false, 
+  onToggle, 
+  onClick, 
+  variant = 'default'
 }) => {
   const location = useLocation();
   const hasChildren = item.children && item.children.length > 0;
+  const isDisabled = item.disabled === true;
 
   // CALCULAR ESTILOS
   
@@ -46,7 +55,6 @@ export const MenuItem: React.FC<MenuItemProps> = ({
    * - Performance: Tailwind purge elimina clases no usadas
    */
   const paddingLeft = variant === 'collapsed' ? 'px-3' : level === 0 ? 'pl-4' :`pl-${4 + level * 4}`;
-
   const heightClass = variant === 'mobile' ? 'min-h-[48px]' : `min-h-[40px]`;
 
   // Estilos base del contenedor
@@ -62,19 +70,11 @@ export const MenuItem: React.FC<MenuItemProps> = ({
   `;
 
   // Estilos cuando esta activo
-  const activeStyles = isActive
-   ? `
-     bg-emerald-50
-     text-emerald-700 font-semibold
-     border-l-4 border-emerald-600
-     shadow-sm
-     `
-   : `
-     text-gray-700
-     hover:bg-emerald-50
-     hover:text-emerald-700
-     border-l-4 border-transparent
-   `;
+  const activeStyles = isDisabled
+    ? 'text-gray-400 cursor-not-allowed opacity-60'
+    : isActive
+      ? 'bg-emerald-50 text-emerald-700 font-semibold border-l-4 border-emerald-600 shadow-sm'
+      : 'text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 border-l-4 border-transparent';
 
    // Estilos para items con children (no clickeables)
    const parentStyles = hasChildren && !item.path ? 'font-medium text-gray-800' : '';
@@ -98,9 +98,11 @@ export const MenuItem: React.FC<MenuItemProps> = ({
     const Icon = item.icon;
     const iconSize = variant === 'collapsed' ? 24 : 20;
 
-    const iconColor = isActive 
-      ? 'text-emerald-600' 
-      : 'text-emerald-600 opacity-70 group-hover:opacity-100';
+    const iconColor = isDisabled
+      ? 'text-gray-300'
+      : isActive
+        ? 'text-emerald-600'
+        : 'text-emerald-600 opacity-70 group-hover:opacity-100';
 
     return (
         <Icon
@@ -148,14 +150,15 @@ export const MenuItem: React.FC<MenuItemProps> = ({
   };
 
   const handleClick = (e: React.MouseEvent) => {
-    // Si tiene children y no tiene path, solo alterna expansion
-    if (hasChildren && !item.path) {
-        e.preventDefault();
-        onToggle?.(item.id);
-        return;
+    if (isDisabled) {
+      e.preventDefault();
+      return;
     }
-
-    // Si es un link nomral, ejecutar onClick
+    if (hasChildren && !item.path) {
+      e.preventDefault();
+      onToggle?.(item.id);
+      return;
+    }
     onClick?.();
   };
 
@@ -186,7 +189,7 @@ export const MenuItem: React.FC<MenuItemProps> = ({
    * - Semántica correcta = mejor accesibilidad
    */
 
-  const element = item.path ? (
+  const element = item.path && !isDisabled ? (
    <Link
       to={item.path}
       className={itemStyles}
@@ -203,6 +206,7 @@ export const MenuItem: React.FC<MenuItemProps> = ({
       onClick={handleClick}
       aria-expanded={hasChildren ? isExpanded : undefined}
       title={variant === 'collapsed' ? item.title : undefined}
+      disabled={isDisabled}
     >
       {renderContent()}
     </button>
@@ -237,7 +241,8 @@ export const MenuItem: React.FC<MenuItemProps> = ({
             key={child.id}
             item={child}
             level={level + 1}
-            isExpanded={isExpanded}
+            isExpanded={expandedItems[child.id] ?? false}
+            expandedItems={expandedItems} 
             isActive={child.path === location.pathname}
             onToggle={onToggle}
             onClick={onClick}

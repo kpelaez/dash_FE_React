@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import Layout from '../../components/Layout/MainLayout';
 import {
   ArrowLeft,
   Package,
@@ -74,17 +73,17 @@ const AssignmentDetailPage = () => {
 
   if (loading) {
     return (
-      <Layout>
+      <div>
         <div className="flex justify-center items-center h-64">
           <Loader2 className="h-12 w-12 animate-spin text-emerald-600" />
         </div>
-      </Layout>
+      </div>
     );
   }
 
   if (error || !assignment) {
     return (
-      <Layout>
+      <div>
         <div className="bg-red-50 border border-red-200 rounded-md p-4">
           <div className="flex items-start">
             <AlertCircle className="h-5 w-5 text-red-400" />
@@ -104,12 +103,12 @@ const AssignmentDetailPage = () => {
             </div>
           </div>
         </div>
-      </Layout>
+      </div>
     );
   }
 
   return (
-    <Layout>
+    <div>
       <div className="space-y-6">
         {/* Header */}
         <div>
@@ -284,7 +283,7 @@ const AssignmentDetailPage = () => {
           </div>
         </div>
       </div>
-    </Layout>
+    </div>
   );
 };
 

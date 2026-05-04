@@ -1,7 +1,6 @@
 // src/pages/Inventory/MaintenancePage.tsx
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import Layout from '../../components/Layout/MainLayout';
 import {
   Settings,
   Plus,
@@ -298,7 +297,7 @@ const MaintenancePage: React.FC = () => {
 
   if (error) {
     return (
-      <Layout>
+      <div>
         <div className="bg-red-50 border border-red-200 rounded-md p-4">
           <div className="flex">
             <AlertTriangle className="h-5 w-5 text-red-400" />
@@ -321,12 +320,12 @@ const MaintenancePage: React.FC = () => {
             </div>
           </div>
         </div>
-      </Layout>
+      </div>
     );
   }
 
   return (
-    <Layout>
+    <div>
       <div className="space-y-6">
         {/* Header */}
         <div className="sm:flex sm:items-center sm:justify-between">
@@ -719,7 +718,7 @@ const MaintenancePage: React.FC = () => {
           </div>
         </div>
       </div>
-    </Layout>
+    </div>
   );
 };
 

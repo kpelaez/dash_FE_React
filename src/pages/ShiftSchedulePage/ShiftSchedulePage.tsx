@@ -1,7 +1,6 @@
 // src/pages/ShiftSchedulePage/ShiftSchedulePage.tsx
 import { useState, useEffect, useCallback } from 'react';
 import { format, startOfMonth, endOfMonth, addMonths, subMonths} from 'date-fns';
-import Layout from '../../components/Layout/MainLayout';
 import CalendarView from './components/CalendarView';
 import StatsPanel from './components/StatsPanel';
 import AlertsBanner from './components/AlertsBanner';
@@ -81,7 +80,7 @@ const ShiftSchedulePage = () => {
   const handleShiftDeleted = () => loadData(currentMonth);
 
   return (
-    <Layout>
+    <div>
       <div className="max-w-7xl mx-auto p-6 space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">
@@ -155,7 +154,7 @@ const ShiftSchedulePage = () => {
           )}
         </div>
       </div>
-    </Layout>
+    </div>
   );
 };
 

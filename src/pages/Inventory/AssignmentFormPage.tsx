@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import Layout from '../../components/Layout/MainLayout';
 import {
   Package,
   Search,
@@ -257,7 +256,7 @@ const AssignmentFormPage: React.FC = () => {
 
 
   return (
-    <Layout>
+    <div>
       <div className="max-w-4xl mx-auto">
         <div className="bg-white shadow-sm rounded-lg">
           <div className="px-4 py-5 sm:p-6">
@@ -552,7 +551,7 @@ const AssignmentFormPage: React.FC = () => {
           </div>
         </div>
       </div>
-    </Layout>
+    </div>
   );
 };
 

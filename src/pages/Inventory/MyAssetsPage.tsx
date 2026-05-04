@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import Layout from '../../components/Layout/MainLayout';
 import {
   Package,
   Calendar,
@@ -133,17 +132,17 @@ const MyAssetsPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <Layout>
+      <div>
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600" />
         </div>
-      </Layout>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Layout>
+      <div>
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
           <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
           <p className="text-red-800 font-medium">{error}</p>
@@ -154,12 +153,12 @@ const MyAssetsPage: React.FC = () => {
             Reintentar
           </button>
         </div>
-      </Layout>
+      </div>
     );
   }
 
   return (
-    <Layout>
+    <div>
       <div className="space-y-6">
         {/* Header */}
         <div className="bg-white shadow rounded-lg overflow-hidden">
@@ -344,7 +343,7 @@ const MyAssetsPage: React.FC = () => {
           </div>
         </div>
       </div>
-    </Layout>
+    </div>
   );
 };
 

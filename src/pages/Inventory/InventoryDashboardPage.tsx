@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import Layout from '../../components/Layout/MainLayout';
 import { 
   Package, 
   Users, 
@@ -146,17 +145,17 @@ const InventoryDashboardPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <Layout>
+      <div>
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
         </div>
-      </Layout>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Layout>
+      <div>
         <div className="bg-red-50 border border-red-200 rounded-md p-4">
           <div className="flex">
             <AlertTriangle className="h-5 w-5 text-red-400" />
@@ -176,12 +175,12 @@ const InventoryDashboardPage: React.FC = () => {
             </div>
           </div>
         </div>
-      </Layout>
+      </div>
     );
   }
 
   return (
-    <Layout>
+    <div>
       <div className="space-y-6">
         {/* Header */}
         <div className="md:flex md:items-center md:justify-between">
@@ -330,7 +329,7 @@ const InventoryDashboardPage: React.FC = () => {
           </div>
         </div>
       </div>
-    </Layout>
+    </div>
   );
 };
 

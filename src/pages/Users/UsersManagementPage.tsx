@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { ShieldCheck, ShieldAlert, Search, UserCog } from 'lucide-react';
-import Layout from '../../components/Layout/MainLayout';
 import { UserDNIModal } from '../../components/Inventory/UserDNIModal';
 import inventoryApi from '../../services/inventoryApi';
 import toast from 'react-hot-toast';
@@ -58,7 +57,7 @@ const UsersManagementPage: React.FC = () => {
   const withoutDNI = users.length - withDNI;
 
   return (
-    <Layout>
+    <div>
       <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -183,7 +182,7 @@ const UsersManagementPage: React.FC = () => {
           toast.success('DNI cargado. Ya podés generar el documento de asignación.');
         }}
       />
-    </Layout>
+    </div>
   );
 };
 

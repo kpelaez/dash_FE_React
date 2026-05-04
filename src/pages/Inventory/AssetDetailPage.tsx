@@ -1,6 +1,5 @@
 import React, {useEffect, useState} from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import Layout from '../../components/Layout/MainLayout';
 import {useInventoryStore} from '../../stores/inventoryStore';
 import { TechAsset } from '../../types/inventory';
 import inventoryApi from '../../services/inventoryApi';
@@ -81,17 +80,17 @@ const AssetDetailPage: React.FC = () => {
 
   if(isLoading) {
     return (
-        <Layout>
+        <div>
             <div className="flex justify-center items-center h-64">
                 <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
             </div>
-        </Layout>
+        </div>
     );
   }
 
   if (error || !asset) {
     return (
-        <Layout>
+        <div>
             <div className="bg-red-50 border border-red-200 rounded-md p-4">
                 <div className="flex">
                     <AlertCircle className="h-5 w-5 text-red-800" />
@@ -108,14 +107,14 @@ const AssetDetailPage: React.FC = () => {
                     </div>
                 </div>
             </div>
-        </Layout>
+        </div>
     );
   }
 
   const StatusIcon = statusIcons[asset.status];
 
   return (
-    <Layout>
+    <div>
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -377,7 +376,7 @@ const AssetDetailPage: React.FC = () => {
           </div>
         </div>
       </div>
-    </Layout>
+    </div>
   );
 };
 

@@ -25,7 +25,8 @@ import {
     ClipboardList,
     FileText,
     ShieldAlert,
-    Info
+    Info,
+    Building2,
 } from 'lucide-react';
 
 /**
@@ -77,6 +78,8 @@ export const menuItems: MenuItem[] = [
         title: 'Indicadores',
         path: '/business-indicators',
         icon: BarChart2,
+        disabled: true,          // ← próximamente, sin funcionalidad aún
+        badge: 'Próximamente',
       },
       {
         id: 'contribucion-marginal',      
@@ -90,6 +93,7 @@ export const menuItems: MenuItem[] = [
   {
     id: 'sectores',
     title: 'Sectores',
+    icon: Building2,
     requiredRoles: ['admin', 'manager', 'user'],
     children: [
       { id: 'sectores-directorio', title: 'Directorio', path: '/teams/directorio' },
@@ -106,7 +110,6 @@ export const menuItems: MenuItem[] = [
       {
         id: 'sectores-stock',
         title: 'Stock',
-        requiredRoles: ['admin', 'manager', 'user'],
         children: [
           {
             id: 'sectores-stock-turnos',

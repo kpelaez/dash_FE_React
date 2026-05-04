@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import Layout from '../../components/Layout/MainLayout';
 import { Tag, Loader2 } from 'lucide-react';
 import { FormInput, FormSelect, FormTextarea } from '../../components/Form';
 import { 
@@ -161,19 +160,19 @@ const AssetFormPage: React.FC = () => {
 
   if (isLoadingData) {
     return (
-      <Layout>
+      <div>
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Cargando datos del activo...</p>
           </div>
         </div>
-      </Layout>
+      </div>
     );
   }
   
   return (
-    <Layout>
+    <div>
       <div className="max-w-4xl mx-auto py-8 px-4">
         {/* Header */}
         <div className="mb-8">
@@ -481,7 +480,7 @@ const AssetFormPage: React.FC = () => {
           </div>
         </form>
       </div>
-    </Layout>
+    </div>
   );
 };
 

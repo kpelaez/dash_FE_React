@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Package, Users, Wrench, AlertTriangle, TrendingUp, RefreshCw, ChevronRight } from 'lucide-react';
-import Layout from '../../components/Layout/MainLayout';
+
 import inventoryApi from '../../services/inventoryApi';
 import { AssetStatistics, AssignmentStatistics } from '../../types/inventory';
 
@@ -202,7 +202,7 @@ const InventoryReportsPage = () => {
   const totalAssignments = assignmentStats?.total_assignments ?? 0;
 
   return (
-    <Layout>
+    <div>
       <div className="max-w-7xl mx-auto p-6 space-y-6">
 
         {/* Header */}
@@ -437,7 +437,7 @@ const InventoryReportsPage = () => {
           </>
         )}
       </div>
-    </Layout>
+    </div>
   );
 };
 

@@ -1,5 +1,6 @@
 import './App.css'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
+import MainLayout from './components/Layout/MainLayout';
 // Pages
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
@@ -18,6 +19,7 @@ import AssetFormPage from './pages/Inventory/AssetFormPage';
 import AssignmentFormPage from './pages/Inventory/AssignmentFormPage';
 import MyAssetsPage from './pages/Inventory/MyAssetsPage';
 import InventoryReportsPage from './pages/Inventory/InventoryReportsPage';
+import AssetDetailPage from './pages/Inventory/AssetDetailPage';
 
 // Página generacion de Documento de asignación
 import AssignmentDetailPage from './pages/Inventory/AssignmentDetailPage';
@@ -32,10 +34,10 @@ import ContribucionMarginalDashboard from './pages/ContribucionMarginalDashboard
 import { Toaster } from 'react-hot-toast';
 
 
-// ProtectedRoutes
+// Guards
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import RoleProtectedRoute from './components/Auth/RoleProtectedRoute';
-import AssetDetailPage from './pages/Inventory/AssetDetailPage';
+
 
 // Nueva pagina modulo agenda stock
 import ShiftSchedulePage from './pages/ShiftSchedulePage/ShiftSchedulePage';
@@ -44,6 +46,14 @@ import DashboardsPage from './pages/DashboardsPage';
 import MyOvertimePage from './pages/Overtime/MyOvertimePage';
 import OvertimeManagePage from './pages/Overtime/OvertimeManagePage';
 
+
+// ─── Layout wrapper — UNA sola instancia de MainLayout 
+// Todas las rutas hijas comparten el mismo sidebar y layout.
+const AppLayout = () => (
+  <MainLayout>
+    <Outlet />
+  </MainLayout>
+);
 
 function App() {
  
@@ -88,7 +98,9 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/unauthorized" element={<UnauthorizedPage />} />
             
-            {/* Rutas protegidas basicas (cualquier usuario autenticado) */}
+            {/* Rutas protegidas basicas (cualquier usuario autenticado) y con Layout */}
+            <Route element={<AppLayout />}>
+            
             <Route 
               path="/" 
               element={
@@ -304,6 +316,8 @@ function App() {
                 </RoleProtectedRoute>
               }
             />
+            </Route> 
+            {/* Fin de rutas con Layout */}
           </Routes>
         </Router>
     </div>
