@@ -48,9 +48,8 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
-  RadialBarChart,
-  RadialBar,
-  Legend,
+  PieChart,
+  Pie,
 } from 'recharts'
 import {
   Upload,
@@ -368,14 +367,19 @@ const KpiCard: React.FC<{
 // CUSTOM Y-AXIS TICK
 // ============================================================
 
+/**
+ * Trunca el nombre del cliente de forma inteligente:
+ * Si los primeros 2 tokens son idénticos entre clientes, muestra hasta 30 chars
+ * para que sean distinguibles en el eje Y.
+ */
 const CustomYAxisTick = ({ x, y, payload }: { x?: number; y?: number; payload?: { value: string } }) => {
-  const maxChars = 22
-  const name = payload?.value ?? ''
+  const maxChars = 30
+  const name = (payload?.value ?? '').replace(/"+/g, '')  // sanitizar comillas en nombres
   const display = name.length > maxChars ? name.substring(0, maxChars) + '…' : name
   return (
     <g transform={`translate(${x},${y})`}>
       <title>{name}</title>
-      <text x={0} y={0} dy={4} textAnchor="end" fill="#374151" fontSize={11} fontFamily="system-ui, sans-serif">
+      <text x={0} y={0} dy={4} textAnchor="end" fill="#374151" fontSize={10} fontFamily="system-ui, sans-serif">
         {display}
       </text>
     </g>
@@ -383,20 +387,147 @@ const CustomYAxisTick = ({ x, y, payload }: { x?: number; y?: number; payload?: 
 }
 
 // ============================================================
-// RADIAL TOOLTIP
+// COMPOSICION DONUT — anillo base (venta bruta) con arcos
+// superpuestos de costos y gastos logísticos al mismo radio
 // ============================================================
 
-const RadialTooltip: React.FC<{
-  active?: boolean
-  payload?: Array<{ payload: { name: string; value: number } }>
-}> = ({ active, payload }) => {
-  if (!active || !payload?.length) return null
-  const d = payload[0].payload
+interface DonutSlice { name: string; value: number; pct: number; fill: string }
+
+const LABEL_OFFSET = 18
+const INNER_R = 55
+const OUTER_R = 90
+
+/**
+ * Renderiza una etiqueta de porcentaje fuera del arco,
+ * con una línea de referencia y el texto del %.
+ */
+const DonutLabel = ({
+  cx, cy, midAngle, outerRadius, pct, fill, name,
+}: {
+  cx: number; cy: number; midAngle: number
+  outerRadius: number; pct: number; fill: string; name: string
+}) => {
+  if (pct < 0.5) return null // no mostrar si es insignificante
+  const RADIAN = Math.PI / 180
+  const sin = Math.sin(-RADIAN * midAngle)
+  const cos = Math.cos(-RADIAN * midAngle)
+  const sx = cx + (outerRadius + 6) * cos
+  const sy = cy + (outerRadius + 6) * sin
+  const mx = cx + (outerRadius + LABEL_OFFSET) * cos
+  const my = cy + (outerRadius + LABEL_OFFSET) * sin
+  const ex = mx + (cos >= 0 ? 1 : -1) * 12
+  const ey = my
+  const textAnchor = cos >= 0 ? 'start' : 'end'
+
   return (
-    <div className="bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-md text-xs">
-      <p className="font-semibold text-gray-700 mb-1">{d.name}</p>
-      <p className="text-gray-600">{fmt(d.value)}</p>
-    </div>
+    <g>
+      <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke={fill} fill="none" strokeWidth={1.5} />
+      <circle cx={ex} cy={ey} r={2} fill={fill} />
+      <text x={ex + (cos >= 0 ? 4 : -4)} y={ey} textAnchor={textAnchor}
+        fill={fill} fontSize={10} fontWeight={700} dominantBaseline="central">
+        {pct.toFixed(1)}%
+      </text>
+      <text x={ex + (cos >= 0 ? 4 : -4)} y={ey + 12} textAnchor={textAnchor}
+        fill="#9ca3af" fontSize={9} dominantBaseline="central">
+        {name.split(' ')[0]}
+      </text>
+    </g>
+  )
+}
+
+const ComposicionDonut: React.FC<{ data: DonutSlice[] }> = ({ data }) => {
+  const costos = data[1] ?? { pct: 0, fill: '#6366f1', name: 'Costos' }
+  const gastos = data[2] ?? { pct: 0, fill: '#f59e0b', name: 'Gastos Log.' }
+  const restoPct = Math.max(0, 100 - costos.pct - gastos.pct)
+
+  // Capa base: anillo completo verde (Venta Bruta)
+  const baseData = [{ name: 'Venta Bruta', value: 100, fill: data[0]?.fill ?? '#059669' }]
+
+  // Capa superpuesta: costos + gastos + margen (transparente) al mismo radio
+  const overlayData = [
+    { name: costos.name, value: costos.pct, fill: costos.fill, pct: costos.pct },
+    { name: gastos.name, value: gastos.pct, fill: gastos.fill, pct: gastos.pct },
+    { name: 'Margen', value: restoPct, fill: '#00000000', pct: restoPct },
+  ]
+
+  // Render label personalizado solo para costos y gastos
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const renderLabel = (props: any) => {
+    const d = overlayData[props.index]
+    if (!d || d.name === 'Margen' || d.pct < 0.3) return null
+    return (
+      <DonutLabel
+        cx={props.cx}
+        cy={props.cy}
+        midAngle={props.midAngle}
+        outerRadius={props.outerRadius}
+        pct={d.pct}
+        fill={d.fill}
+        name={d.name}
+      />
+    )
+  }
+
+  // Render cell personalizado: transparente para el sector "Margen"
+  const renderCell = (entry: { name: string; fill: string }, index: number) => (
+    <Cell
+      key={`overlay-${index}`}
+      fill={entry.name === 'Margen' ? 'transparent' : entry.fill}
+      stroke={entry.name === 'Margen' ? 'transparent' : '#ffffff'}
+      strokeWidth={entry.name === 'Margen' ? 0 : 2}
+      opacity={entry.name === 'Margen' ? 0 : 0.9}
+    />
+  )
+
+  return (
+    <ResponsiveContainer width="100%" height={240}>
+      <PieChart margin={{ top: 24, right: 34, bottom: 24, left: 34 }}>
+        {/* Anillo base — Venta Bruta completa (verde) */}
+        <Pie
+          data={baseData}
+          cx="50%"
+          cy="50%"
+          innerRadius={INNER_R}
+          outerRadius={OUTER_R}
+          dataKey="value"
+          startAngle={90}
+          endAngle={-270}
+          strokeWidth={0}
+          isAnimationActive={false}
+        >
+          {baseData.map((entry, i) => (
+            <Cell key={i} fill={entry.fill} strokeWidth={0} />
+          ))}
+        </Pie>
+
+        {/* Anillo superpuesto — Costos + Gastos al mismo radio */}
+        <Pie
+          data={overlayData}
+          cx="50%"
+          cy="50%"
+          innerRadius={INNER_R}
+          outerRadius={OUTER_R}
+          dataKey="value"
+          startAngle={90}
+          endAngle={-270}
+          labelLine={false}
+          label={renderLabel}
+          isAnimationActive={true}
+        >
+          {overlayData.map((entry, index) => renderCell(entry, index))}
+        </Pie>
+
+        {/* Texto central */}
+        <text x="50%" y="45%" textAnchor="middle" dominantBaseline="central"
+          fill="#111827" fontSize={14} fontWeight={700}>
+          100%
+        </text>
+        <text x="50%" y="57%" textAnchor="middle" dominantBaseline="central"
+          fill="#6b7280" fontSize={9}>
+          Venta Bruta
+        </text>
+      </PieChart>
+    </ResponsiveContainer>
   )
 }
 
@@ -711,7 +842,7 @@ const ContribucionMarginalDashboard: React.FC = () => {
             <BarChart data={barData} layout="vertical" margin={{ left: 10, right: 50, top: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
               <XAxis type="number" tickFormatter={fmtShort} tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} />
-              <YAxis type="category" dataKey="name" width={160} tick={<CustomYAxisTick />} axisLine={false} tickLine={false} />
+              <YAxis type="category" dataKey="name" width={200} tick={<CustomYAxisTick />} axisLine={false} tickLine={false} />
               <Tooltip
                 formatter={(value: number, _: string, props) => [`${fmt(value)} (${fmtPct(props.payload.pct)})`, 'Contribución Marginal']}
                 labelFormatter={(_, payload) => payload?.[0]?.payload?.fullName ?? ''}
@@ -746,37 +877,17 @@ const ContribucionMarginalDashboard: React.FC = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* Radial chart — composición de venta bruta */}
+        {/* Donut chart — composición superpuesta sobre venta bruta */}
         <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm flex flex-col">
           <div className="mb-2">
             <h2 className="text-sm font-semibold text-gray-700">Composición de la Venta Bruta</h2>
-            <p className="text-xs text-gray-400 mt-0.5">Costos, logística y margen como % del bruto</p>
+            <p className="text-xs text-gray-400 mt-0.5">Costos y gastos logísticos sobre el total</p>
           </div>
           <div className="flex-1 flex items-center justify-center">
-            <ResponsiveContainer width="100%" height={220}>
-              <RadialBarChart
-                cx="50%"
-                cy="50%"
-                innerRadius="30%"
-                outerRadius="90%"
-                barSize={18}
-                data={radialData}
-                startAngle={90}
-                endAngle={-270}
-              >
-                <RadialBar background={{ fill: '#f3f4f6' }} dataKey="pct" cornerRadius={6} />
-                <Tooltip content={<RadialTooltip />} />
-                <Legend
-                  iconType="circle"
-                  iconSize={8}
-                  wrapperStyle={{ fontSize: '11px' }}
-                  formatter={(value) => <span className="text-gray-600">{value}</span>}
-                />
-              </RadialBarChart>
-            </ResponsiveContainer>
+            <ComposicionDonut data={radialData} />
           </div>
-          {/* Detalle con valores absolutos */}
-          <div className="space-y-2 mt-2 border-t border-gray-100 pt-3">
+          {/* Leyenda con valores absolutos */}
+          <div className="space-y-2 mt-3 border-t border-gray-100 pt-3">
             {radialData.map((d) => (
               <div key={d.name} className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-1.5">
@@ -784,8 +895,8 @@ const ContribucionMarginalDashboard: React.FC = () => {
                   <span className="text-gray-600">{d.name}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-400">{fmtPct(d.pct)}</span>
-                  <span className="font-mono font-medium text-gray-700">{fmtShort(d.value)}</span>
+                  <span className="font-semibold" style={{ color: d.fill }}>{fmtPct(d.pct)}</span>
+                  <span className="font-mono text-gray-500">{fmtShort(d.value)}</span>
                 </div>
               </div>
             ))}
@@ -1072,4 +1183,4 @@ const DetalleTab: React.FC<{
   )
 }
 
-export default ContribucionMarginalDashboard;
+export default ContribucionMarginalDashboard
