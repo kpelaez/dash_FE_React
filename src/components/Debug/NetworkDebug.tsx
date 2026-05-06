@@ -33,13 +33,13 @@ const NetworkDebug: React.FC = () => {
       },
       {
         name: 'Auth Endpoint',
-        url: `${apiUrl}/token`,
+        url: `${apiUrl}/api/v1/auth/token`,
         status: 'pending',
         message: 'Iniciando...'
       },
       {
         name: 'User Profile',
-        url: `${apiUrl}/me`,
+        url: `${apiUrl}/api/v1/users/me`,
         status: 'pending',
         message: 'Iniciando...'
       }

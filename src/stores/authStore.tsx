@@ -56,7 +56,7 @@ export const useAuthStore = create<AuthState>((set, get)=>({
       formData.append('username', credentials.email);
       formData.append('password', credentials.password);
 
-      const response = await fetch(`${API_URL}/token`,{
+      const response = await fetch(`${API_URL}/api/v1/auth/token`,{
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -128,7 +128,7 @@ export const useAuthStore = create<AuthState>((set, get)=>({
     set({ isLoading: true});
 
     try {
-      const response = await fetch(`${API_URL}/api/users/me`, {
+      const response = await fetch(`${API_URL}/api/v1/users/me`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -175,7 +175,7 @@ export const useAuthStore = create<AuthState>((set, get)=>({
     set({isLoading: true, error: null});
 
     try {
-      const response = await fetch(`${API_URL}/register`,{
+      const response = await fetch(`${API_URL}/api/v1/auth/register`,{
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
