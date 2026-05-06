@@ -1,21 +1,22 @@
-import axios, { AxiosError } from 'axios';
+import api from '../lib/axios';
+import { AxiosError } from 'axios';
 import type {
   AssignmentDocumentStatus,
   SendToHumandResponse
 } from '../types/inventory';
 
-const API_URL = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_URL || '');
+// const API_URL = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_URL || '');
 
 // Configurar axios con token
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('auth_token');
-  return {
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    }
-  };
-};
+// const getAuthHeaders = () => {
+//   const token = localStorage.getItem('auth_token');
+//   return {
+//     headers: {
+//       'Authorization': `Bearer ${token}`,
+//       'Content-Type': 'application/json'
+//     }
+//   };
+// };
 
 // Helper para extraer mensaje de error legible desde respuestas de FastAPI
 const extractErrorMessage = (error: unknown): string => {
@@ -42,36 +43,28 @@ export const assignmentDocumentService = {
    * Generar preview del PDF de asignación
    */
   generatePreview: async (assignmentId: number): Promise<Blob> => {
-    try{
-      const response = await axios.post(
-        `${API_URL}/api/v1/assignments/${assignmentId}/generate-preview`,
+    try {
+      const response = await api.post(
+        `/api/v1/assignments/${assignmentId}/generate-preview`,
         {},
-        {
-          ...getAuthHeaders(),
-          responseType: 'blob' // Importante para recibir el PDF
-        }
+        { responseType: 'blob' }  // sin getAuthHeaders() — el interceptor lo inyecta
       );
       return response.data;
     } catch (error) {
-        throw new Error(extractErrorMessage(error));
+      throw new Error(extractErrorMessage(error));
     }
   },
+
 
   /**
    * Enviar documento a Humand
    */
-  sendToHumand: async (
-    assignmentId: number, 
-    sendNotification: boolean = true
-  ): Promise<SendToHumandResponse> => {
+  sendToHumand: async (assignmentId: number, sendNotification = true): Promise<SendToHumandResponse> => {
     try {
-      const response = await axios.post(
-        `${API_URL}/api/v1/assignments/${assignmentId}/send-to-humand`,
-        {}, 
-        {
-          ...getAuthHeaders(),
-          params: { send_notification: sendNotification },
-        }
+      const response = await api.post(
+        `/api/v1/assignments/${assignmentId}/send-to-humand`,
+        {},
+        { params: { send_notification: sendNotification } }
       );
       return response.data;
     } catch (error) {
@@ -84,10 +77,7 @@ export const assignmentDocumentService = {
    */
   getDocumentStatus: async (assignmentId: number): Promise<AssignmentDocumentStatus> => {
     try {
-      const response = await axios.get(
-        `${API_URL}/api/v1/assignments/${assignmentId}/document-status`,
-        getAuthHeaders()
-      );
+      const response = await api.get(`/api/v1/assignments/${assignmentId}/document-status`);
       return response.data;
     } catch (error) {
       throw new Error(extractErrorMessage(error));
