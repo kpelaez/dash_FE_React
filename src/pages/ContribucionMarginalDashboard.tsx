@@ -1,31 +1,32 @@
 /**
  * ============================================
- * ContribucionMarginalDashboard
+ * ContribucionMarginalDashboard — V2
  * ============================================
  *
- * Dashboard de Contribución Marginal por Cliente — Enero 2026
- *
  * ARQUITECTURA (MVP):
- *   Excel (.xlsx) → SheetJS (parse en browser) → estado local → UI
+ *   Excel (.xlsx) → SheetJS → estado local → UI
  *
- * MIGRACIÓN FUTURA (cuando haya backend):
- *   Solo reemplazar `loadFromExcel()` por `fetchFromAPI()`
- *   El resto del componente NO cambia.
+ * MIGRACIÓN FUTURA: reemplazar parseExcel() por fetchFromAPI()
  *
- * DEPENDENCIAS:
- *   npm install @tanstack/react-table xlsx
- *   (recharts ya está instalado)
+ * COLUMNAS DEL EXCEL V2 (índices 0-21):
+ *   0  Fecha factura        1  Nro factura          2  Cliente
+ *   3  Fecha OT             4  Nro OT               5  Total bruto factura
+ *   6  Concepto impositivo  7  Total factura (neto)  8  Gastos logísticos
+ *   9  % Gastos log        10  Fecha remito         11  Nro remito
+ *  12  Fecha consumo       13  Nro consumo          14  Precio (costo PPP)
+ *  15  Estado valorización 16  Descripción          17  Fecha NC
+ *  18  Nro NC              19  Total bruto NC       20  Contr. marginal
+ *  21  % margen
  *
- * COLUMNAS DEL EXCEL (índices 0-17):
- *   0  Fecha ot         1  Nro ot          2  Cliente
- *   3  Fecha factura    4  Nro factura     5  Total bruto factura
- *   6  Fecha remito     7  Nro remito      8  Fecha consumo
- *   9  Nro consumo      10 Precio          11 Estado valorización
- *   12 Descripción      13 Fecha nc        14 Nro nc
- *   15 Total bruto nc   16 Contr. marginal 17 %margen
+ * NOTAS DE NEGOCIO:
+ *   - % margen calculado sobre bruto (col 5)
+ *   - CM ya tiene gastos logísticos descontados (no restar de nuevo)
+ *   - Filas con Nro NC (col 18) se excluyen del dashboard
+ *   - Las fechas vienen como datetime objects (no número de serie Excel)
+ *   - Toggle IVA preparado para sprint siguiente
  */
 
-import React, { useState, useMemo, useCallback, useRef } from 'react'
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import * as XLSX from 'xlsx'
 import {
   useReactTable,
@@ -47,6 +48,9 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
+  RadialBarChart,
+  RadialBar,
+  Legend,
 } from 'recharts'
 import {
   Upload,
@@ -62,6 +66,9 @@ import {
   AlertCircle,
   CheckCircle2,
   Clock,
+  Truck,
+  CalendarDays,
+  EyeOff,
 } from 'lucide-react'
 
 // ============================================================
@@ -69,30 +76,37 @@ import {
 // ============================================================
 
 interface RawRow {
-  fechaOt: number | null
-  nroOt: string
-  cliente: string
-  fechaFactura: number | null
+  fechaFactura: Date | null
   nroFactura: string
-  totalBrutoFactura: number
-  fechaRemito: number | null
+  cliente: string
+  fechaOt: Date | null
+  nroOt: string
+  totalBrutoFactura: number   // col 5 — base de cálculo % margen
+  conceptoImpositivo: number  // col 6 — IVA
+  totalFacturaNeto: number    // col 7 — bruto + IVA
+  gastosLogisticos: number    // col 8
+  pctGastosLog: number        // col 9
+  fechaRemito: Date | null
   nroRemito: string
-  fechaConsumo: number | null
+  fechaConsumo: Date | null
   nroConsumo: number | null
-  precio: number
+  precio: number              // col 14 — costo PPP
   estadoValorizacion: string
   descripcion: string
-  fechaNc: number | null
+  fechaNc: Date | null
   nroNc: string
   totalBrutoNc: number
-  contribMarginal: number
-  pctMargen: number
+  contribMarginal: number     // col 20 — ya incluye descuento de gastos log
+  pctMargen: number           // col 21
+  mesAnio: string             // derivado — "MM/YYYY"
 }
 
 interface ClienteSummary {
   cliente: string
   totalBruto: number
-  totalNc: number
+  totalNeto: number
+  conceptoImpositivo: number
+  gastosLogisticos: number
   costo: number
   contribMarginal: number
   pctMargen: number
@@ -120,49 +134,73 @@ const fmtShort = (n: number): string => {
 
 const fmtPct = (n: number) => `${n.toFixed(1)}%`
 
-/** Convierte número de serie Excel a string de fecha legible */
-const excelDateToString = (serial: number | null): string => {
-  if (!serial) return '—'
-  const date = new Date((serial - 25569) * 86400 * 1000)
+const toDateString = (val: Date | number | null): string => {
+  if (!val) return '—'
+  const date = val instanceof Date ? val : new Date((val as number - 25569) * 86400 * 1000)
   return date.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
-/** Parsea el Excel y devuelve array de RawRow */
+const toMesAnio = (date: Date | null): string => {
+  if (!date) return ''
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  return `${m}/${date.getFullYear()}`
+}
+
+const parseDate = (val: unknown): Date | null => {
+  if (!val) return null
+  if (val instanceof Date) return val
+  if (typeof val === 'number') return new Date((val - 25569) * 86400 * 1000)
+  return null
+}
+
+// ============================================================
+// PARSE EXCEL
+// ============================================================
+
 function parseExcel(file: File): Promise<RawRow[]> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = (e) => {
       try {
         const data = new Uint8Array(e.target!.result as ArrayBuffer)
-        const wb = XLSX.read(data, { type: 'array' })
-        const ws = wb.Sheets[wb.SheetNames[0]]
-        const raw: unknown[][] = XLSX.utils.sheet_to_json(ws, { header: 1 })
+        const wb = XLSX.read(data, { type: 'array', cellDates: true })
+        const rawData: unknown[][] = XLSX.utils.sheet_to_json(
+          wb.Sheets[wb.SheetNames[0]],
+          { header: 1, raw: true }
+        )
 
-        // Saltar fila de encabezado (índice 0)
-        const rows: RawRow[] = raw
+        const rows: RawRow[] = rawData
           .slice(1)
-          .filter((r: unknown[]) => r[2])         // filtrar filas sin cliente
-          .filter((r: unknown[]) => !r[14])        // excluir registros con Nota de Crédito (col 14 = Nro NC)
-          .map((r: unknown[]) => ({
-            fechaOt: (r[0] as number) ?? null,
-            nroOt: String(r[1] ?? ''),
-            cliente: String(r[2] ?? ''),
-            fechaFactura: (r[3] as number) ?? null,
-            nroFactura: String(r[4] ?? ''),
-            totalBrutoFactura: Number(r[5] ?? 0),
-            fechaRemito: (r[6] as number) ?? null,
-            nroRemito: String(r[7] ?? ''),
-            fechaConsumo: (r[8] as number) ?? null,
-            nroConsumo: (r[9] as number) ?? null,
-            precio: Number(r[10] ?? 0),
-            estadoValorizacion: String(r[11] ?? ''),
-            descripcion: String(r[12] ?? ''),
-            fechaNc: (r[13] as number) ?? null,
-            nroNc: String(r[14] ?? ''),
-            totalBrutoNc: Number(r[15] ?? 0),
-            contribMarginal: Number(r[16] ?? 0),
-            pctMargen: Number(r[17] ?? 0),
-          }))
+          .filter((r: unknown[]) => r[2])
+          .filter((r: unknown[]) => !r[18] || String(r[18]).trim() === '')
+          .map((r: unknown[]) => {
+            const fechaFactura = parseDate(r[0])
+            return {
+              fechaFactura,
+              nroFactura: String(r[1] ?? ''),
+              cliente: String(r[2] ?? ''),
+              fechaOt: parseDate(r[3]),
+              nroOt: String(r[4] ?? ''),
+              totalBrutoFactura: Number(r[5] ?? 0),
+              conceptoImpositivo: Number(r[6] ?? 0),
+              totalFacturaNeto: Number(r[7] ?? 0),
+              gastosLogisticos: Number(r[8] ?? 0),
+              pctGastosLog: Number(r[9] ?? 0),
+              fechaRemito: parseDate(r[10]),
+              nroRemito: String(r[11] ?? ''),
+              fechaConsumo: parseDate(r[12]),
+              nroConsumo: r[13] ? Number(r[13]) : null,
+              precio: Number(r[14] ?? 0),
+              estadoValorizacion: String(r[15] ?? ''),
+              descripcion: String(r[16] ?? ''),
+              fechaNc: parseDate(r[17]),
+              nroNc: String(r[18] ?? ''),
+              totalBrutoNc: Number(r[19] ?? 0),
+              contribMarginal: Number(r[20] ?? 0),
+              pctMargen: Number(r[21] ?? 0),
+              mesAnio: toMesAnio(fechaFactura),
+            }
+          })
         resolve(rows)
       } catch (err) {
         reject(err)
@@ -173,7 +211,10 @@ function parseExcel(file: File): Promise<RawRow[]> {
   })
 }
 
-/** Agrupa filas por cliente y calcula totales */
+// ============================================================
+// BUILD SUMMARIES
+// ============================================================
+
 function buildClienteSummaries(rows: RawRow[]): ClienteSummary[] {
   const map = new Map<string, ClienteSummary>()
 
@@ -183,16 +224,20 @@ function buildClienteSummaries(rows: RawRow[]): ClienteSummary[] {
       map.set(r.cliente, {
         cliente: r.cliente,
         totalBruto: r.totalBrutoFactura,
-        totalNc: r.totalBrutoNc,
+        totalNeto: r.totalFacturaNeto,
+        conceptoImpositivo: r.conceptoImpositivo,
+        gastosLogisticos: r.gastosLogisticos,
         costo: r.precio,
         contribMarginal: r.contribMarginal,
-        pctMargen: 0, // recalculamos al final
+        pctMargen: 0,
         cantOTs: r.nroOt ? 1 : 0,
         estadoValorizacion: r.estadoValorizacion === 'Valorizado' ? 'Valorizado' : 'Sin Valorizar',
       })
     } else {
       existing.totalBruto += r.totalBrutoFactura
-      existing.totalNc += r.totalBrutoNc
+      existing.totalNeto += r.totalFacturaNeto
+      existing.conceptoImpositivo += r.conceptoImpositivo
+      existing.gastosLogisticos += r.gastosLogisticos
       existing.costo += r.precio
       existing.contribMarginal += r.contribMarginal
       if (r.nroOt) existing.cantOTs += 1
@@ -202,13 +247,12 @@ function buildClienteSummaries(rows: RawRow[]): ClienteSummary[] {
     }
   }
 
-  // Recalcular % margen final por cliente
-  const result = Array.from(map.values()).map((c) => ({
-    ...c,
-    pctMargen: c.totalBruto > 0 ? (c.contribMarginal / c.totalBruto) * 100 : 0,
-  }))
-
-  return result.sort((a, b) => b.contribMarginal - a.contribMarginal)
+  return Array.from(map.values())
+    .map((c) => ({
+      ...c,
+      pctMargen: c.totalBruto > 0 ? (c.contribMarginal / c.totalBruto) * 100 : 0,
+    }))
+    .sort((a, b) => b.contribMarginal - a.contribMarginal)
 }
 
 // ============================================================
@@ -220,6 +264,12 @@ const EMERALD_PALETTE = [
   '#047857', '#065f46', '#0d9488', '#0891b2',
   '#0284c7', '#2563eb', '#4f46e5', '#7c3aed',
 ]
+
+const RADIAL_COLORS = {
+  ventas: '#059669',
+  costos: '#6366f1',
+  gastos: '#f59e0b',
+}
 
 const margenColor = (pct: number) => {
   if (pct >= 85) return 'text-emerald-600'
@@ -236,26 +286,19 @@ const margenBg = (pct: number) => {
 }
 
 // ============================================================
-// SUB-COMPONENTES
+// UPLOAD ZONE
 // ============================================================
 
-/** Zona de drag-and-drop para subir el Excel */
-const UploadZone: React.FC<{ onFile: (f: File) => void; loading: boolean }> = ({
-  onFile,
-  loading,
-}) => {
+const UploadZone: React.FC<{ onFile: (f: File) => void; loading: boolean }> = ({ onFile, loading }) => {
   const inputRef = useRef<HTMLInputElement>(null)
   const [dragging, setDragging] = useState(false)
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault()
-      setDragging(false)
-      const file = e.dataTransfer.files[0]
-      if (file) onFile(file)
-    },
-    [onFile]
-  )
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setDragging(false)
+    const file = e.dataTransfer.files[0]
+    if (file) onFile(file)
+  }, [onFile])
 
   return (
     <div className="flex items-center justify-center min-h-[60vh]">
@@ -264,23 +307,11 @@ const UploadZone: React.FC<{ onFile: (f: File) => void; loading: boolean }> = ({
         onDragLeave={() => setDragging(false)}
         onDrop={handleDrop}
         onClick={() => inputRef.current?.click()}
-        className={`
-          w-full max-w-lg border-2 border-dashed rounded-2xl p-14
-          flex flex-col items-center gap-5 cursor-pointer
-          transition-all duration-200
-          ${dragging
-            ? 'border-emerald-500 bg-emerald-50 scale-[1.01]'
-            : 'border-gray-300 bg-white hover:border-emerald-400 hover:bg-emerald-50/40'
-          }
-        `}
+        className={`w-full max-w-lg border-2 border-dashed rounded-2xl p-14 flex flex-col items-center gap-5 cursor-pointer transition-all duration-200
+          ${dragging ? 'border-emerald-500 bg-emerald-50 scale-[1.01]' : 'border-gray-300 bg-white hover:border-emerald-400 hover:bg-emerald-50/40'}`}
       >
-        <input
-          ref={inputRef}
-          type="file"
-          accept=".xlsx,.xls"
-          className="hidden"
-          onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])}
-        />
+        <input ref={inputRef} type="file" accept=".xlsx,.xls" className="hidden"
+          onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
         {loading ? (
           <>
             <div className="w-14 h-14 rounded-full border-4 border-emerald-200 border-t-emerald-600 animate-spin" />
@@ -292,12 +323,8 @@ const UploadZone: React.FC<{ onFile: (f: File) => void; loading: boolean }> = ({
               <Upload size={30} className="text-emerald-600" />
             </div>
             <div className="text-center">
-              <p className="text-lg font-semibold text-gray-800">
-                Cargar Excel de Contribución Marginal
-              </p>
-              <p className="text-sm text-gray-500 mt-1">
-                Arrastrá el archivo acá o hacé click para seleccionarlo
-              </p>
+              <p className="text-lg font-semibold text-gray-800">Cargar Excel de Contribución Marginal</p>
+              <p className="text-sm text-gray-500 mt-1">Arrastrá el archivo acá o hacé click para seleccionarlo</p>
               <p className="text-xs text-gray-400 mt-2">.xlsx o .xls</p>
             </div>
           </>
@@ -307,7 +334,10 @@ const UploadZone: React.FC<{ onFile: (f: File) => void; loading: boolean }> = ({
   )
 }
 
-/** Tarjeta de KPI */
+// ============================================================
+// KPI CARD
+// ============================================================
+
 const KpiCard: React.FC<{
   label: string
   value: string
@@ -315,20 +345,19 @@ const KpiCard: React.FC<{
   icon: React.ReactNode
   accent: string
   trend?: string
-}> = ({ label, value, sub, icon, accent, trend }) => (
+  trendColor?: string
+}> = ({ label, value, sub, icon, accent, trend, trendColor = 'text-emerald-600' }) => (
   <div className="bg-white rounded-xl border border-gray-200 p-5 flex flex-col gap-3 shadow-sm hover:shadow-md transition-shadow">
     <div className="flex items-center justify-between">
       <span className="text-sm font-medium text-gray-500">{label}</span>
-      <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${accent}`}>
-        {icon}
-      </div>
+      <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${accent}`}>{icon}</div>
     </div>
     <div>
       <p className="text-2xl font-bold text-gray-900 tracking-tight">{value}</p>
       {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
     </div>
     {trend && (
-      <div className="text-xs font-medium text-emerald-600 flex items-center gap-1">
+      <div className={`text-xs font-medium flex items-center gap-1 ${trendColor}`}>
         <TrendingUp size={12} /> {trend}
       </div>
     )}
@@ -336,7 +365,7 @@ const KpiCard: React.FC<{
 )
 
 // ============================================================
-// CUSTOM Y-AXIS TICK — trunca nombres largos con tooltip nativo
+// CUSTOM Y-AXIS TICK
 // ============================================================
 
 const CustomYAxisTick = ({ x, y, payload }: { x?: number; y?: number; payload?: { value: string } }) => {
@@ -346,18 +375,28 @@ const CustomYAxisTick = ({ x, y, payload }: { x?: number; y?: number; payload?: 
   return (
     <g transform={`translate(${x},${y})`}>
       <title>{name}</title>
-      <text
-        x={0}
-        y={0}
-        dy={4}
-        textAnchor="end"
-        fill="#374151"
-        fontSize={11}
-        fontFamily="system-ui, sans-serif"
-      >
+      <text x={0} y={0} dy={4} textAnchor="end" fill="#374151" fontSize={11} fontFamily="system-ui, sans-serif">
         {display}
       </text>
     </g>
+  )
+}
+
+// ============================================================
+// RADIAL TOOLTIP
+// ============================================================
+
+const RadialTooltip: React.FC<{
+  active?: boolean
+  payload?: Array<{ payload: { name: string; value: number } }>
+}> = ({ active, payload }) => {
+  if (!active || !payload?.length) return null
+  const d = payload[0].payload
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-md text-xs">
+      <p className="font-semibold text-gray-700 mb-1">{d.name}</p>
+      <p className="text-gray-600">{fmt(d.value)}</p>
+    </div>
   )
 }
 
@@ -366,24 +405,19 @@ const CustomYAxisTick = ({ x, y, payload }: { x?: number; y?: number; payload?: 
 // ============================================================
 
 const ContribucionMarginalDashboard: React.FC = () => {
-  // ── Estado ─────────────────────────────────────────────
   const [rows, setRows] = useState<RawRow[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [fileName, setFileName] = useState<string>('')
   const [activeTab, setActiveTab] = useState<'resumen' | 'detalle'>('resumen')
-  // Estado compartido: cliente seleccionado desde el gráfico → filtra en DetalleTab
   const [selectedCliente, setSelectedCliente] = useState<string | null>(null)
+  const [selectedMes, setSelectedMes] = useState<string>('todos')
 
-  // TanStack Table — resumen por cliente
-  const [sorting, setSorting] = useState<SortingState>([
-    { id: 'contribMarginal', desc: true },
-  ])
+  const [sorting, setSorting] = useState<SortingState>([{ id: 'contribMarginal', desc: true }])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [globalFilter, setGlobalFilter] = useState('')
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 })
 
-  // ── Cargar archivo ──────────────────────────────────────
   const handleFile = useCallback(async (file: File) => {
     setLoading(true)
     setError(null)
@@ -391,6 +425,8 @@ const ContribucionMarginalDashboard: React.FC = () => {
       const parsed = await parseExcel(file)
       setRows(parsed)
       setFileName(file.name)
+      setSelectedMes('todos')
+      setSelectedCliente(null)
     } catch (e) {
       setError('Error al procesar el archivo. Verificá que sea el formato correcto.')
       console.error(e)
@@ -399,125 +435,126 @@ const ContribucionMarginalDashboard: React.FC = () => {
     }
   }, [])
 
-  // ── Datos derivados ─────────────────────────────────────
-  const summaries = useMemo(() => buildClienteSummaries(rows), [rows])
-
-  const kpis = useMemo(() => {
-    const totalBruto = rows.reduce((s, r) => s + r.totalBrutoFactura, 0)
-    const totalCosto = rows.reduce((s, r) => s + r.precio, 0)
-    const totalCM = rows.reduce((s, r) => s + r.contribMarginal, 0)
-    const pctMargen = totalBruto > 0 ? (totalCM / totalBruto) * 100 : 0
-    const valorizado = rows.filter((r) => r.estadoValorizacion === 'Valorizado').length
-    const sinValorizar = rows.filter((r) => r.estadoValorizacion === 'Sin Valorizar').length
-    const pctValorizado = rows.length > 0 ? (valorizado / rows.length) * 100 : 0
-
-    return { totalBruto, totalCosto, totalCM, pctMargen, valorizado, sinValorizar, pctValorizado }
+  // Meses disponibles ordenados cronológicamente
+  const mesesDisponibles = useMemo(() => {
+    const set = new Set<string>()
+    rows.forEach((r) => { if (r.mesAnio) set.add(r.mesAnio) })
+    return Array.from(set).sort((a, b) => {
+      const [ma, ya] = a.split('/').map(Number)
+      const [mb, yb] = b.split('/').map(Number)
+      return ya !== yb ? ya - yb : ma - mb
+    })
   }, [rows])
 
-  // Datos para gráfico de barras — Top 10 por CM
-  // IMPORTANTE: usar fullName como key única para evitar duplicados en el eje Y
-  const barData = useMemo(
-    () =>
-      summaries.slice(0, 10).map((c) => ({
-        name: c.cliente, // nombre completo — el CustomTick lo trunca visualmente
-        fullName: c.cliente,
-        cm: c.contribMarginal,
-        bruto: c.totalBruto,
-        pct: c.pctMargen,
-      })),
+  // Filas filtradas por mes seleccionado
+  const rowsFiltradas = useMemo(() =>
+    selectedMes === 'todos' ? rows : rows.filter((r) => r.mesAnio === selectedMes),
+    [rows, selectedMes]
+  )
+
+  const summaries = useMemo(() => buildClienteSummaries(rowsFiltradas), [rowsFiltradas])
+
+  const kpis = useMemo(() => {
+    const ventaBruta = rowsFiltradas.reduce((s, r) => s + r.totalBrutoFactura, 0)
+    const costos = rowsFiltradas.reduce((s, r) => s + r.precio, 0)
+    const gastosLog = rowsFiltradas.reduce((s, r) => s + r.gastosLogisticos, 0)
+    const margen = rowsFiltradas.reduce((s, r) => s + r.contribMarginal, 0)
+    const pctMargen = ventaBruta > 0 ? (margen / ventaBruta) * 100 : 0
+    const pctGastos = ventaBruta > 0 ? (gastosLog / ventaBruta) * 100 : 0
+    const pctCostos = ventaBruta > 0 ? (costos / ventaBruta) * 100 : 0
+    return { ventaBruta, costos, gastosLog, margen, pctMargen, pctGastos, pctCostos }
+  }, [rowsFiltradas])
+
+  const barData = useMemo(() =>
+    summaries.slice(0, 10).map((c) => ({
+      name: c.cliente,
+      fullName: c.cliente,
+      cm: c.contribMarginal,
+      bruto: c.totalBruto,
+      pct: c.pctMargen,
+    })),
     [summaries]
   )
 
+  // Radial chart — cada anillo representa un componente como % de la venta bruta
+  const radialData = useMemo(() => {
+    const total = kpis.ventaBruta || 1
+    return [
+      { name: 'Venta Bruta', value: kpis.ventaBruta, pct: 100, fill: RADIAL_COLORS.ventas },
+      { name: 'Costos (P.P.P.)', value: kpis.costos, pct: parseFloat(((kpis.costos / total) * 100).toFixed(1)), fill: RADIAL_COLORS.costos },
+      { name: 'Gastos Logísticos', value: kpis.gastosLog, pct: parseFloat(((kpis.gastosLog / total) * 100).toFixed(1)), fill: RADIAL_COLORS.gastos },
+    ]
+  }, [kpis])
 
-  // ── Columnas TanStack Table ─────────────────────────────
-  const columns = useMemo<ColumnDef<ClienteSummary>[]>(
-    () => [
-      {
-        accessorKey: 'cliente',
-        header: 'Cliente',
-        cell: ({ getValue }) => (
-          <span className="font-medium text-gray-800 text-sm">{getValue() as string}</span>
-        ),
-        size: 280,
+  const columns = useMemo<ColumnDef<ClienteSummary>[]>(() => [
+    {
+      accessorKey: 'cliente',
+      header: 'Cliente',
+      cell: ({ getValue }) => <span className="font-medium text-gray-800 text-sm">{getValue() as string}</span>,
+      size: 260,
+    },
+    {
+      accessorKey: 'cantOTs',
+      header: 'OTs',
+      cell: ({ getValue }) => <span className="text-center block text-gray-600">{getValue() as number}</span>,
+      size: 55,
+    },
+    {
+      accessorKey: 'totalBruto',
+      header: 'Venta Bruta',
+      cell: ({ getValue }) => <span className="text-right block font-mono text-gray-700 text-sm">{fmt(getValue() as number)}</span>,
+    },
+    {
+      accessorKey: 'costo',
+      header: 'Costos (P.P.P.)',
+      cell: ({ getValue }) => <span className="text-right block font-mono text-gray-500 text-sm">{fmt(getValue() as number)}</span>,
+    },
+    {
+      accessorKey: 'gastosLogisticos',
+      header: 'Gs. Logísticos',
+      cell: ({ getValue }) => {
+        const v = getValue() as number
+        return <span className={`text-right block font-mono text-sm ${v > 0 ? 'text-amber-600' : 'text-gray-300'}`}>{v > 0 ? fmt(v) : '—'}</span>
       },
-      {
-        accessorKey: 'cantOTs',
-        header: 'OTs',
-        cell: ({ getValue }) => (
-          <span className="text-center block text-gray-600">{getValue() as number}</span>
-        ),
-        size: 60,
+    },
+    {
+      accessorKey: 'contribMarginal',
+      header: 'Contr. Marginal',
+      cell: ({ getValue }) => <span className="text-right block font-mono font-semibold text-emerald-700 text-sm">{fmt(getValue() as number)}</span>,
+    },
+    {
+      accessorKey: 'pctMargen',
+      header: '% Margen',
+      cell: ({ getValue }) => {
+        const pct = getValue() as number
+        return (
+          <div className="flex justify-end">
+            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${margenBg(pct)}`}>
+              {fmtPct(pct)}
+            </span>
+          </div>
+        )
       },
-      {
-        accessorKey: 'totalBruto',
-        header: 'Total Bruto',
-        cell: ({ getValue }) => (
-          <span className="text-right block font-mono text-gray-700 text-sm">
-            {fmt(getValue() as number)}
-          </span>
-        ),
+    },
+    {
+      accessorKey: 'estadoValorizacion',
+      header: 'Estado',
+      cell: ({ getValue }) => {
+        const v = getValue() as string
+        return (
+          <div className="flex justify-center">
+            {v === 'Valorizado' ? (
+              <span className="inline-flex items-center gap-1 text-xs text-emerald-700"><CheckCircle2 size={13} /> Valorizado</span>
+            ) : v === 'Sin Valorizar' ? (
+              <span className="inline-flex items-center gap-1 text-xs text-amber-600"><Clock size={13} /> Sin Valorizar</span>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-xs text-blue-600"><AlertCircle size={13} /> Mixto</span>
+            )}
+          </div>
+        )
       },
-      {
-        accessorKey: 'costo',
-        header: 'Costo (P.P.P.)',
-        cell: ({ getValue }) => (
-          <span className="text-right block font-mono text-gray-500 text-sm">
-            {fmt(getValue() as number)}
-          </span>
-        ),
-      },
-      {
-        accessorKey: 'contribMarginal',
-        header: 'Contrib. Marginal',
-        cell: ({ getValue }) => (
-          <span className="text-right block font-mono font-semibold text-emerald-700 text-sm">
-            {fmt(getValue() as number)}
-          </span>
-        ),
-      },
-      {
-        accessorKey: 'pctMargen',
-        header: '% Margen',
-        cell: ({ getValue }) => {
-          const pct = getValue() as number
-          return (
-            <div className="flex justify-end">
-              <span
-                className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${margenBg(pct)}`}
-              >
-                {fmtPct(pct)}
-              </span>
-            </div>
-          )
-        },
-      },
-      {
-        accessorKey: 'estadoValorizacion',
-        header: 'Estado',
-        cell: ({ getValue }) => {
-          const v = getValue() as string
-          return (
-            <div className="flex justify-center">
-              {v === 'Valorizado' ? (
-                <span className="inline-flex items-center gap-1 text-xs text-emerald-700">
-                  <CheckCircle2 size={13} /> Valorizado
-                </span>
-              ) : v === 'Sin Valorizar' ? (
-                <span className="inline-flex items-center gap-1 text-xs text-amber-600">
-                  <Clock size={13} /> Sin Valorizar
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 text-xs text-blue-600">
-                  <AlertCircle size={13} /> Mixto
-                </span>
-              )}
-            </div>
-          )
-        },
-      },
-    ],
-    []
-  )
+    },
+  ], [])
 
   const table = useReactTable({
     data: summaries,
@@ -533,19 +570,13 @@ const ContribucionMarginalDashboard: React.FC = () => {
     getPaginationRowModel: getPaginationRowModel(),
   })
 
-  // ── Render ──────────────────────────────────────────────
-
-  // Sin datos — mostrar upload
+  // ── Sin datos ───────────────────────────────────────────
   if (rows.length === 0) {
     return (
       <div className="p-6">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Contribución Marginal por Cliente
-          </h1>
-          <p className="text-gray-500 text-sm mt-1">
-            Enero 2026 — Cargá el archivo Excel para visualizar el dashboard
-          </p>
+          <h1 className="text-2xl font-bold text-gray-900">Contribución Marginal por Cliente</h1>
+          <p className="text-gray-500 text-sm mt-1">Cargá el archivo Excel para visualizar el dashboard</p>
         </div>
         {error && (
           <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-center gap-2">
@@ -557,110 +588,134 @@ const ContribucionMarginalDashboard: React.FC = () => {
     )
   }
 
-  // Con datos — mostrar dashboard
+  // ── Dashboard ───────────────────────────────────────────
   return (
     <div className="p-6 space-y-6">
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Contribución Marginal por Cliente
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900">Contribución Marginal por Cliente</h1>
           <p className="text-gray-500 text-sm mt-0.5">
-            Enero 2026 · {summaries.length} clientes · {rows.length} operaciones ·{' '}
+            {selectedMes !== 'todos' ? selectedMes : 'Todos los meses'} · {summaries.length} clientes · {rowsFiltradas.length} operaciones ·{' '}
             <span className="text-emerald-600 font-medium">{fileName}</span>
           </p>
         </div>
-        <button
-          onClick={() => { setRows([]); setFileName('') }}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-        >
-          <Upload size={15} /> Cambiar archivo
-        </button>
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Toggle IVA — preparado para sprint siguiente */}
+          <button
+            disabled
+            title="Vista con/sin IVA — próximamente"
+            className="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-lg border bg-gray-50 border-gray-300 text-gray-400 cursor-not-allowed"
+          >
+            <EyeOff size={14} />
+            Sin IVA
+            <span className="ml-1 px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] rounded font-bold">PRONTO</span>
+          </button>
+          <button
+            onClick={() => { setRows([]); setFileName('') }}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <Upload size={15} /> Cambiar archivo
+          </button>
+        </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Filtro de mes */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 text-sm text-gray-500 mr-1">
+          <CalendarDays size={15} />
+          <span className="font-medium">Período:</span>
+        </div>
+        <button
+          onClick={() => setSelectedMes('todos')}
+          className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors
+            ${selectedMes === 'todos'
+              ? 'bg-emerald-600 text-white border-emerald-600'
+              : 'bg-white text-gray-600 border-gray-300 hover:border-emerald-400 hover:text-emerald-700'
+            }`}
+        >
+          Todos
+        </button>
+        {mesesDisponibles.map((mes) => (
+          <button
+            key={mes}
+            onClick={() => setSelectedMes(mes)}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors
+              ${selectedMes === mes
+                ? 'bg-emerald-600 text-white border-emerald-600'
+                : 'bg-white text-gray-600 border-gray-300 hover:border-emerald-400 hover:text-emerald-700'
+              }`}
+          >
+            {mes}
+          </button>
+        ))}
+      </div>
+
+      {/* KPI Cards — orden: Venta Bruta | Costos | Gastos Log | Margen */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
-          label="Total Facturado Bruto"
-          value={fmtShort(kpis.totalBruto)}
-          sub={fmt(kpis.totalBruto)}
+          label="Venta Bruta"
+          value={fmtShort(kpis.ventaBruta)}
+          sub={fmt(kpis.ventaBruta)}
           icon={<DollarSign size={18} className="text-emerald-600" />}
           accent="bg-emerald-100"
         />
         <KpiCard
-          label="Contribución Marginal"
-          value={fmtShort(kpis.totalCM)}
-          sub={fmt(kpis.totalCM)}
-          icon={<TrendingUp size={18} className="text-blue-600" />}
-          accent="bg-blue-100"
-          trend={`${fmtPct(kpis.pctMargen)} de margen global`}
+          label="Costos (P.P.P.)"
+          value={fmtShort(kpis.costos)}
+          sub={fmt(kpis.costos)}
+          icon={<BarChart2 size={18} className="text-indigo-600" />}
+          accent="bg-indigo-100"
+          trend={`${fmtPct(kpis.pctCostos)} sobre venta bruta`}
+          trendColor="text-indigo-600"
         />
         <KpiCard
-          label="Costo Total (P.P.P.)"
-          value={fmtShort(kpis.totalCosto)}
-          sub={fmt(kpis.totalCosto)}
-          icon={<BarChart2 size={18} className="text-violet-600" />}
-          accent="bg-violet-100"
+          label="Gastos Logísticos"
+          value={fmtShort(kpis.gastosLog)}
+          sub={fmt(kpis.gastosLog)}
+          icon={<Truck size={18} className="text-amber-600" />}
+          accent="bg-amber-100"
+          trend={kpis.gastosLog > 0 ? `${fmtPct(kpis.pctGastos)} sobre venta bruta` : 'Sin gastos en este período'}
+          trendColor={kpis.gastosLog > 0 ? 'text-amber-600' : 'text-gray-400'}
         />
-
+        <KpiCard
+          label="Margen (Contr. Marginal)"
+          value={fmtShort(kpis.margen)}
+          sub={fmt(kpis.margen)}
+          icon={<TrendingUp size={18} className="text-emerald-600" />}
+          accent="bg-emerald-100"
+          trend={`${fmtPct(kpis.pctMargen)} sobre venta bruta`}
+          trendColor={kpis.pctMargen >= 70 ? 'text-emerald-600' : 'text-yellow-600'}
+        />
       </div>
 
       {/* Gráficos */}
-      <div className="grid grid-cols-1 gap-4">
-        {/* Bar chart — Top 10 CM */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-          <div className="flex items-start justify-between mb-1">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+
+        {/* Bar chart */}
+        <div className="xl:col-span-2 bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+          <div className="flex items-start justify-between mb-4">
             <div>
-              <h2 className="text-sm font-semibold text-gray-700">
-                Top 10 Clientes por Contribución Marginal
-              </h2>
-              <p className="text-xs text-gray-400 mt-0.5">
-                Hacé click en una barra para filtrar el detalle de operaciones
-              </p>
+              <h2 className="text-sm font-semibold text-gray-700">Top 10 Clientes por Contribución Marginal</h2>
+              <p className="text-xs text-gray-400 mt-0.5">Hacé click en una barra para filtrar el detalle</p>
             </div>
             {selectedCliente && (
-              <button
-                onClick={() => setSelectedCliente(null)}
-                className="text-xs text-emerald-600 hover:text-emerald-800 font-medium flex items-center gap-1 shrink-0"
-              >
+              <button onClick={() => setSelectedCliente(null)}
+                className="text-xs text-emerald-600 hover:text-emerald-800 font-medium flex items-center gap-1 shrink-0">
                 ✕ Limpiar filtro
               </button>
             )}
           </div>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart
-              data={barData}
-              layout="vertical"
-              margin={{ left: 10, right: 50, top: 8, bottom: 0 }}
-            >
+            <BarChart data={barData} layout="vertical" margin={{ left: 10, right: 50, top: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
-              <XAxis
-                type="number"
-                tickFormatter={fmtShort}
-                tick={{ fontSize: 11, fill: '#6b7280' }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis
-                type="category"
-                dataKey="name"
-                width={160}
-                tick={<CustomYAxisTick />}
-                axisLine={false}
-                tickLine={false}
-              />
+              <XAxis type="number" tickFormatter={fmtShort} tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+              <YAxis type="category" dataKey="name" width={160} tick={<CustomYAxisTick />} axisLine={false} tickLine={false} />
               <Tooltip
-                formatter={(value: number, _name: string, props) => [
-                  `${fmt(value)} (${fmtPct(props.payload.pct)})`,
-                  'Contribución Marginal',
-                ]}
+                formatter={(value: number, _: string, props) => [`${fmt(value)} (${fmtPct(props.payload.pct)})`, 'Contribución Marginal']}
                 labelFormatter={(_, payload) => payload?.[0]?.payload?.fullName ?? ''}
-                contentStyle={{
-                  borderRadius: '8px',
-                  border: '1px solid #e5e7eb',
-                  fontSize: '12px',
-                }}
+                contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '12px' }}
                 cursor={{ fill: 'rgba(16,185,129,0.08)' }}
               />
               <Bar
@@ -669,7 +724,6 @@ const ContribucionMarginalDashboard: React.FC = () => {
                 maxBarSize={22}
                 style={{ cursor: 'pointer' }}
                 onClick={(data) => {
-                  // Recharts tipea data como BarRectangleItem — el payload real está en data
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   const clicked = (data as any)?.fullName as string | undefined
                   if (clicked) {
@@ -681,10 +735,9 @@ const ContribucionMarginalDashboard: React.FC = () => {
                 {barData.map((entry, i) => (
                   <Cell
                     key={i}
-                    fill={
-                      selectedCliente === null || selectedCliente === entry.fullName
-                        ? EMERALD_PALETTE[i % EMERALD_PALETTE.length]
-                        : '#e5e7eb'
+                    fill={selectedCliente === null || selectedCliente === entry.fullName
+                      ? EMERALD_PALETTE[i % EMERALD_PALETTE.length]
+                      : '#e5e7eb'
                     }
                   />
                 ))}
@@ -693,17 +746,61 @@ const ContribucionMarginalDashboard: React.FC = () => {
           </ResponsiveContainer>
         </div>
 
+        {/* Radial chart — composición de venta bruta */}
+        <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm flex flex-col">
+          <div className="mb-2">
+            <h2 className="text-sm font-semibold text-gray-700">Composición de la Venta Bruta</h2>
+            <p className="text-xs text-gray-400 mt-0.5">Costos, logística y margen como % del bruto</p>
+          </div>
+          <div className="flex-1 flex items-center justify-center">
+            <ResponsiveContainer width="100%" height={220}>
+              <RadialBarChart
+                cx="50%"
+                cy="50%"
+                innerRadius="30%"
+                outerRadius="90%"
+                barSize={18}
+                data={radialData}
+                startAngle={90}
+                endAngle={-270}
+              >
+                <RadialBar background={{ fill: '#f3f4f6' }} dataKey="pct" cornerRadius={6} />
+                <Tooltip content={<RadialTooltip />} />
+                <Legend
+                  iconType="circle"
+                  iconSize={8}
+                  wrapperStyle={{ fontSize: '11px' }}
+                  formatter={(value) => <span className="text-gray-600">{value}</span>}
+                />
+              </RadialBarChart>
+            </ResponsiveContainer>
+          </div>
+          {/* Detalle con valores absolutos */}
+          <div className="space-y-2 mt-2 border-t border-gray-100 pt-3">
+            {radialData.map((d) => (
+              <div key={d.name} className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: d.fill }} />
+                  <span className="text-gray-600">{d.name}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-400">{fmtPct(d.pct)}</span>
+                  <span className="font-mono font-medium text-gray-700">{fmtShort(d.value)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* Tabs: Resumen / Detalle */}
+      {/* Tabs */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        {/* Tab Bar */}
         <div className="flex border-b border-gray-200">
           {(['resumen', 'detalle'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-6 py-3.5 text-sm font-medium transition-colors capitalize ${
+              className={`px-6 py-3.5 text-sm font-medium transition-colors ${
                 activeTab === tab
                   ? 'border-b-2 border-emerald-600 text-emerald-700'
                   : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
@@ -714,49 +811,33 @@ const ContribucionMarginalDashboard: React.FC = () => {
           ))}
         </div>
 
-        {/* Tab Content */}
         {activeTab === 'resumen' ? (
           <div>
-            {/* Search bar */}
             <div className="p-4 border-b border-gray-100">
               <div className="relative max-w-sm">
                 <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                <input
-                  value={globalFilter}
-                  onChange={(e) => setGlobalFilter(e.target.value)}
+                <input value={globalFilter} onChange={(e) => setGlobalFilter(e.target.value)}
                   placeholder="Buscar cliente..."
-                  className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-                />
+                  className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent" />
               </div>
             </div>
-
-            {/* Table */}
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   {table.getHeaderGroups().map((hg) => (
                     <tr key={hg.id} className="bg-gray-50 border-b border-gray-200">
                       {hg.headers.map((header) => (
-                        <th
-                          key={header.id}
-                          onClick={header.column.getToggleSortingHandler()}
-                          className={`
-                            px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide
-                            ${header.column.getCanSort() ? 'cursor-pointer select-none hover:bg-gray-100' : ''}
-                          `}
-                          style={{ width: header.getSize() }}
-                        >
+                        <th key={header.id} onClick={header.column.getToggleSortingHandler()}
+                          className={`px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide
+                            ${header.column.getCanSort() ? 'cursor-pointer select-none hover:bg-gray-100' : ''}`}
+                          style={{ width: header.getSize() }}>
                           <div className="flex items-center gap-1.5">
                             {flexRender(header.column.columnDef.header, header.getContext())}
                             {header.column.getCanSort() && (
                               <span className="text-gray-400">
-                                {header.column.getIsSorted() === 'asc' ? (
-                                  <ChevronUp size={13} />
-                                ) : header.column.getIsSorted() === 'desc' ? (
-                                  <ChevronDown size={13} />
-                                ) : (
-                                  <ChevronsUpDown size={13} />
-                                )}
+                                {header.column.getIsSorted() === 'asc' ? <ChevronUp size={13} />
+                                  : header.column.getIsSorted() === 'desc' ? <ChevronDown size={13} />
+                                  : <ChevronsUpDown size={13} />}
                               </span>
                             )}
                           </div>
@@ -767,13 +848,8 @@ const ContribucionMarginalDashboard: React.FC = () => {
                 </thead>
                 <tbody>
                   {table.getRowModel().rows.map((row, i) => (
-                    <tr
-                      key={row.id}
-                      className={`
-                        border-b border-gray-100 hover:bg-emerald-50/40 transition-colors
-                        ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}
-                      `}
-                    >
+                    <tr key={row.id}
+                      className={`border-b border-gray-100 hover:bg-emerald-50/40 transition-colors ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}`}>
                       {row.getVisibleCells().map((cell) => (
                         <td key={cell.id} className="px-4 py-3">
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -784,37 +860,23 @@ const ContribucionMarginalDashboard: React.FC = () => {
                 </tbody>
               </table>
             </div>
-
-            {/* Pagination */}
             <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 text-sm text-gray-500">
-              <span>
-                {table.getFilteredRowModel().rows.length} clientes
-                {globalFilter && ` (filtrado de ${summaries.length})`}
-              </span>
+              <span>{table.getFilteredRowModel().rows.length} clientes{globalFilter && ` (filtrado de ${summaries.length})`}</span>
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => table.previousPage()}
-                  disabled={!table.getCanPreviousPage()}
-                  className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
+                <button onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}
+                  className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed">
                   <ChevronLeft size={16} />
                 </button>
-                <span className="text-xs font-medium">
-                  Pág. {table.getState().pagination.pageIndex + 1} / {table.getPageCount()}
-                </span>
-                <button
-                  onClick={() => table.nextPage()}
-                  disabled={!table.getCanNextPage()}
-                  className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
+                <span className="text-xs font-medium">Pág. {table.getState().pagination.pageIndex + 1} / {table.getPageCount()}</span>
+                <button onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}
+                  className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed">
                   <ChevronRight size={16} />
                 </button>
               </div>
             </div>
           </div>
         ) : (
-          /* Detalle de operaciones */
-          <DetalleTab rows={rows} selectedCliente={selectedCliente} onClearCliente={() => setSelectedCliente(null)} />
+          <DetalleTab rows={rowsFiltradas} selectedCliente={selectedCliente} onClearCliente={() => setSelectedCliente(null)} />
         )}
       </div>
     </div>
@@ -822,7 +884,7 @@ const ContribucionMarginalDashboard: React.FC = () => {
 }
 
 // ============================================================
-// TAB DETALLE — tabla de operaciones individuales
+// TAB DETALLE
 // ============================================================
 
 const DetalleTab: React.FC<{
@@ -834,115 +896,88 @@ const DetalleTab: React.FC<{
   const [sorting, setSorting] = useState<SortingState>([])
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 15 })
 
-  // Cuando cambia selectedCliente desde el gráfico, resetear a página 1
-  React.useEffect(() => {
+  useEffect(() => {
     setPagination((p) => ({ ...p, pageIndex: 0 }))
   }, [selectedCliente])
 
-  // Filtrar filas: si hay cliente seleccionado desde el gráfico, filtra primero
-  const filteredRows = useMemo(() => {
-    if (!selectedCliente) return rows
-    return rows.filter((r) => r.cliente === selectedCliente)
-  }, [rows, selectedCliente])
-
-  const columns = useMemo<ColumnDef<RawRow>[]>(
-    () => [
-      {
-        accessorKey: 'nroOt',
-        header: 'N° OT',
-        cell: ({ getValue }) => (
-          <span className="font-mono text-xs text-gray-600">{getValue() as string || '—'}</span>
-        ),
-        size: 100,
-      },
-      {
-        accessorKey: 'cliente',
-        header: 'Cliente',
-        cell: ({ getValue }) => (
-          <span className="text-sm font-medium text-gray-800 truncate block max-w-[220px]">
-            {getValue() as string}
-          </span>
-        ),
-        size: 240,
-      },
-      {
-        accessorKey: 'nroFactura',
-        header: 'N° Factura',
-        cell: ({ getValue }) => (
-          <span className="font-mono text-xs text-gray-500">{getValue() as string}</span>
-        ),
-        size: 140,
-      },
-      {
-        accessorKey: 'fechaFactura',
-        header: 'Fecha Factura',
-        cell: ({ getValue }) => (
-          <span className="text-xs text-gray-500">{excelDateToString(getValue() as number)}</span>
-        ),
-        size: 110,
-      },
-      {
-        accessorKey: 'totalBrutoFactura',
-        header: 'Bruto',
-        cell: ({ getValue }) => (
-          <span className="text-right block font-mono text-xs text-gray-700">
-            {fmt(getValue() as number)}
-          </span>
-        ),
-      },
-      {
-        accessorKey: 'precio',
-        header: 'Costo',
-        cell: ({ getValue }) => (
-          <span className="text-right block font-mono text-xs text-gray-500">
-            {fmt(getValue() as number)}
-          </span>
-        ),
-      },
-      {
-        accessorKey: 'contribMarginal',
-        header: 'C. Marginal',
-        cell: ({ getValue }) => (
-          <span className="text-right block font-mono text-xs font-semibold text-emerald-700">
-            {fmt(getValue() as number)}
-          </span>
-        ),
-      },
-      {
-        accessorKey: 'pctMargen',
-        header: '%',
-        cell: ({ getValue }) => {
-          const pct = getValue() as number
-          return (
-            <span className={`text-right block text-xs font-bold ${margenColor(pct)}`}>
-              {fmtPct(pct)}
-            </span>
-          )
-        },
-        size: 65,
-      },
-      {
-        accessorKey: 'estadoValorizacion',
-        header: 'Estado',
-        cell: ({ getValue }) => {
-          const v = getValue() as string
-          return (
-            <span
-              className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                v === 'Valorizado'
-                  ? 'bg-emerald-100 text-emerald-700'
-                  : 'bg-amber-100 text-amber-700'
-              }`}
-            >
-              {v}
-            </span>
-          )
-        },
-        size: 100,
-      },
-    ],
-    []
+  const filteredRows = useMemo(() =>
+    selectedCliente ? rows.filter((r) => r.cliente === selectedCliente) : rows,
+    [rows, selectedCliente]
   )
+
+  const columns = useMemo<ColumnDef<RawRow>[]>(() => [
+    {
+      accessorKey: 'nroOt',
+      header: 'N° OT',
+      cell: ({ getValue }) => <span className="font-mono text-xs text-gray-600">{getValue() as string || '—'}</span>,
+      size: 110,
+    },
+    {
+      accessorKey: 'cliente',
+      header: 'Cliente',
+      cell: ({ getValue }) => <span className="text-sm font-medium text-gray-800 truncate block max-w-[200px]">{getValue() as string}</span>,
+      size: 220,
+    },
+    {
+      accessorKey: 'nroFactura',
+      header: 'N° Factura',
+      cell: ({ getValue }) => <span className="font-mono text-xs text-gray-500">{getValue() as string}</span>,
+      size: 150,
+    },
+    {
+      accessorKey: 'fechaFactura',
+      header: 'Fecha Factura',
+      cell: ({ getValue }) => <span className="text-xs text-gray-500">{toDateString(getValue() as Date)}</span>,
+      size: 110,
+    },
+    {
+      accessorKey: 'totalBrutoFactura',
+      header: 'Bruto',
+      cell: ({ getValue }) => <span className="text-right block font-mono text-xs text-gray-700">{fmt(getValue() as number)}</span>,
+    },
+    {
+      accessorKey: 'precio',
+      header: 'Costo',
+      cell: ({ getValue }) => <span className="text-right block font-mono text-xs text-gray-500">{fmt(getValue() as number)}</span>,
+    },
+    {
+      accessorKey: 'gastosLogisticos',
+      header: 'Gs. Log.',
+      cell: ({ getValue }) => {
+        const v = getValue() as number
+        return <span className={`text-right block font-mono text-xs ${v > 0 ? 'text-amber-600' : 'text-gray-300'}`}>{v > 0 ? fmt(v) : '—'}</span>
+      },
+      size: 90,
+    },
+    {
+      accessorKey: 'contribMarginal',
+      header: 'C. Marginal',
+      cell: ({ getValue }) => <span className="text-right block font-mono text-xs font-semibold text-emerald-700">{fmt(getValue() as number)}</span>,
+    },
+    {
+      accessorKey: 'pctMargen',
+      header: '%',
+      cell: ({ getValue }) => {
+        const pct = getValue() as number
+        return <span className={`text-right block text-xs font-bold ${margenColor(pct)}`}>{fmtPct(pct)}</span>
+      },
+      size: 60,
+    },
+    {
+      accessorKey: 'estadoValorizacion',
+      header: 'Estado',
+      cell: ({ getValue }) => {
+        const v = getValue() as string
+        return (
+          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+            ${v === 'Valorizado' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+            {v}
+          </span>
+        )
+      },
+      size: 100,
+    },
+  ], [])
 
   const table = useReactTable({
     data: filteredRows,
@@ -960,28 +995,18 @@ const DetalleTab: React.FC<{
   return (
     <div>
       <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-        {/* Badge de cliente filtrado desde el gráfico */}
         {selectedCliente && (
           <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-lg text-xs font-medium text-emerald-700 shrink-0">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             {selectedCliente.length > 40 ? selectedCliente.substring(0, 40) + '…' : selectedCliente}
-            <button
-              onClick={onClearCliente}
-              className="ml-1 text-emerald-500 hover:text-emerald-800 font-bold leading-none"
-              title="Quitar filtro"
-            >
-              ✕
-            </button>
+            <button onClick={onClearCliente} className="ml-1 text-emerald-500 hover:text-emerald-800 font-bold leading-none" title="Quitar filtro">✕</button>
           </div>
         )}
         <div className="relative max-w-sm w-full">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            value={globalFilter}
-            onChange={(e) => setGlobalFilter(e.target.value)}
+          <input value={globalFilter} onChange={(e) => setGlobalFilter(e.target.value)}
             placeholder="Buscar OT, cliente, factura..."
-            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-          />
+            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent" />
         </div>
       </div>
 
@@ -991,24 +1016,17 @@ const DetalleTab: React.FC<{
             {table.getHeaderGroups().map((hg) => (
               <tr key={hg.id} className="bg-gray-50 border-b border-gray-200">
                 {hg.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    onClick={header.column.getToggleSortingHandler()}
+                  <th key={header.id} onClick={header.column.getToggleSortingHandler()}
                     className={`px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wide whitespace-nowrap
                       ${header.column.getCanSort() ? 'cursor-pointer hover:bg-gray-100' : ''}`}
-                    style={{ width: header.getSize() }}
-                  >
+                    style={{ width: header.getSize() }}>
                     <div className="flex items-center gap-1">
                       {flexRender(header.column.columnDef.header, header.getContext())}
                       {header.column.getCanSort() && (
                         <span className="text-gray-400">
-                          {header.column.getIsSorted() === 'asc' ? (
-                            <ChevronUp size={12} />
-                          ) : header.column.getIsSorted() === 'desc' ? (
-                            <ChevronDown size={12} />
-                          ) : (
-                            <ChevronsUpDown size={12} />
-                          )}
+                          {header.column.getIsSorted() === 'asc' ? <ChevronUp size={12} />
+                            : header.column.getIsSorted() === 'desc' ? <ChevronDown size={12} />
+                            : <ChevronsUpDown size={12} />}
                         </span>
                       )}
                     </div>
@@ -1019,11 +1037,8 @@ const DetalleTab: React.FC<{
           </thead>
           <tbody>
             {table.getRowModel().rows.map((row, i) => (
-              <tr
-                key={row.id}
-                className={`border-b border-gray-100 hover:bg-emerald-50/40 transition-colors
-                  ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}`}
-              >
+              <tr key={row.id}
+                className={`border-b border-gray-100 hover:bg-emerald-50/40 transition-colors ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}`}>
                 {row.getVisibleCells().map((cell) => (
                   <td key={cell.id} className="px-4 py-2.5">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -1042,21 +1057,13 @@ const DetalleTab: React.FC<{
           {!selectedCliente && globalFilter && ` (filtrado de ${rows.length})`}
         </span>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-            className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
+          <button onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}
+            className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed">
             <ChevronLeft size={16} />
           </button>
-          <span className="text-xs font-medium">
-            Pág. {table.getState().pagination.pageIndex + 1} / {table.getPageCount()}
-          </span>
-          <button
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-            className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
+          <span className="text-xs font-medium">Pág. {table.getState().pagination.pageIndex + 1} / {table.getPageCount()}</span>
+          <button onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}
+            className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed">
             <ChevronRight size={16} />
           </button>
         </div>
@@ -1065,4 +1072,4 @@ const DetalleTab: React.FC<{
   )
 }
 
-export default ContribucionMarginalDashboard
+export default ContribucionMarginalDashboard;
