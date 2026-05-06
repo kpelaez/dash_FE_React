@@ -80,23 +80,31 @@ interface RawRow {
   cliente: string
   fechaOt: Date | null
   nroOt: string
-  totalBrutoFactura: number   // col 5 — base de cálculo % margen
-  conceptoImpositivo: number  // col 6 — IVA
-  totalFacturaNeto: number    // col 7 — bruto + IVA
+  totalBrutoFactura: number   // col 5  — base de cálculo % margen
+  conceptoImpositivo: number  // col 6  — IVA
+  totalFacturaNeto: number    // col 7  — bruto + IVA
   gastosLogisticos: number    // col 8
   pctGastosLog: number        // col 9
-  fechaRemito: Date | null
-  nroRemito: string
-  fechaConsumo: Date | null
-  nroConsumo: number | null
-  precio: number              // col 14 — costo PPP
-  estadoValorizacion: string
-  descripcion: string
-  fechaNc: Date | null
-  nroNc: string
-  totalBrutoNc: number
-  contribMarginal: number     // col 20 — ya incluye descuento de gastos log
-  pctMargen: number           // col 21
+  fechaRemito: Date | null    // col 10
+  nroRemito: string           // col 11
+  // ── Campos clínicos / operativos (V3) ──
+  paciente: string            // col 12
+  institucion: string         // col 13
+  tecnico: string             // col 14
+  medico: string              // col 15
+  medicoProctor: string       // col 16
+  sucursal: string            // col 17
+  // ── Continuación (corridas +6 desde V2) ──
+  fechaConsumo: Date | null   // col 18
+  nroConsumo: number | null   // col 19
+  precio: number              // col 20 — costo PPP
+  estadoValorizacion: string  // col 21
+  descripcion: string         // col 22
+  fechaNc: Date | null        // col 23
+  nroNc: string               // col 24
+  totalBrutoNc: number        // col 25
+  contribMarginal: number     // col 26 — ya incluye descuento de gastos log
+  pctMargen: number           // col 27
   mesAnio: string             // derivado — "MM/YYYY"
 }
 
@@ -179,7 +187,7 @@ function parseExcel(file: File): Promise<RawRow[]> {
         const rows: RawRow[] = rawData
           .slice(1)
           .filter((r: unknown[]) => r[2])
-          .filter((r: unknown[]) => !r[18] || String(r[18]).trim() === '')
+          .filter((r: unknown[]) => !r[24] || String(r[24]).trim() === '')        // excluir NC (col 24 en V3)
           .map((r: unknown[]) => {
             const fechaFactura = parseDate(r[0])
             return {
@@ -195,16 +203,24 @@ function parseExcel(file: File): Promise<RawRow[]> {
               pctGastosLog: Number(r[9] ?? 0),
               fechaRemito: parseDate(r[10]),
               nroRemito: String(r[11] ?? ''),
-              fechaConsumo: parseDate(r[12]),
-              nroConsumo: r[13] ? Number(r[13]) : null,
-              precio: Number(r[14] ?? 0),
-              estadoValorizacion: String(r[15] ?? ''),
-              descripcion: String(r[16] ?? ''),
-              fechaNc: parseDate(r[17]),
-              nroNc: String(r[18] ?? ''),
-              totalBrutoNc: Number(r[19] ?? 0),
-              contribMarginal: Number(r[20] ?? 0),
-              pctMargen: Number(r[21] ?? 0),
+              // ── Campos clínicos V3 ──
+              paciente: String(r[12] ?? '').trim(),
+              institucion: String(r[13] ?? '').trim(),
+              tecnico: String(r[14] ?? '').trim(),
+              medico: String(r[15] ?? '').trim(),
+              medicoProctor: String(r[16] ?? '').trim(),
+              sucursal: String(r[17] ?? '').trim(),
+              // ── Continuación corrida +6 ──
+              fechaConsumo: parseDate(r[18]),
+              nroConsumo: r[19] ? Number(r[19]) : null,
+              precio: Number(r[20] ?? 0),
+              estadoValorizacion: String(r[21] ?? ''),
+              descripcion: String(r[22] ?? ''),
+              fechaNc: parseDate(r[23]),
+              nroNc: String(r[24] ?? ''),
+              totalBrutoNc: Number(r[25] ?? 0),
+              contribMarginal: Number(r[26] ?? 0),
+              pctMargen: Number(r[27] ?? 0),
               mesAnio: toMesAnio(fechaFactura),
             }
           })
@@ -1194,6 +1210,114 @@ const ContribucionMarginalDashboard: React.FC = () => {
 }
 
 // ============================================================
+// EXPAND ROW — datos clínicos/operativos expandibles
+// ============================================================
+
+const campo = (valor: string) => valor.trim() || '—'
+
+const ExpandRow: React.FC<{ row: RawRow; colSpan: number }> = ({ row, colSpan }) => (
+  <tr className="bg-gradient-to-r from-slate-50 to-blue-50/30">
+    <td colSpan={colSpan} className="px-4 py-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-3">
+
+        {/* Paciente */}
+        <div className="flex items-start gap-2">
+          <div className="mt-0.5 w-6 h-6 rounded-md bg-blue-100 flex items-center justify-center shrink-0">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-wide text-gray-400 font-medium">Paciente</p>
+            <p className={`text-xs font-medium truncate ${row.paciente ? 'text-gray-700' : 'text-gray-300'}`}>
+              {campo(row.paciente)}
+            </p>
+          </div>
+        </div>
+
+        {/* Institución */}
+        <div className="flex items-start gap-2">
+          <div className="mt-0.5 w-6 h-6 rounded-md bg-emerald-100 flex items-center justify-center shrink-0">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/>
+            </svg>
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-wide text-gray-400 font-medium">Institución</p>
+            <p className={`text-xs font-medium truncate ${row.institucion ? 'text-gray-700' : 'text-gray-300'}`}
+               title={row.institucion || undefined}>
+              {campo(row.institucion)}
+            </p>
+          </div>
+        </div>
+
+        {/* Sucursal */}
+        <div className="flex items-start gap-2">
+          <div className="mt-0.5 w-6 h-6 rounded-md bg-violet-100 flex items-center justify-center shrink-0">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2" strokeLinecap="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+            </svg>
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-wide text-gray-400 font-medium">Sucursal</p>
+            <p className={`text-xs font-medium truncate ${row.sucursal ? 'text-gray-700' : 'text-gray-300'}`}>
+              {campo(row.sucursal)}
+            </p>
+          </div>
+        </div>
+
+        {/* Médico */}
+        <div className="flex items-start gap-2">
+          <div className="mt-0.5 w-6 h-6 rounded-md bg-cyan-100 flex items-center justify-center shrink-0">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0891b2" strokeWidth="2" strokeLinecap="round">
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+            </svg>
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-wide text-gray-400 font-medium">Médico</p>
+            <p className={`text-xs font-medium truncate ${row.medico ? 'text-gray-700' : 'text-gray-300'}`}>
+              {campo(row.medico)}
+            </p>
+          </div>
+        </div>
+
+        {/* Médico Proctor */}
+        <div className="flex items-start gap-2">
+          <div className="mt-0.5 w-6 h-6 rounded-md bg-indigo-100 flex items-center justify-center shrink-0">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" strokeWidth="2" strokeLinecap="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-wide text-gray-400 font-medium">Médico Proctor</p>
+            <p className={`text-xs font-medium truncate ${row.medicoProctor ? 'text-gray-700' : 'text-gray-300'}`}>
+              {campo(row.medicoProctor)}
+            </p>
+          </div>
+        </div>
+
+        {/* Técnico */}
+        <div className="flex items-start gap-2">
+          <div className="mt-0.5 w-6 h-6 rounded-md bg-amber-100 flex items-center justify-center shrink-0">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" strokeLinecap="round">
+              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+            </svg>
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-wide text-gray-400 font-medium">Técnico</p>
+            <p className={`text-xs font-medium truncate ${row.tecnico ? 'text-gray-700' : 'text-gray-300'}`}>
+              {campo(row.tecnico)}
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </td>
+  </tr>
+)
+
+// ============================================================
 // TAB DETALLE
 // ============================================================
 
@@ -1205,9 +1329,19 @@ const DetalleTab: React.FC<{
   const [globalFilter, setGlobalFilter] = useState('')
   const [sorting, setSorting] = useState<SortingState>([])
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 15 })
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
+
+  const toggleRow = (id: string) => {
+    setExpandedRows((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
 
   useEffect(() => {
     setPagination((p) => ({ ...p, pageIndex: 0 }))
+    setExpandedRows(new Set()) // colapsar al cambiar filtro
   }, [selectedCliente])
 
   const filteredRows = useMemo(() =>
@@ -1215,7 +1349,28 @@ const DetalleTab: React.FC<{
     [rows, selectedCliente]
   )
 
+  const TOTAL_COLS = 10 // columnas visibles + col expand
+
   const columns = useMemo<ColumnDef<RawRow>[]>(() => [
+    {
+      id: 'expand',
+      header: '',
+      cell: ({ row }) => (
+        <button
+          onClick={() => toggleRow(row.id)}
+          className={`w-5 h-5 rounded flex items-center justify-center text-xs font-bold transition-all
+            ${expandedRows.has(row.id)
+              ? 'bg-emerald-100 text-emerald-700 rotate-45'
+              : 'bg-gray-100 text-gray-500 hover:bg-emerald-50 hover:text-emerald-600'
+            }`}
+          title={expandedRows.has(row.id) ? 'Colapsar detalle' : 'Ver detalle clínico'}
+        >
+          +
+        </button>
+      ),
+      size: 36,
+      enableSorting: false,
+    },
     {
       accessorKey: 'nroOt',
       header: 'N° OT',
@@ -1347,14 +1502,24 @@ const DetalleTab: React.FC<{
           </thead>
           <tbody>
             {table.getRowModel().rows.map((row, i) => (
-              <tr key={row.id}
-                className={`border-b border-gray-100 hover:bg-emerald-50/40 transition-colors ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}`}>
-                {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-4 py-2.5">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-              </tr>
+              <React.Fragment key={row.id}>
+                <tr
+                  className={`border-b border-gray-100 transition-colors
+                    ${expandedRows.has(row.id)
+                      ? 'bg-emerald-50/30 border-emerald-100'
+                      : i % 2 === 0 ? 'bg-white hover:bg-emerald-50/40' : 'bg-gray-50/30 hover:bg-emerald-50/40'
+                    }`}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <td key={cell.id} className="px-4 py-2.5">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  ))}
+                </tr>
+                {expandedRows.has(row.id) && (
+                  <ExpandRow row={row.original} colSpan={TOTAL_COLS} />
+                )}
+              </React.Fragment>
             ))}
           </tbody>
         </table>
