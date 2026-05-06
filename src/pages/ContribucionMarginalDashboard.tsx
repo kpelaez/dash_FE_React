@@ -368,50 +368,53 @@ const KpiCard: React.FC<{
 // ============================================================
 
 /**
- * Trunca el nombre del cliente preservando palabras completas.
- * Muestra hasta 2 líneas SVG para nombres muy largos, asegurando
- * que clientes con prefijos similares (ej: dos "INSTITUTO ...") 
- * sean visualmente distinguibles.
+ * Muestra el nombre del cliente en el eje Y.
+ * Estrategia: mostrar la primera palabra significativa en línea 1,
+ * y las siguientes 2-3 palabras en línea 2 (hasta 20 chars).
+ * Así "INSTITUTO NACIONAL..." e "INSTITUTO DE OBRA..." se distinguen
+ * porque la línea 2 muestra "NACIONAL..." vs "DE OBRA..."
  */
 const CustomYAxisTick = ({ x, y, payload }: { x?: number; y?: number; payload?: { value: string } }) => {
   const name = (payload?.value ?? '').replace(/"+/g, '').trim()
-  const words = name.split(' ')
-  const LINE_MAX = 16  // chars por línea — ajustado al width del eje
+  const words = name.split(' ').filter(Boolean)
 
-  // Dividir en línea 1 y línea 2
+  // Calcular el punto de corte: línea 1 tiene las primeras palabras
+  // hasta llegar a ~18 chars, línea 2 las siguientes (hasta 20 chars)
   let line1 = ''
-  let line2 = ''
-  for (const w of words) {
-    const candidate = line1 ? `${line1} ${w}` : w
-    if (candidate.length <= LINE_MAX) {
+  let splitIndex = 0
+  for (let i = 0; i < words.length; i++) {
+    const candidate = line1 ? `${line1} ${words[i]}` : words[i]
+    if (candidate.length <= 18) {
       line1 = candidate
-    } else if (!line2) {
-      const candidate2 = line2 ? `${line2} ${w}` : w
-      if (candidate2.length <= LINE_MAX) {
-        line2 = candidate2
-      } else {
-        line2 = candidate2.substring(0, LINE_MAX - 1) + '…'
-        break
-      }
+      splitIndex = i + 1
+    } else {
+      break
     }
   }
-  if (!line2 && name.length > LINE_MAX) {
-    // fallback si una sola palabra es muy larga
-    line2 = line1.substring(LINE_MAX)
-    line1 = line1.substring(0, LINE_MAX)
+  // Si el nombre cabe entero en una línea
+  if (splitIndex >= words.length) {
+    return (
+      <g transform={`translate(${x},${y})`}>
+        <title>{name}</title>
+        <text x={0} y={0} dy={4} textAnchor="end" fill="#374151" fontSize={10} fontFamily="system-ui, sans-serif">
+          {line1}
+        </text>
+      </g>
+    )
   }
+  // Línea 2: palabras restantes, truncadas a 20 chars
+  let line2 = words.slice(splitIndex).join(' ')
+  if (line2.length > 20) line2 = line2.substring(0, 19) + '…'
 
   return (
     <g transform={`translate(${x},${y})`}>
       <title>{name}</title>
-      {line2 ? (
-        <>
-          <text x={0} y={-6} textAnchor="end" fill="#374151" fontSize={10} fontFamily="system-ui, sans-serif">{line1}</text>
-          <text x={0} y={7} textAnchor="end" fill="#6b7280" fontSize={9} fontFamily="system-ui, sans-serif">{line2}</text>
-        </>
-      ) : (
-        <text x={0} y={0} dy={4} textAnchor="end" fill="#374151" fontSize={10} fontFamily="system-ui, sans-serif">{line1}</text>
-      )}
+      <text x={0} y={-7} textAnchor="end" fill="#374151" fontSize={10} fontWeight={600} fontFamily="system-ui, sans-serif">
+        {line1}
+      </text>
+      <text x={0} y={6} textAnchor="end" fill="#6b7280" fontSize={9} fontFamily="system-ui, sans-serif">
+        {line2}
+      </text>
     </g>
   )
 }
@@ -466,30 +469,23 @@ const DonutLabel = ({
 }
 
 const ComposicionDonut: React.FC<{ data: DonutSlice[] }> = ({ data }) => {
-  const costos = data[1] ?? { pct: 0, fill: '#6366f1', name: 'Costos' }
-  const gastos = data[2] ?? { pct: 0, fill: '#f59e0b', name: 'Gastos Log.' }
-  const restoPct = Math.max(0, 100 - costos.pct - gastos.pct)
-
-  // Capa base: anillo verde del tamaño de la CM (ej: 82.1% del bruto)
-  // El resto del anillo (17.9%) queda como fondo gris
   const marginPct = data[0]?.pct ?? 0
-  const baseData = [
-    { name: 'Contr. Marginal', value: marginPct, fill: data[0]?.fill ?? '#059669' },
-    { name: '_gap', value: Math.max(0, 100 - marginPct), fill: '#f3f4f6' },
-  ]
+  const costosPct = data[1]?.pct ?? 0
+  const gastosPct = data[2]?.pct ?? 0
 
-  // Capa superpuesta: costos + gastos + complemento (transparente) al mismo radio
-  const overlayData = [
-    { name: costos.name, value: costos.pct, fill: costos.fill, pct: costos.pct },
-    { name: gastos.name, value: gastos.pct, fill: gastos.fill, pct: gastos.pct },
-    { name: '_rest', value: restoPct, fill: '#00000000', pct: restoPct },
-  ]
+  // Un único anillo con 3 segmentos que suman exactamente 100%
+  // CM (verde) + Costos (índigo) + Gastos Log (ámbar) = 100%
+  const pieData = [
+    { name: data[0]?.name ?? 'Contr. Marginal', value: marginPct,  fill: data[0]?.fill ?? '#059669', pct: marginPct },
+    { name: data[1]?.name ?? 'Costos',          value: costosPct,  fill: data[1]?.fill ?? '#6366f1', pct: costosPct },
+    { name: data[2]?.name ?? 'Gastos Log.',      value: gastosPct,  fill: data[2]?.fill ?? '#f59e0b', pct: gastosPct },
+  ].filter(d => d.value > 0)  // excluir segmentos vacíos (ej: gastos = 0)
 
-  // Render label personalizado solo para costos y gastos
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const renderLabel = (props: any) => {
-    const d = overlayData[props.index]
-    if (!d || d.name === '_rest' || d.pct < 0.3) return null
+    const d = pieData[props.index]
+    // Solo mostrar etiqueta en Costos y Gastos, no en el segmento verde
+    if (!d || props.index === 0 || d.pct < 0.3) return null
     return (
       <DonutLabel
         cx={props.cx}
@@ -503,23 +499,11 @@ const ComposicionDonut: React.FC<{ data: DonutSlice[] }> = ({ data }) => {
     )
   }
 
-  // Render cell personalizado: transparente para el sector "Margen"
-  const renderCell = (entry: { name: string; fill: string }, index: number) => (
-    <Cell
-      key={`overlay-${index}`}
-      fill={entry.name === '_rest' ? 'transparent' : entry.fill}
-      stroke={entry.name === '_rest' ? 'transparent' : '#ffffff'}
-      strokeWidth={entry.name === '_rest' ? 0 : 2}
-      opacity={entry.name === '_rest' ? 0 : 0.9}
-    />
-  )
-
   return (
     <ResponsiveContainer width="100%" height={240}>
       <PieChart margin={{ top: 24, right: 34, bottom: 24, left: 34 }}>
-        {/* Anillo base — Venta Bruta completa (verde) */}
         <Pie
-          data={baseData}
+          data={pieData}
           cx="50%"
           cy="50%"
           innerRadius={INNER_R}
@@ -527,32 +511,18 @@ const ComposicionDonut: React.FC<{ data: DonutSlice[] }> = ({ data }) => {
           dataKey="value"
           startAngle={90}
           endAngle={-270}
-          strokeWidth={0}
-          isAnimationActive={false}
-        >
-          {baseData.map((entry, i) => (
-            <Cell key={i} fill={entry.fill} strokeWidth={0} />
-          ))}
-        </Pie>
-
-        {/* Anillo superpuesto — Costos + Gastos al mismo radio */}
-        <Pie
-          data={overlayData}
-          cx="50%"
-          cy="50%"
-          innerRadius={INNER_R}
-          outerRadius={OUTER_R}
-          dataKey="value"
-          startAngle={90}
-          endAngle={-270}
+          strokeWidth={2}
+          stroke="#fff"
           labelLine={false}
           label={renderLabel}
           isAnimationActive={true}
         >
-          {overlayData.map((entry, index) => renderCell(entry, index))}
+          {pieData.map((entry, i) => (
+            <Cell key={i} fill={entry.fill} opacity={0.92} />
+          ))}
         </Pie>
 
-        {/* Texto central — muestra % de CM sobre venta bruta */}
+        {/* Texto central — % de margen dinámico */}
         <text x="50%" y="44%" textAnchor="middle" dominantBaseline="central"
           fill="#059669" fontSize={15} fontWeight={700}>
           {`${marginPct.toFixed(1)}%`}
