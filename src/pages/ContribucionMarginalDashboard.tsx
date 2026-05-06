@@ -368,20 +368,50 @@ const KpiCard: React.FC<{
 // ============================================================
 
 /**
- * Trunca el nombre del cliente de forma inteligente:
- * Si los primeros 2 tokens son idénticos entre clientes, muestra hasta 30 chars
- * para que sean distinguibles en el eje Y.
+ * Trunca el nombre del cliente preservando palabras completas.
+ * Muestra hasta 2 líneas SVG para nombres muy largos, asegurando
+ * que clientes con prefijos similares (ej: dos "INSTITUTO ...") 
+ * sean visualmente distinguibles.
  */
 const CustomYAxisTick = ({ x, y, payload }: { x?: number; y?: number; payload?: { value: string } }) => {
-  const maxChars = 30
-  const name = (payload?.value ?? '').replace(/"+/g, '')  // sanitizar comillas en nombres
-  const display = name.length > maxChars ? name.substring(0, maxChars) + '…' : name
+  const name = (payload?.value ?? '').replace(/"+/g, '').trim()
+  const words = name.split(' ')
+  const LINE_MAX = 16  // chars por línea — ajustado al width del eje
+
+  // Dividir en línea 1 y línea 2
+  let line1 = ''
+  let line2 = ''
+  for (const w of words) {
+    const candidate = line1 ? `${line1} ${w}` : w
+    if (candidate.length <= LINE_MAX) {
+      line1 = candidate
+    } else if (!line2) {
+      const candidate2 = line2 ? `${line2} ${w}` : w
+      if (candidate2.length <= LINE_MAX) {
+        line2 = candidate2
+      } else {
+        line2 = candidate2.substring(0, LINE_MAX - 1) + '…'
+        break
+      }
+    }
+  }
+  if (!line2 && name.length > LINE_MAX) {
+    // fallback si una sola palabra es muy larga
+    line2 = line1.substring(LINE_MAX)
+    line1 = line1.substring(0, LINE_MAX)
+  }
+
   return (
     <g transform={`translate(${x},${y})`}>
       <title>{name}</title>
-      <text x={0} y={0} dy={4} textAnchor="end" fill="#374151" fontSize={10} fontFamily="system-ui, sans-serif">
-        {display}
-      </text>
+      {line2 ? (
+        <>
+          <text x={0} y={-6} textAnchor="end" fill="#374151" fontSize={10} fontFamily="system-ui, sans-serif">{line1}</text>
+          <text x={0} y={7} textAnchor="end" fill="#6b7280" fontSize={9} fontFamily="system-ui, sans-serif">{line2}</text>
+        </>
+      ) : (
+        <text x={0} y={0} dy={4} textAnchor="end" fill="#374151" fontSize={10} fontFamily="system-ui, sans-serif">{line1}</text>
+      )}
     </g>
   )
 }
@@ -440,21 +470,26 @@ const ComposicionDonut: React.FC<{ data: DonutSlice[] }> = ({ data }) => {
   const gastos = data[2] ?? { pct: 0, fill: '#f59e0b', name: 'Gastos Log.' }
   const restoPct = Math.max(0, 100 - costos.pct - gastos.pct)
 
-  // Capa base: anillo completo verde (Venta Bruta)
-  const baseData = [{ name: 'Venta Bruta', value: 100, fill: data[0]?.fill ?? '#059669' }]
+  // Capa base: anillo verde del tamaño de la CM (ej: 82.1% del bruto)
+  // El resto del anillo (17.9%) queda como fondo gris
+  const marginPct = data[0]?.pct ?? 0
+  const baseData = [
+    { name: 'Contr. Marginal', value: marginPct, fill: data[0]?.fill ?? '#059669' },
+    { name: '_gap', value: Math.max(0, 100 - marginPct), fill: '#f3f4f6' },
+  ]
 
-  // Capa superpuesta: costos + gastos + margen (transparente) al mismo radio
+  // Capa superpuesta: costos + gastos + complemento (transparente) al mismo radio
   const overlayData = [
     { name: costos.name, value: costos.pct, fill: costos.fill, pct: costos.pct },
     { name: gastos.name, value: gastos.pct, fill: gastos.fill, pct: gastos.pct },
-    { name: 'Margen', value: restoPct, fill: '#00000000', pct: restoPct },
+    { name: '_rest', value: restoPct, fill: '#00000000', pct: restoPct },
   ]
 
   // Render label personalizado solo para costos y gastos
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const renderLabel = (props: any) => {
     const d = overlayData[props.index]
-    if (!d || d.name === 'Margen' || d.pct < 0.3) return null
+    if (!d || d.name === '_rest' || d.pct < 0.3) return null
     return (
       <DonutLabel
         cx={props.cx}
@@ -472,10 +507,10 @@ const ComposicionDonut: React.FC<{ data: DonutSlice[] }> = ({ data }) => {
   const renderCell = (entry: { name: string; fill: string }, index: number) => (
     <Cell
       key={`overlay-${index}`}
-      fill={entry.name === 'Margen' ? 'transparent' : entry.fill}
-      stroke={entry.name === 'Margen' ? 'transparent' : '#ffffff'}
-      strokeWidth={entry.name === 'Margen' ? 0 : 2}
-      opacity={entry.name === 'Margen' ? 0 : 0.9}
+      fill={entry.name === '_rest' ? 'transparent' : entry.fill}
+      stroke={entry.name === '_rest' ? 'transparent' : '#ffffff'}
+      strokeWidth={entry.name === '_rest' ? 0 : 2}
+      opacity={entry.name === '_rest' ? 0 : 0.9}
     />
   )
 
@@ -517,14 +552,14 @@ const ComposicionDonut: React.FC<{ data: DonutSlice[] }> = ({ data }) => {
           {overlayData.map((entry, index) => renderCell(entry, index))}
         </Pie>
 
-        {/* Texto central */}
-        <text x="50%" y="45%" textAnchor="middle" dominantBaseline="central"
-          fill="#111827" fontSize={14} fontWeight={700}>
-          100%
+        {/* Texto central — muestra % de CM sobre venta bruta */}
+        <text x="50%" y="44%" textAnchor="middle" dominantBaseline="central"
+          fill="#059669" fontSize={15} fontWeight={700}>
+          {`${marginPct.toFixed(1)}%`}
         </text>
         <text x="50%" y="57%" textAnchor="middle" dominantBaseline="central"
           fill="#6b7280" fontSize={9}>
-          Venta Bruta
+          Margen
         </text>
       </PieChart>
     </ResponsiveContainer>
@@ -607,11 +642,13 @@ const ContribucionMarginalDashboard: React.FC = () => {
     [summaries]
   )
 
-  // Radial chart — cada anillo representa un componente como % de la venta bruta
+  // Donut — [0] Margen/CM (verde, base), [1] Costos, [2] Gastos Log
+  // El anillo verde representa la CM como % del bruto (ej: 82.1%)
+  // Los arcos de costos y gastos se superponen sobre ese anillo
   const radialData = useMemo(() => {
     const total = kpis.ventaBruta || 1
     return [
-      { name: 'Venta Bruta', value: kpis.ventaBruta, pct: 100, fill: RADIAL_COLORS.ventas },
+      { name: 'Contr. Marginal', value: kpis.margen, pct: parseFloat(((kpis.margen / total) * 100).toFixed(1)), fill: RADIAL_COLORS.ventas },
       { name: 'Costos (P.P.P.)', value: kpis.costos, pct: parseFloat(((kpis.costos / total) * 100).toFixed(1)), fill: RADIAL_COLORS.costos },
       { name: 'Gastos Logísticos', value: kpis.gastosLog, pct: parseFloat(((kpis.gastosLog / total) * 100).toFixed(1)), fill: RADIAL_COLORS.gastos },
     ]
@@ -838,11 +875,11 @@ const ContribucionMarginalDashboard: React.FC = () => {
               </button>
             )}
           </div>
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={380}>
             <BarChart data={barData} layout="vertical" margin={{ left: 10, right: 50, top: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
               <XAxis type="number" tickFormatter={fmtShort} tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} />
-              <YAxis type="category" dataKey="name" width={200} tick={<CustomYAxisTick />} axisLine={false} tickLine={false} />
+              <YAxis type="category" dataKey="name" width={185} tick={<CustomYAxisTick />} axisLine={false} tickLine={false} />
               <Tooltip
                 formatter={(value: number, _: string, props) => [`${fmt(value)} (${fmtPct(props.payload.pct)})`, 'Contribución Marginal']}
                 labelFormatter={(_, payload) => payload?.[0]?.payload?.fullName ?? ''}
@@ -852,7 +889,7 @@ const ContribucionMarginalDashboard: React.FC = () => {
               <Bar
                 dataKey="cm"
                 radius={[0, 4, 4, 0]}
-                maxBarSize={22}
+                maxBarSize={26}
                 style={{ cursor: 'pointer' }}
                 onClick={(data) => {
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
