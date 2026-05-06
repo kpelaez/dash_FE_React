@@ -113,6 +113,14 @@ interface ClienteSummary {
   estadoValorizacion: 'Valorizado' | 'Sin Valorizar' | 'Mixto'
 }
 
+interface OtSummary {
+  nroOt: string
+  cliente: string
+  bruto: number
+  cm: number
+  pct: number
+}
+
 // ============================================================
 // HELPERS
 // ============================================================
@@ -208,6 +216,45 @@ function parseExcel(file: File): Promise<RawRow[]> {
     reader.onerror = () => reject(new Error('Error leyendo el archivo'))
     reader.readAsArrayBuffer(file)
   })
+}
+
+// ============================================================
+// BUILD OT RANKINGS
+// ============================================================
+
+/** Devuelve top N mejores y peores OTs por % margen (excluyendo 100%) */
+function buildOtRankings(rows: RawRow[], n = 5): { best: OtSummary[]; worst: OtSummary[] } {
+  const ots: OtSummary[] = rows
+    .filter((r) => r.nroOt && r.totalBrutoFactura > 0 && r.pctMargen < 99.9)
+    .map((r) => ({
+      nroOt: r.nroOt,
+      cliente: r.cliente,
+      bruto: r.totalBrutoFactura,
+      cm: r.contribMarginal,
+      pct: r.pctMargen,
+    }))
+
+  const sorted = [...ots].sort((a, b) => b.pct - a.pct)
+  return {
+    best: sorted.slice(0, n),
+    worst: sorted.slice(-n).reverse(),
+  }
+}
+
+/** Mapea cliente → top 3 OTs por rentabilidad (sin 100%) para tooltips */
+function buildClienteOtMap(rows: RawRow[]): Map<string, OtSummary[]> {
+  const map = new Map<string, OtSummary[]>()
+  for (const r of rows) {
+    if (!r.nroOt || r.totalBrutoFactura <= 0 || r.pctMargen >= 99.9) continue
+    const existing = map.get(r.cliente) ?? []
+    existing.push({ nroOt: r.nroOt, cliente: r.cliente, bruto: r.totalBrutoFactura, cm: r.contribMarginal, pct: r.pctMargen })
+    map.set(r.cliente, existing)
+  }
+  // Ordenar y quedarse con top 3 por cliente
+  map.forEach((ots, key) => {
+    map.set(key, [...ots].sort((a, b) => b.pct - a.pct).slice(0, 3))
+  })
+  return map
 }
 
 // ============================================================
@@ -420,6 +467,63 @@ const CustomYAxisTick = ({ x, y, payload }: { x?: number; y?: number; payload?: 
 }
 
 // ============================================================
+// CUSTOM TOOLTIP — bar chart CM con Top 3 OTs del cliente
+// ============================================================
+
+const CmBarTooltip: React.FC<{
+  active?: boolean
+  payload?: Array<{ payload: { fullName: string; cm: number; pct: number } }>
+  clienteOtMap: Map<string, OtSummary[]>
+}> = ({ active, payload, clienteOtMap }) => {
+  if (!active || !payload?.length) return null
+  const d = payload[0].payload
+  const top3 = clienteOtMap.get(d.fullName) ?? []
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl shadow-lg p-4 text-xs max-w-[280px]">
+      <p className="font-semibold text-gray-800 text-sm leading-tight mb-1">{d.fullName}</p>
+      <div className="flex items-center gap-3 mb-3 pb-2 border-b border-gray-100">
+        <div>
+          <p className="text-gray-400 text-[10px] uppercase tracking-wide">CM Total</p>
+          <p className="font-mono font-semibold text-emerald-700">{fmt(d.cm)}</p>
+        </div>
+        <div>
+          <p className="text-gray-400 text-[10px] uppercase tracking-wide">Margen</p>
+          <p className={`font-bold ${d.pct >= 80 ? 'text-emerald-600' : d.pct >= 60 ? 'text-blue-600' : 'text-yellow-600'}`}>
+            {fmtPct(d.pct)}
+          </p>
+        </div>
+      </div>
+      {top3.length > 0 && (
+        <>
+          <p className="text-[10px] uppercase tracking-wide text-gray-400 mb-1.5">Top 3 OTs por rentabilidad</p>
+          <div className="space-y-1.5">
+            {top3.map((ot, i) => (
+              <div key={ot.nroOt} className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] text-gray-400 w-3">{i + 1}.</span>
+                  <span className="font-mono text-gray-600">{ot.nroOt}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-400">{fmtShort(ot.bruto)}</span>
+                  <span className={`font-bold px-1.5 py-0.5 rounded text-[10px] ${
+                    ot.pct >= 90 ? 'bg-emerald-100 text-emerald-700'
+                    : ot.pct >= 70 ? 'bg-blue-100 text-blue-700'
+                    : 'bg-yellow-100 text-yellow-700'
+                  }`}>
+                    {fmtPct(ot.pct)}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+// ============================================================
 // COMPOSICION DONUT — anillo base (venta bruta) con arcos
 // superpuestos de costos y gastos logísticos al mismo radio
 // ============================================================
@@ -549,6 +653,8 @@ const ContribucionMarginalDashboard: React.FC = () => {
   const [selectedCliente, setSelectedCliente] = useState<string | null>(null)
   const [selectedMes, setSelectedMes] = useState<string>('todos')
 
+  // Toggle del gráfico: 'cm' = Top 10 por CM | 'rankings' = Top 5 mejor/peor
+  const [chartMode, setChartMode] = useState<'cm' | 'rankings'>('cm')
   const [sorting, setSorting] = useState<SortingState>([{ id: 'contribMarginal', desc: true }])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [globalFilter, setGlobalFilter] = useState('')
@@ -611,6 +717,15 @@ const ContribucionMarginalDashboard: React.FC = () => {
     })),
     [summaries]
   )
+
+  const otRankings = useMemo(() => buildOtRankings(rowsFiltradas), [rowsFiltradas])
+  const clienteOtMap = useMemo(() => buildClienteOtMap(rowsFiltradas), [rowsFiltradas])
+
+  // Datos para el modo rankings — best y worst como dos grupos para el BarChart
+  const rankingBarData = useMemo(() => [
+    ...otRankings.best.map((o) => ({ ...o, name: o.nroOt, group: 'best' as const })),
+    ...otRankings.worst.map((o) => ({ ...o, name: o.nroOt, group: 'worst' as const })),
+  ], [otRankings])
 
   // Donut — [0] Margen/CM (verde, base), [1] Costos, [2] Gastos Log
   // El anillo verde representa la CM como % del bruto (ej: 82.1%)
@@ -831,57 +946,139 @@ const ContribucionMarginalDashboard: React.FC = () => {
       {/* Gráficos */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
 
-        {/* Bar chart */}
+        {/* Bar chart — toggle CM / Rankings */}
         <div className="xl:col-span-2 bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-          <div className="flex items-start justify-between mb-4">
+
+          {/* Header con toggle */}
+          <div className="flex items-start justify-between mb-4 gap-2 flex-wrap">
             <div>
-              <h2 className="text-sm font-semibold text-gray-700">Top 10 Clientes por Contribución Marginal</h2>
-              <p className="text-xs text-gray-400 mt-0.5">Hacé click en una barra para filtrar el detalle</p>
+              <h2 className="text-sm font-semibold text-gray-700">
+                {chartMode === 'cm' ? 'Top 10 Clientes por Contribución Marginal' : 'Ranking de Rentabilidad por OT'}
+              </h2>
+              <p className="text-xs text-gray-400 mt-0.5">
+                {chartMode === 'cm'
+                  ? 'Hacé click en una barra para filtrar el detalle'
+                  : 'Top 5 mejores y peores OTs según % de margen (excluye OTs al 100%)'}
+              </p>
             </div>
-            {selectedCliente && (
-              <button onClick={() => setSelectedCliente(null)}
-                className="text-xs text-emerald-600 hover:text-emerald-800 font-medium flex items-center gap-1 shrink-0">
-                ✕ Limpiar filtro
-              </button>
-            )}
+            <div className="flex items-center gap-2 shrink-0">
+              {chartMode === 'cm' && selectedCliente && (
+                <button onClick={() => setSelectedCliente(null)}
+                  className="text-xs text-emerald-600 hover:text-emerald-800 font-medium flex items-center gap-1">
+                  ✕ Limpiar filtro
+                </button>
+              )}
+              {/* Toggle */}
+              <div className="flex rounded-lg border border-gray-200 overflow-hidden text-xs font-medium">
+                <button
+                  onClick={() => setChartMode('cm')}
+                  className={`px-3 py-1.5 transition-colors ${chartMode === 'cm' ? 'bg-emerald-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+                >
+                  Top 10 CM
+                </button>
+                <button
+                  onClick={() => setChartMode('rankings')}
+                  className={`px-3 py-1.5 transition-colors border-l border-gray-200 ${chartMode === 'rankings' ? 'bg-emerald-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+                >
+                  Rentabilidad OTs
+                </button>
+              </div>
+            </div>
           </div>
-          <ResponsiveContainer width="100%" height={380}>
-            <BarChart data={barData} layout="vertical" margin={{ left: 10, right: 50, top: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
-              <XAxis type="number" tickFormatter={fmtShort} tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} />
-              <YAxis type="category" dataKey="name" width={185} tick={<CustomYAxisTick />} axisLine={false} tickLine={false} />
-              <Tooltip
-                formatter={(value: number, _: string, props) => [`${fmt(value)} (${fmtPct(props.payload.pct)})`, 'Contribución Marginal']}
-                labelFormatter={(_, payload) => payload?.[0]?.payload?.fullName ?? ''}
-                contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '12px' }}
-                cursor={{ fill: 'rgba(16,185,129,0.08)' }}
-              />
-              <Bar
-                dataKey="cm"
-                radius={[0, 4, 4, 0]}
-                maxBarSize={26}
-                style={{ cursor: 'pointer' }}
-                onClick={(data) => {
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  const clicked = (data as any)?.fullName as string | undefined
-                  if (clicked) {
-                    setSelectedCliente((prev) => (prev === clicked ? null : clicked))
-                    setActiveTab('detalle')
-                  }
-                }}
-              >
-                {barData.map((entry, i) => (
-                  <Cell
-                    key={i}
-                    fill={selectedCliente === null || selectedCliente === entry.fullName
-                      ? EMERALD_PALETTE[i % EMERALD_PALETTE.length]
-                      : '#e5e7eb'
+
+          {/* MODO CM: Top 10 por Contribución Marginal */}
+          {chartMode === 'cm' && (
+            <ResponsiveContainer width="100%" height={380}>
+              <BarChart data={barData} layout="vertical" margin={{ left: 10, right: 50, top: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
+                <XAxis type="number" tickFormatter={fmtShort} tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+                <YAxis type="category" dataKey="name" width={185} tick={<CustomYAxisTick />} axisLine={false} tickLine={false} />
+                <Tooltip
+                  content={<CmBarTooltip clienteOtMap={clienteOtMap} />}
+                  cursor={{ fill: 'rgba(16,185,129,0.06)' }}
+                />
+                <Bar
+                  dataKey="cm"
+                  radius={[0, 4, 4, 0]}
+                  maxBarSize={26}
+                  style={{ cursor: 'pointer' }}
+                  onClick={(data) => {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const clicked = (data as any)?.fullName as string | undefined
+                    if (clicked) {
+                      setSelectedCliente((prev) => (prev === clicked ? null : clicked))
+                      setActiveTab('detalle')
                     }
-                  />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+                  }}
+                >
+                  {barData.map((entry, i) => (
+                    <Cell
+                      key={i}
+                      fill={selectedCliente === null || selectedCliente === entry.fullName
+                        ? EMERALD_PALETTE[i % EMERALD_PALETTE.length]
+                        : '#e5e7eb'
+                      }
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+
+          {/* MODO RANKINGS: Top 5 mejor / Top 5 peor */}
+          {chartMode === 'rankings' && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+
+              {/* TOP 5 MEJORES */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <span className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Top 5 Mejores</span>
+                  <span className="text-xs text-gray-400">mayor % de margen</span>
+                </div>
+                <div className="space-y-2">
+                  {otRankings.best.map((ot, i) => (
+                    <div key={ot.nroOt} className="flex items-center gap-3 p-3 rounded-lg bg-emerald-50/60 border border-emerald-100 hover:bg-emerald-50 transition-colors">
+                      <span className="text-xs font-bold text-emerald-400 w-4 shrink-0">{i + 1}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-mono text-xs font-semibold text-gray-700">{ot.nroOt}</p>
+                        <p className="text-[10px] text-gray-400 truncate">{ot.cliente}</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-xs font-bold text-emerald-600">{fmtPct(ot.pct)}</p>
+                        <p className="text-[10px] text-gray-400 font-mono">{fmtShort(ot.bruto)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* TOP 5 PEORES */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="w-2 h-2 rounded-full bg-red-400" />
+                  <span className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Top 5 Peores</span>
+                  <span className="text-xs text-gray-400">menor % de margen</span>
+                </div>
+                <div className="space-y-2">
+                  {otRankings.worst.map((ot, i) => (
+                    <div key={ot.nroOt} className="flex items-center gap-3 p-3 rounded-lg bg-red-50/60 border border-red-100 hover:bg-red-50 transition-colors">
+                      <span className="text-xs font-bold text-red-300 w-4 shrink-0">{i + 1}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-mono text-xs font-semibold text-gray-700">{ot.nroOt}</p>
+                        <p className="text-[10px] text-gray-400 truncate">{ot.cliente}</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-xs font-bold text-red-500">{fmtPct(ot.pct)}</p>
+                        <p className="text-[10px] text-gray-400 font-mono">{fmtShort(ot.bruto)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+          )}
         </div>
 
         {/* Donut chart — composición superpuesta sobre venta bruta */}
