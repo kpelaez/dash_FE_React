@@ -721,11 +721,6 @@ const ContribucionMarginalDashboard: React.FC = () => {
   const otRankings = useMemo(() => buildOtRankings(rowsFiltradas), [rowsFiltradas])
   const clienteOtMap = useMemo(() => buildClienteOtMap(rowsFiltradas), [rowsFiltradas])
 
-  // Datos para el modo rankings — best y worst como dos grupos para el BarChart
-  const rankingBarData = useMemo(() => [
-    ...otRankings.best.map((o) => ({ ...o, name: o.nroOt, group: 'best' as const })),
-    ...otRankings.worst.map((o) => ({ ...o, name: o.nroOt, group: 'worst' as const })),
-  ], [otRankings])
 
   // Donut — [0] Margen/CM (verde, base), [1] Costos, [2] Gastos Log
   // El anillo verde representa la CM como % del bruto (ej: 82.1%)
