@@ -160,7 +160,7 @@ npm run preview   # para probar el build localmente
 - Alertas de turnos pendientes
 
 ### Horas Extra (`/overtime`)
-- Solicitud de horas extra y compensatorios
+- Solicitud de horas a compensar
 - Flujo de aprobación manager → admin
 - Balance por usuario
 

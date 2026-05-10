@@ -33,8 +33,8 @@ const modules = [
   {
     icon: TrendingUp,
     color: 'bg-purple-50 text-purple-600',
-    title: 'Horas Extra',
-    description: 'Solicitud y seguimiento de horas extra y compensatorios.',
+    title: 'Horas Compensatorias',
+    description: 'Solicitud y seguimiento de horas compensatorios.',
     path: '/teams/stock/overtime',
     roles: ['admin', 'manager', 'user'],
   },
@@ -132,7 +132,7 @@ const HomePage = () => {
         <p className="text-sm text-gray-400 mb-1">Hola, {firstName} 👋</p>
         <h1 className="text-3xl font-bold text-gray-900">Bienvenido a StoneFixer</h1>
         <p className="text-gray-500 mt-2">
-          Tu plataforma interna para gestión de inventario, turnos, horas extra e indicadores de negocio.
+          Tu plataforma interna para gestión de inventario, turnos, horas compensatorias e indicadores de negocio.
         </p>
       </section>
 

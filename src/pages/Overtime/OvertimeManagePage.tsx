@@ -67,7 +67,7 @@ export default function OvertimeManagePage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gestión de Horas Extras</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Gestión de Horas Compensatorias</h1>
           <p className="text-sm text-gray-500 mt-0.5">Aprobación de solicitudes del equipo de Stock</p>
         </div>
         {pendingCount > 0 && (
@@ -193,7 +193,7 @@ export default function OvertimeManagePage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Tipo</span>
-                <span>{reviewing.entry_type === 'credit' ? '🕐 Horas extra' : '🌴 Compensatorio'}</span>
+                <span>{reviewing.entry_type === 'credit' ? ' Horas extra' : ' Compensatorio'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Horas</span>

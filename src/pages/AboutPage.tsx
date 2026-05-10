@@ -52,9 +52,9 @@ const modules = [
   },
   {
     icon: Wrench,
-    title: 'Horas Extra',
+    title: 'Horas Compensatorias',
     description:
-      'Solicitud y aprobación de horas extra y compensatorios con flujo manager → admin, balance por empleado e historial completo.',
+      'Solicitud y aprobación de horas extras y compensatorios con flujo manager → admin, balance por empleado e historial completo.',
   },
   {
     icon: BarChart2,
@@ -115,7 +115,7 @@ const AboutPage = () => {
         <p className="text-gray-500 max-w-2xl mx-auto leading-relaxed">
           Plataforma interna desarrollada por el Departamento de Tecnología de MKL Coders
           para resolver los gaps operativos que el ERP de la empresa no cubre.
-          Centraliza la gestión de inventario tecnológico, turnos, horas extra e
+          Centraliza la gestión de inventario tecnológico, turnos, horas compensatorias e
           indicadores de negocio en un único sistema.
         </p>
       </section>

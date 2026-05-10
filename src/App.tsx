@@ -45,6 +45,8 @@ import DashboardsPage from './pages/DashboardsPage';
 
 import MyOvertimePage from './pages/Overtime/MyOvertimePage';
 import OvertimeManagePage from './pages/Overtime/OvertimeManagePage';
+import { useAuthStore } from './stores/authStore';
+import { useEffect } from 'react';
 
 
 // ─── Layout wrapper — UNA sola instancia de MainLayout 
@@ -56,6 +58,17 @@ const AppLayout = () => (
 );
 
 function App() {
+
+  const getUser = useAuthStore(state => state.getUser);
+  const isAuthenticated = useAuthStore(state => state.isAuthenticated);
+
+  // Inicializar auth UNA sola vez al montar la app
+  useEffect(() => {
+    if (isAuthenticated) {
+      getUser();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
  
   return (
     <div className="app-container">
