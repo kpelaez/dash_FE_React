@@ -154,8 +154,8 @@ export default function MyOvertimePage() {
                 value={form.entry_type}
                 onChange={e => setForm({ ...form, entry_type: e.target.value as 'credit' | 'debit' })}
               >
-                <option value="credit">🕐 Horas extra trabajadas</option>
-                <option value="debit">🌴 Compensatorio (usar horas)</option>
+                <option value="credit"> Horas extra trabajadas</option>
+                <option value="debit"> Compensatorio (usar horas)</option>
               </select>
             </div>
 

@@ -119,13 +119,13 @@ export const menuItems: MenuItem[] = [
           },
           {
             id: 'sectores-stock-overtime',
-            title: 'Mis Horas Extras',
+            title: 'Mis Horas a Comp.',
             path: '/teams/stock/overtime',
             requiredRoles: ['admin', 'manager', 'user'],
           },
           {
             id: 'sectores-stock-overtime-manage',
-            title: 'Gestión Horas Extras',
+            title: 'Gestión Horas Comp.',
             path: '/overtime/manage',
             requiredRoles: ['admin', 'manager'],   // Solo managers ven esto
           },

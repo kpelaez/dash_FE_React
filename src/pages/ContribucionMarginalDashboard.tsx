@@ -409,7 +409,7 @@ const KpiCard: React.FC<{
   trend?: string
   trendColor?: string
 }> = ({ label, value, sub, icon, accent, trend, trendColor = 'text-emerald-600' }) => (
-  <div className="bg-white rounded-xl border border-gray-200 p-5 flex flex-col gap-3 shadow-sm hover:shadow-md transition-shadow">
+  <div className="bg-white rounded-xl border border-slate-300 p-5 flex flex-col gap-3 shadow-md hover:shadow-lg transition-shadow">
     <div className="flex items-center justify-between">
       <span className="text-sm font-medium text-gray-500">{label}</span>
       <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${accent}`}>{icon}</div>
@@ -854,7 +854,7 @@ const ContribucionMarginalDashboard: React.FC = () => {
 
   // ── Dashboard ───────────────────────────────────────────
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 min-h-screen bg-slate-200">
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -873,7 +873,7 @@ const ContribucionMarginalDashboard: React.FC = () => {
             className="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium rounded-lg border bg-gray-50 border-gray-300 text-gray-400 cursor-not-allowed"
           >
             <EyeOff size={14} />
-            Sin IVA
+            CON IVA
             <span className="ml-1 px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] rounded font-bold">PRONTO</span>
           </button>
           <button
@@ -958,7 +958,7 @@ const ContribucionMarginalDashboard: React.FC = () => {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
 
         {/* Bar chart — toggle CM / Rankings */}
-        <div className="xl:col-span-2 bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+        <div className="xl:col-span-2 bg-white rounded-xl border border-slate-300 p-5 shadow-md">
 
           {/* Header con toggle */}
           <div className="flex items-start justify-between mb-4 gap-2 flex-wrap">
@@ -1093,7 +1093,7 @@ const ContribucionMarginalDashboard: React.FC = () => {
         </div>
 
         {/* Donut chart — composición superpuesta sobre venta bruta */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm flex flex-col">
+        <div className="bg-white rounded-xl border border-slate-300 p-5 shadow-md flex flex-col">
           <div className="mb-2">
             <h2 className="text-sm font-semibold text-gray-700">Composición de la Venta Bruta</h2>
             <p className="text-xs text-gray-400 mt-0.5">Costos y gastos logísticos sobre el total</p>
@@ -1120,7 +1120,7 @@ const ContribucionMarginalDashboard: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-300 shadow-md overflow-hidden">
         <div className="flex border-b border-gray-200">
           {(['resumen', 'detalle'] as const).map((tab) => (
             <button
