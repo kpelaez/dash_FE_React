@@ -60,13 +60,11 @@ const AppLayout = () => (
 function App() {
 
   const getUser = useAuthStore(state => state.getUser);
-  const isAuthenticated = useAuthStore(state => state.isAuthenticated);
 
-  // Inicializar auth UNA sola vez al montar la app
   useEffect(() => {
-    if (isAuthenticated) {
+    // Siempre intentar recuperar el usuario al cargar la app
+    // Si no hay cookie válida, el backend devuelve 401 y getUser() limpia el estado
       getUser();
-    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
  

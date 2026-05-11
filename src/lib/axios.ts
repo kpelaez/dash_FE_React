@@ -2,9 +2,9 @@
  * Instancia centralizada de Axios para StoneFixer.
  *
  * RESPONSABILIDADES:
- * - Inyectar el token JWT en cada request automáticamente
  * - Manejar errores HTTP de forma consistente (401, 403, 500...)
  * - Redirigir al login cuando el token expira, sin repetir esa lógica en cada servicio
+ * - Enviar cookies httpOnly automáticamente en cada request (withCredentials: true)
  * - Exponer la baseURL desde la variable de entorno VITE_API_URL
  *
  * USO:
@@ -12,7 +12,7 @@
  *   const data = await api.get('/inventory/tech-assets');
  */
 
-import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import axios, { AxiosError } from 'axios';
 import toast from 'react-hot-toast';
 
 // ─── Instancia base 
@@ -23,18 +23,15 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
   timeout: 15000, // 15 segundos — evita requests colgados silenciosamente
+  withCredentials: true,  // <-- agregar esto: envía la cookie en cada request automáticamente
 });
 
 // ─── Interceptor de REQUEST — inyectar token 
 
+// Cookie httpOnly la envía el browser automáticamente via withCredentials
+// No se requiere inyección manual de token
 api.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem('auth_token');
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
+  (config) => config,
   (error) => Promise.reject(error)
 );
 
@@ -49,11 +46,6 @@ api.interceptors.response.use(
     const status = error.response?.status;
 
     if (status === 401) {
-      // Token expirado o inválido
-      // Limpiar sesión y redirigir al login.
-      // Usamos window.location en lugar del router porque este módulo
-      // está fuera del árbol de React y no tiene acceso al contexto de Router.
-      localStorage.removeItem('auth_token');
       toast.error('Tu sesión expiró. Iniciá sesión nuevamente.');
 
       // Evitar redirigir si ya estamos en /login

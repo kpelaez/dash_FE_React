@@ -41,10 +41,10 @@ interface AuthState {
 }
 
 export const useAuthStore = create<AuthState>((set, get)=>({
-  token: localStorage.getItem('auth_token'),
+  token: null,
   user: null,
   roles: [],
-  isAuthenticated: !!localStorage.getItem('auth_token'),
+  isAuthenticated: false,
   isLoading: false,
   error: null,
 
@@ -62,6 +62,7 @@ export const useAuthStore = create<AuthState>((set, get)=>({
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: formData,
+        credentials: 'include', // permite que el browser guarde la cookie
       });
 
       if(!response.ok){
@@ -71,19 +72,14 @@ export const useAuthStore = create<AuthState>((set, get)=>({
 
       const data = await response.json();
 
-      localStorage.setItem('auth_token', data.access_token);//<-- Se llama asi en el backend
-
-      // IMPORTANTE: Asegúrate de que los roles se están guardando correctamente
-      console.log("Roles recibidos:", data.roles); // Para depuración
-
       set({
-        token: data.access_token,
         roles: data.roles || [],
         isAuthenticated: true,
         isLoading: false,
       });
 
       await get().getUser();
+
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error al iniciar sesión';
       set({
@@ -91,82 +87,53 @@ export const useAuthStore = create<AuthState>((set, get)=>({
         isLoading: false,
         roles: [],
         isAuthenticated: false,
-        token: null,
-        user: null,
       });
       toast.error(errorMessage);
       throw error;
     }
   },
 
-  logout: ()=>{
-    localStorage.removeItem('auth_token');
-    set({
-      token: null,
-      user: null,
-      roles: [],
-      isAuthenticated: false,
-      error: null
+  logout: async () => {
+    // Llamar al backend para que elimine la cookie
+    await fetch(`${API_URL}/api/v1/auth/logout`, {
+      method: 'POST',
+      credentials: 'include',   // <-- también necesario en logout
     });
+
+    set({ token: null, user: null, roles: [], isAuthenticated: false, error: null });
     toast.success('Sesión cerrada exitosamente');
   },
 
   getUser: async ()=>{
-    const {token, user} = get();
-
-    if (!token) {
-      set({ 
-        user: null,
-        isAuthenticated: false,
-        roles: [],
-      })
-      return;
-    }
-
+    const { user } = get();
     if (user) return;
 
-    set({ isLoading: true});
+    set({ isLoading: true });
 
     try {
       const response = await fetch(`${API_URL}/api/v1/users/me`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+       credentials: 'include',   // <-- el browser envía la cookie automáticamente
       });
 
-      if(!response.ok) {
+      if (!response.ok) {
         if (response.status === 401 || response.status === 403) {
-          // Token inválido o expirado
-          localStorage.removeItem('auth_token');
-          set({
-            error: 'Sesión expirada. Por favor iniciá sesión nuevamente.',
-            isLoading: false,
-            user: null,
-            roles: [],
-            isAuthenticated: false,
-            token: null,
-          });
+          set({ user: null, roles: [], isAuthenticated: false, isLoading: false, token: null });
           return;
         }
-
-        // Cualquier otro error (500, red, etc.) → NO destruir sesión
-        console.warn(`[AuthStore] getUser falló con status ${response.status} — manteniendo sesión`);
         set({ isLoading: false });
         return;
       }
 
       const userData = await response.json();
-
-      set({ 
-        user: userData, 
+      set({
+        user: userData,
         roles: userData.roles?.length ? userData.roles : get().roles,
+        isAuthenticated: true,
         isLoading: false,
-        error: null,
       });
 
     } catch (error) {
-      // Error de red → NO destruir sesión
-      console.warn('[AuthStore] Error de red al obtener usuario — manteniendo sesión:', error);
+      console.warn('[AuthStore] Error de red — manteniendo sesión:', error);
       set({ isLoading: false });
     }
   },
@@ -180,6 +147,7 @@ export const useAuthStore = create<AuthState>((set, get)=>({
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({ //<-- Aca va el cuerpo que necesita para registrarse del Backend
           email: credentials.email,
           password: credentials.password,

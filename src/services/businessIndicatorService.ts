@@ -12,24 +12,17 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 class BusinessIndicatorService {
   private async fetchWithAuth(url: string, options: RequestInit = {}) {
     
-    const token = localStorage.getItem('auth_token');
-    
-    const headers = {
-      'Content-Type': 'application/json',
-      ...(token && { 'Authorization': `Bearer ${token}` }),
-      ...options.headers,
-    };
-
     const response = await fetch(`${API_BASE_URL}${url}`, {
       ...options,
-      headers,
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
     });
 
     if (!response.ok) {
       if (response.status === 401) {
-        // Token expirado o inválido - redirigir al login
-        localStorage.removeItem('auth_token');
-        window.location.href = '/login';
         throw new Error('Sesión expirada');
       }
       

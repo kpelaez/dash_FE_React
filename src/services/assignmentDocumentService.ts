@@ -7,17 +7,6 @@ import type {
 
 // const API_URL = import.meta.env.DEV ? '' : (import.meta.env.VITE_API_URL || '');
 
-// Configurar axios con token
-// const getAuthHeaders = () => {
-//   const token = localStorage.getItem('auth_token');
-//   return {
-//     headers: {
-//       'Authorization': `Bearer ${token}`,
-//       'Content-Type': 'application/json'
-//     }
-//   };
-// };
-
 // Helper para extraer mensaje de error legible desde respuestas de FastAPI
 const extractErrorMessage = (error: unknown): string => {
   if (error instanceof AxiosError) {
