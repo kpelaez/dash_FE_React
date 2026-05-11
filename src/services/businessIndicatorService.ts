@@ -23,7 +23,6 @@ class BusinessIndicatorService {
 
     if (!response.ok) {
       if (response.status === 401) {
-        window.location.href = '/login';
         throw new Error('Sesión expirada');
       }
       
