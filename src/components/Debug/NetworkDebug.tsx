@@ -223,6 +223,10 @@ const NetworkDebug: React.FC = () => {
     }
   };
 
+  if(!import.meta.env.DEV) {
+    return null; // No renderizar nada en producción
+  }
+
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
       <div className="mb-6">
@@ -311,7 +315,7 @@ const NetworkDebug: React.FC = () => {
         <div className="text-xs font-mono bg-white p-3 rounded border overflow-x-auto">
           <div><strong>User Agent:</strong> {navigator.userAgent}</div>
           <div><strong>Timestamp:</strong> {new Date().toISOString()}</div>
-          {/* <div><strong>Local Storage Token:</strong> {localStorage.getItem('auth_token') ? 'Present' : 'Missing'}</div> */}
+          <div><strong>Auth Cookie:</strong> {document.cookie.includes('access_token') ? 'Present (httpOnly)' : 'Missing'}</div>
         </div>
       </div>
     </div>
