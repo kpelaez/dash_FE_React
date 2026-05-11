@@ -147,6 +147,7 @@ export const useAuthStore = create<AuthState>((set, get)=>({
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({ //<-- Aca va el cuerpo que necesita para registrarse del Backend
           email: credentials.email,
           password: credentials.password,
