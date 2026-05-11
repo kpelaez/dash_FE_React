@@ -144,51 +144,51 @@ const NetworkDebug: React.FC = () => {
     }
 
     // Test 4: User Profile (requiere token)
-    const token = localStorage.getItem('auth_token');
-    if (token) {
-      try {
-        const startTime = Date.now();
-        const response = await fetch(`${apiUrl}/me`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        const endTime = Date.now();
+  //   const token = localStorage.getItem('auth_token');
+  //   if (token) {
+  //     try {
+  //       const startTime = Date.now();
+  //       const response = await fetch(`${apiUrl}/me`, {
+  //         headers: {
+  //           'Authorization': `Bearer ${token}`
+  //         }
+  //       });
+  //       const endTime = Date.now();
         
-        setTests(prev => prev.map(test => 
-          test.name === 'User Profile' 
-            ? {
-                ...test,
-                status: response.ok ? 'success' : 'error',
-                message: response.ok 
-                  ? `✅ Perfil de usuario accesible (${response.status})` 
-                  : `❌ Error ${response.status} - Token inválido o expirado`,
-                responseTime: endTime - startTime
-              }
-            : test
-        ));
-      } catch (error) {
-        setTests(prev => prev.map(test => 
-          test.name === 'User Profile' 
-            ? {
-                ...test,
-                status: 'error',
-                message: `❌ Error de conexión: ${error instanceof Error ? error.message : 'Unknown error'}`
-              }
-            : test
-        ));
-      }
-    } else {
-      setTests(prev => prev.map(test => 
-        test.name === 'User Profile' 
-          ? {
-              ...test,
-              status: 'error',
-              message: '⚠️ No hay token de autenticación'
-            }
-          : test
-      ));
-    }
+  //       setTests(prev => prev.map(test => 
+  //         test.name === 'User Profile' 
+  //           ? {
+  //               ...test,
+  //               status: response.ok ? 'success' : 'error',
+  //               message: response.ok 
+  //                 ? `✅ Perfil de usuario accesible (${response.status})` 
+  //                 : `❌ Error ${response.status} - Token inválido o expirado`,
+  //               responseTime: endTime - startTime
+  //             }
+  //           : test
+  //       ));
+  //     } catch (error) {
+  //       setTests(prev => prev.map(test => 
+  //         test.name === 'User Profile' 
+  //           ? {
+  //               ...test,
+  //               status: 'error',
+  //               message: `❌ Error de conexión: ${error instanceof Error ? error.message : 'Unknown error'}`
+  //             }
+  //           : test
+  //       ));
+  //     }
+  //   } else {
+  //     setTests(prev => prev.map(test => 
+  //       test.name === 'User Profile' 
+  //         ? {
+  //             ...test,
+  //             status: 'error',
+  //             message: '⚠️ No hay token de autenticación'
+  //           }
+  //         : test
+  //     ));
+  //   }
 
     setIsRunning(false);
   };
@@ -311,7 +311,7 @@ const NetworkDebug: React.FC = () => {
         <div className="text-xs font-mono bg-white p-3 rounded border overflow-x-auto">
           <div><strong>User Agent:</strong> {navigator.userAgent}</div>
           <div><strong>Timestamp:</strong> {new Date().toISOString()}</div>
-          <div><strong>Local Storage Token:</strong> {localStorage.getItem('auth_token') ? 'Present' : 'Missing'}</div>
+          {/* <div><strong>Local Storage Token:</strong> {localStorage.getItem('auth_token') ? 'Present' : 'Missing'}</div> */}
         </div>
       </div>
     </div>
