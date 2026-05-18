@@ -102,7 +102,7 @@ function toWeekStart(d: Date): Date {
 }
 
 function formatLabel(isoDate: string, groupBy: GroupBy): string {
-  const [year, month, day] = isoDate.split('-')
+  const [ , month, day] = isoDate.split('-')
   if (groupBy === 'week') return `Sem ${day}/${month}`
   return `${day}/${month}`
 }
