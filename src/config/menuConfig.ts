@@ -129,6 +129,20 @@ export const menuItems: MenuItem[] = [
             path: '/overtime/manage',
             requiredRoles: ['admin', 'manager'],   // Solo managers ven esto
           },
+          {
+            id: 'sectores-stock-reportes',
+            title: 'Reportes',
+            icon: BarChart2,  
+            requiredRoles: ['admin', 'manager', 'user'],
+            children: [
+              {
+                id: 'stock-report-remitos-cx',
+                title: 'Planificación CX',
+                path: '/stock/reports/remitos-cx',
+                requiredRoles: ['admin', 'manager', 'user'],
+              },
+            ],
+          },
         ]
       },
     ]

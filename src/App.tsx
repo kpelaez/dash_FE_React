@@ -29,7 +29,7 @@ import UsersManagementPage from './pages/Users/UsersManagementPage';
 import ContribucionMarginalDashboard from './pages/ContribucionMarginalDashboard'
 
 // Agregar al bloque de imports de páginas
-
+import RemitosReportPage from './pages/Stock/Reports/RemitosReportsPage';
 // Toaster
 import { Toaster } from 'react-hot-toast';
 
@@ -144,6 +144,14 @@ function App() {
                 <ProtectedRoute>
                   <MyOvertimePage />
                 </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/teams/stock/reports/remitos-cx"
+              element={
+                <RoleProtectedRoute requiredRoles={['admin', 'manager', 'user']}>
+                  <RemitosReportPage />
+                </RoleProtectedRoute>
               }
             />
 
