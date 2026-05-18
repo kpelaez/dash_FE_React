@@ -147,7 +147,7 @@ function App() {
               }
             />
             <Route
-              path="/teams/stock/reports/remitos-cx"
+              path="/stock/reports/remitos-cx"
               element={
                 <RoleProtectedRoute requiredRoles={['admin', 'manager', 'user']}>
                   <RemitosReportPage />
